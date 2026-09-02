@@ -41,6 +41,20 @@ export function publicFarmer(row) {
   };
 }
 
+export function publicStaff(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    role: row.role,
+    org: row.org,
+    district: row.district,
+    epa: row.epa,
+    createdAt: row.created_at,
+  };
+}
+
 export function HttpError(status, message) {
   const error = new Error(message);
   error.status = status;

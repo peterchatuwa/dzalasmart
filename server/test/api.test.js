@@ -114,3 +114,41 @@ test("USSD logs the next milestone onto the same farmer record", async (t) => {
   assert.equal(status.body.currentStage.key, "input_redemption");
   assert.equal(status.body.events[0].channel, "ussd");
 });
+
+test("staff can read a farmer record but cannot write stages", async (t) => {
+  const db = openDatabase(":memory:");
+  seedIfEmpty(db);
+  const { seedStaffIfEmpty } = await import("../src/staff.js");
+  seedStaffIfEmpty(db);
+  const app = createApp(db, { jwtSecret: "test-secret" });
+  const { url, close } = await listen(app);
+  t.after(close);
+
+  const staffLogin = await json(`${url}/api/staff/login`, {
+    method: "POST",
+    body: JSON.stringify({ phone: "+265888000101", pin: "1234" }),
+  });
+  assert.equal(staffLogin.res.status, 200);
+  assert.equal(staffLogin.body.staff.role, "extension");
+  const staffToken = staffLogin.body.token;
+
+  const list = await json(`${url}/api/staff/farmers`, {
+    headers: { Authorization: `Bearer ${staffToken}` },
+  });
+  assert.equal(list.res.status, 200);
+  const estere = list.body.farmers.find((row) => row.farmer.phone === "+265888000003");
+  assert.ok(estere);
+
+  const detail = await json(`${url}/api/staff/farmers/${estere.farmer.id}`, {
+    headers: { Authorization: `Bearer ${staffToken}` },
+  });
+  assert.equal(detail.res.status, 200);
+  assert.equal(detail.body.farmer.name, "Estere Mvula");
+
+  const blockedWrite = await json(`${url}/api/farmers/me/events`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${staffToken}` },
+    body: JSON.stringify({}),
+  });
+  assert.equal(blockedWrite.res.status, 403);
+});

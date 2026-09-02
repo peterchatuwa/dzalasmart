@@ -1,10 +1,11 @@
 import path from "node:path";
 import express from "express";
 import cors from "cors";
-import { requireFarmer } from "./auth.js";
-import { farmerStatus, loginFarmer, logStage, registerFarmer } from "./farmers.js";
+import { requireFarmer, requireStaff } from "./auth.js";
+import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer } from "./farmers.js";
 import { listDistricts } from "./places.js";
 import { STAGES } from "./stages.js";
+import { loginStaff } from "./staff.js";
 import { handleUssd } from "./ussd.js";
 
 export function createApp(db, options = {}) {
@@ -64,6 +65,39 @@ export function createApp(db, options = {}) {
     }
   });
 
+  app.post("/api/staff/login", (req, res, next) => {
+    try {
+      res.json(loginStaff(db, req.body || {}, jwtSecret));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/me", requireStaff(db, jwtSecret), (req, res) => {
+    res.json({ staff: req.staff });
+  });
+
+  app.get("/api/staff/farmers", requireStaff(db, jwtSecret), (_req, res, next) => {
+    try {
+      res.json({ farmers: listFarmerSummaries(db) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/farmers/:id", requireStaff(db, jwtSecret), (req, res, next) => {
+    try {
+      const row = getFarmerById(db, req.params.id);
+      if (!row) {
+        res.status(404).json({ error: "Farmer not found" });
+        return;
+      }
+      res.json(farmerStatus(db, row));
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/ussd", (req, res, next) => {
     try {
       const reply = handleUssd(db, req.body || {});
@@ -74,6 +108,9 @@ export function createApp(db, options = {}) {
   });
 
   if (options.frontendDir) {
+    app.get("/staff", (_req, res) => {
+      res.sendFile(path.join(options.frontendDir, "staff.html"));
+    });
     app.use(express.static(options.frontendDir));
     app.get(/.*/, (req, res, next) => {
       if (req.path.startsWith("/api") || req.path === "/ussd" || req.path === "/health") {

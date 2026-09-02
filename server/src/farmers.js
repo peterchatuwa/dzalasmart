@@ -44,6 +44,23 @@ export function farmerStatus(db, farmer) {
   };
 }
 
+export function getFarmerById(db, id) {
+  return db.prepare("SELECT * FROM farmers WHERE id = ?").get(id) || null;
+}
+
+export function listFarmerSummaries(db) {
+  return db.prepare("SELECT * FROM farmers ORDER BY name COLLATE NOCASE").all().map((row) => {
+    const status = farmerStatus(db, row);
+    return {
+      farmer: status.farmer,
+      currentStage: status.currentStage,
+      nextStage: status.nextStage,
+      eventCount: status.events.length,
+      lastEventAt: status.events.at(-1)?.createdAt || null,
+    };
+  });
+}
+
 export function findFarmerByPhone(db, phone) {
   return db.prepare("SELECT * FROM farmers WHERE phone = ?").get(normalizePhone(phone)) || null;
 }

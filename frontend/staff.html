@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DzalaSmart — Staff desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=4">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="seed"></span>DzalaSmart</div>
+    <p class="topbar-note">Staff can read farmer records. They cannot write season stages from here.</p>
+    <a class="nav-link" href="/">Farmer app</a>
+    <div class="server-pill" id="serverPill">Checking server…</div>
+  </header>
+
+  <div id="authView" class="staff-layout">
+    <section class="panel">
+      <div class="panel-label">Staff desk · HTTP JSON</div>
+      <h1>Sign in as extension or cooperative</h1>
+      <p class="lede">This uses <code>POST /api/staff/login</code>. After that you only <code>GET</code> farmer records — the same rows the app and USSD already wrote.</p>
+      <form id="loginForm" class="stack">
+        <label>Phone
+          <input id="loginPhone" name="phone" inputmode="tel" value="+265888000101">
+        </label>
+        <label>PIN
+          <input id="loginPin" name="pin" inputmode="numeric" maxlength="4" autocomplete="off" value="1234">
+        </label>
+        <button type="submit" class="primary">Log in</button>
+        <p class="form-error" id="loginError" hidden></p>
+      </form>
+      <div class="demo-row">
+        <span>Demo PIN 1234:</span>
+        <button type="button" class="chip" data-demo="+265888000101">Mercy · Extension</button>
+        <button type="button" class="chip" data-demo="+265888000102">Joseph · Cooperative</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="deskView" hidden>
+    <main class="staff-layout">
+      <section class="panel">
+        <div class="farm-head">
+          <div>
+            <p class="eyebrow" id="staffRole">—</p>
+            <h1 id="staffName">—</h1>
+            <p class="lede" id="staffOrg">—</p>
+          </div>
+          <button type="button" class="ghost" id="logoutBtn">Log out</button>
+        </div>
+        <label>Filter district
+          <select id="districtFilter">
+            <option value="">All districts</option>
+          </select>
+        </label>
+        <h2>Farmers on the register</h2>
+        <div id="farmerList" class="farmer-list"></div>
+      </section>
+
+      <section class="panel" id="detailPanel">
+        <p class="lede" id="emptyDetail">Select a farmer to see their live season log from the server.</p>
+        <div id="farmerDetail" hidden>
+          <p class="eyebrow" id="detailCode">—</p>
+          <h1 id="detailName">—</h1>
+          <p class="lede" id="detailPlace">—</p>
+          <div class="readonly-banner">Read only — stages are logged by the farmer app or by *413#, not from this desk.</div>
+          <div class="status-card">
+            <div>
+              <p class="eyebrow">Current stage</p>
+              <p class="stat" id="detailCurrent">—</p>
+            </div>
+            <div>
+              <p class="eyebrow">Next</p>
+              <p class="stat" id="detailNext">—</p>
+            </div>
+          </div>
+          <ol class="stepper" id="detailStepper"></ol>
+          <h2>Season log</h2>
+          <div id="detailEvents" class="event-log"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <section class="wire" aria-label="Network traffic">
+    <div class="wire-head">
+      <h2>Live traffic to the server</h2>
+      <button type="button" class="ghost" id="clearWire">Clear</button>
+    </div>
+    <p class="hint">Staff requests are GET-only after login.</p>
+    <div id="wireLog" class="wire-log"></div>
+  </section>
+
+  <script src="/staff.js?v=4"></script>
+</body>
+</html>

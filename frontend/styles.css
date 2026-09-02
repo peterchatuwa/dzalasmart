@@ -60,6 +60,14 @@ code, .mono, pre { font-family: "IBM Plex Mono", monospace; }
   transform: rotate(45deg);
 }
 .topbar-note { margin: 0; color: var(--ink-soft); font-size: 13px; flex: 1; }
+.nav-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-deep);
+  text-decoration: none;
+  border-bottom: 1px solid var(--gold-deep);
+  white-space: nowrap;
+}
 .server-pill {
   font-size: 12px;
   font-weight: 600;
@@ -292,3 +300,52 @@ input, select {
   .layout { grid-template-columns: 1fr; padding: 16px; }
   .topbar { flex-wrap: wrap; }
 }
+
+.staff-layout {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 20px;
+  padding: 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.farmer-list { display: grid; gap: 8px; }
+.farmer-card {
+  text-align: left;
+  width: 100%;
+  background: var(--paper-dim);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+.farmer-card:hover, .farmer-card.active {
+  border-color: var(--gold-deep);
+  background: #fff;
+}
+.farmer-card .name { font-family: Fraunces, serif; font-weight: 600; font-size: 16px; }
+.farmer-card .meta { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+.readonly-banner {
+  background: #edf3ea;
+  border: 1px solid #c7d8bc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--green-deep);
+  margin: 12px 0;
+}
+.role-pill {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--paper-dim);
+  padding: 3px 9px;
+  border-radius: 12px;
+}
+@media (max-width: 860px) {
+  .staff-layout { grid-template-columns: 1fr; padding: 16px; }
+}
+

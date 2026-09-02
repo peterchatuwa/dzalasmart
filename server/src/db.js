@@ -31,6 +31,18 @@ CREATE TABLE IF NOT EXISTS season_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_farmer ON season_events(farmer_id, stage_index);
+
+CREATE TABLE IF NOT EXISTS staff (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT UNIQUE NOT NULL,
+  pin_hash TEXT NOT NULL,
+  role TEXT NOT NULL,
+  org TEXT NOT NULL,
+  district TEXT,
+  epa TEXT,
+  created_at INTEGER NOT NULL
+);
 `;
 
 export function openDatabase(databasePath) {
