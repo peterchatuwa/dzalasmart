@@ -16,10 +16,12 @@ const databasePath = process.env.DATABASE_PATH
 
 const db = openDatabase(databasePath);
 const seeded = seedIfEmpty(db);
-const app = createApp(db, { jwtSecret });
+const frontendDir = path.join(here, "..", "..", "frontend");
+const app = createApp(db, { jwtSecret, frontendDir });
 
 app.listen(port, () => {
-  console.log(`DzalaSmart API listening on http://localhost:${port}`);
+  console.log(`DzalaSmart app: http://localhost:${port}`);
+  console.log(`API health:     http://localhost:${port}/health`);
   console.log(`Database: ${databasePath}`);
   if (seeded) {
     console.log("Seeded demo farmers (PIN 1234):");

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DzalaSmart — Farmer app</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=3">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="seed"></span>DzalaSmart</div>
+    <p class="topbar-note">Farmer app and USSD both write to the same local server.</p>
+    <div class="server-pill" id="serverPill">Checking server…</div>
+  </header>
+
+  <main class="layout">
+    <section class="panel app-panel" aria-label="Farmer mobile app">
+      <div class="panel-label">Mobile app · HTTP JSON</div>
+
+      <div id="authView">
+        <h1>Sign in to your farm record</h1>
+        <p class="lede">This is a real client. It sends your phone and PIN to <code>/api/farmers/login</code> and keeps the token the server returns.</p>
+
+        <div class="tabs">
+          <button type="button" class="tab active" data-auth-tab="login">Log in</button>
+          <button type="button" class="tab" data-auth-tab="register">Register</button>
+        </div>
+
+        <form id="loginForm" class="stack">
+          <label>Phone
+            <input id="loginPhone" name="phone" inputmode="tel" autocomplete="username" value="+265888000003">
+          </label>
+          <label>PIN
+            <input id="loginPin" name="pin" inputmode="numeric" maxlength="4" autocomplete="off" value="1234">
+          </label>
+          <button type="submit" class="primary">Log in</button>
+          <p class="form-error" id="loginError" hidden></p>
+        </form>
+
+        <form id="registerForm" class="stack" hidden>
+          <label>Full name
+            <input id="regName" name="name" autocomplete="name">
+          </label>
+          <label>Phone
+            <input id="regPhone" name="phone" inputmode="tel" placeholder="0881 234 567">
+          </label>
+          <label>PIN (4 digits)
+            <input id="regPin" name="pin" inputmode="numeric" maxlength="4">
+          </label>
+          <label>District
+            <select id="regDistrict" name="district"></select>
+          </label>
+          <label>EPA
+            <select id="regEpa" name="epa"></select>
+          </label>
+          <button type="submit" class="primary">Create farmer record</button>
+          <p class="form-error" id="registerError" hidden></p>
+        </form>
+
+        <div class="demo-row">
+          <span>Demo PIN 1234:</span>
+          <button type="button" class="chip" data-demo="+265888000001">Grace</button>
+          <button type="button" class="chip" data-demo="+265888000002">Joseph</button>
+          <button type="button" class="chip" data-demo="+265888000003">Estere</button>
+        </div>
+      </div>
+
+      <div id="farmView" hidden>
+        <div class="farm-head">
+          <div>
+            <p class="eyebrow" id="farmerCode">—</p>
+            <h1 id="farmerName">—</h1>
+            <p class="lede" id="farmerPlace">—</p>
+          </div>
+          <button type="button" class="ghost" id="logoutBtn">Log out</button>
+        </div>
+
+        <div class="status-card">
+          <div>
+            <p class="eyebrow">Current stage</p>
+            <p class="stat" id="currentStage">Not started</p>
+          </div>
+          <div>
+            <p class="eyebrow">Next</p>
+            <p class="stat" id="nextStage">—</p>
+          </div>
+        </div>
+
+        <ol class="stepper" id="stepper"></ol>
+
+        <button type="button" class="primary" id="advanceBtn">Log next milestone</button>
+        <p class="form-error" id="advanceError" hidden></p>
+
+        <h2>Season log</h2>
+        <p class="hint">Each row is a <code>season_events</code> record. Channel shows whether the phone app or USSD wrote it.</p>
+        <div id="eventLog" class="event-log"></div>
+      </div>
+    </section>
+
+    <section class="panel phone-panel" aria-label="USSD phone">
+      <div class="panel-label">Feature phone · POST /ussd</div>
+      <h1>Dial *413#</h1>
+      <p class="lede">Same Africa’s Talking payload a real gateway will send. The SIM number is the farmer — no app login.</p>
+
+      <label class="ussd-phone-label">Phone on this SIM
+        <input id="ussdPhone" value="+265888000003">
+      </label>
+
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="screen-title">*413# — DzalaSmart</div>
+          <pre class="screen-body" id="ussdScreen">Press Dial to start a USSD session.</pre>
+        </div>
+        <div class="keypad" id="ussdKeys"></div>
+      </div>
+      <div class="ussd-actions">
+        <button type="button" class="primary" id="ussdDial">Dial *413#</button>
+        <button type="button" class="ghost" id="ussdHangup">End session</button>
+      </div>
+    </section>
+  </main>
+
+  <section class="wire" aria-label="Network traffic">
+    <div class="wire-head">
+      <h2>Live traffic to the server</h2>
+      <button type="button" class="ghost" id="clearWire">Clear</button>
+    </div>
+    <p class="hint">This is the actual request and response — not a mock.</p>
+    <div id="wireLog" class="wire-log"></div>
+  </section>
+
+  <script src="/app.js?v=3"></script>
+</body>
+</html>

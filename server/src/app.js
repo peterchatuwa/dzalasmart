@@ -1,3 +1,4 @@
+import path from "node:path";
 import express from "express";
 import cors from "cors";
 import { requireFarmer } from "./auth.js";
@@ -71,6 +72,17 @@ export function createApp(db, options = {}) {
       next(error);
     }
   });
+
+  if (options.frontendDir) {
+    app.use(express.static(options.frontendDir));
+    app.get(/.*/, (req, res, next) => {
+      if (req.path.startsWith("/api") || req.path === "/ussd" || req.path === "/health") {
+        next();
+        return;
+      }
+      res.sendFile(path.join(options.frontendDir, "index.html"));
+    });
+  }
 
   app.use((error, _req, res, _next) => {
     const status = error.status || 500;
