@@ -349,3 +349,17 @@ input, select {
   .staff-layout { grid-template-columns: 1fr; padding: 16px; }
 }
 
+.native-only { display: none !important; }
+html.native .native-only { display: grid !important; }
+html.native .web-only,
+html.native .phone-panel,
+html.native .wire { display: none !important; }
+html.native .layout {
+  grid-template-columns: 1fr;
+  padding: 12px;
+  max-width: 560px;
+}
+html.native .topbar-note { display: none; }
+html.native .native-server { margin-bottom: 16px; }
+
+

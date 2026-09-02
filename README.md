@@ -25,6 +25,27 @@ Demo farmers (PIN `1234`):
 
 Copy `server/.env.example` to `server/.env` before any real deploy. Local development will start without it.
 
+Staff desk: http://localhost:4000/staff  
+Demo staff PIN `1234`: Mercy Chirwa `+265888000101` (extension), Joseph Phiri `+265888000102` (cooperative).
+
+## Android farmer app
+
+The farmer UI is wrapped with Capacitor (`android/`). This machine does not have the Android SDK or a JDK yet, so the APK has to be built in Android Studio.
+
+1. Keep `npm start` running (the phone talks to this server).
+2. Install [Android Studio](https://developer.android.com/studio) (includes JDK + SDK).
+3. From this folder:
+
+```bash
+npm run android:sync
+npm run android:open
+```
+
+4. Run on an emulator. The app defaults to `http://10.0.2.2:4000` (the emulator’s address for your PC). On a physical phone, set the server field to your PC’s LAN IP, e.g. `http://192.168.1.10:4000`, and keep the PC and phone on the same Wi‑Fi.
+
+The Android app logs the same season events as the browser farmer app. USSD stays on a feature phone (or the browser simulator).
+
+
 ## What this server is
 
 - **Farmer identity** — name, Malawi phone, PIN, district/EPA, farmer ID

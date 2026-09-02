@@ -21,10 +21,11 @@ const staffSeeded = seedStaffIfEmpty(db);
 const frontendDir = path.join(here, "..", "..", "frontend");
 const app = createApp(db, { jwtSecret, frontendDir });
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`DzalaSmart app: http://localhost:${port}`);
   console.log(`Staff desk:     http://localhost:${port}/staff`);
   console.log(`API health:     http://localhost:${port}/health`);
+  console.log("Listening on all interfaces so an Android emulator can use http://10.0.2.2:4000");
   console.log(`Database: ${databasePath}`);
   if (staffSeeded) {
     console.log("Seeded demo staff (PIN 1234):");

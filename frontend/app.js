@@ -1,4 +1,31 @@
 const TOKEN_KEY = "dzalasmart.token";
+const API_BASE_KEY = "dzalasmart.apiBase";
+
+function isNative() {
+  return Boolean(window.Capacitor?.isNativePlatform?.());
+}
+
+function defaultApiBase() {
+  return isNative() ? "http://10.0.2.2:4000" : "";
+}
+
+function apiBase() {
+  if (!isNative()) return "";
+  return (localStorage.getItem(API_BASE_KEY) || defaultApiBase()).replace(/\/$/, "");
+}
+
+function setApiBase(url) {
+  const cleaned = String(url || "").trim().replace(/\/$/, "");
+  if (cleaned) localStorage.setItem(API_BASE_KEY, cleaned);
+  else localStorage.removeItem(API_BASE_KEY);
+}
+
+function applyNativeShell() {
+  if (!isNative()) return;
+  document.documentElement.classList.add("native");
+  const input = document.getElementById("apiBaseInput");
+  if (input) input.value = apiBase();
+}
 
 const authView = document.getElementById("authView");
 const farmView = document.getElementById("farmView");
@@ -46,7 +73,7 @@ async function api(method, path, { body, auth = false, plain = false } = {}) {
   const headers = {};
   if (body != null) headers["Content-Type"] = "application/json";
   if (auth && token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(path, {
+  const res = await fetch(apiBase() + path, {
     method,
     headers,
     body: body == null ? undefined : JSON.stringify(body),
@@ -286,7 +313,14 @@ document.getElementById("ussdHangup").addEventListener("click", () => {
   ussdScreen.textContent = "Session ended. Press Dial to start again.";
 });
 
+document.getElementById("nativeServerForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setApiBase(document.getElementById("apiBaseInput").value);
+  await checkServer();
+});
+
 async function boot() {
+  applyNativeShell();
   await checkServer();
   const stagePayload = await api("GET", "/api/stages");
   window.__stages = stagePayload.stages || [];

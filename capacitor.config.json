@@ -1,0 +1,17 @@
+{
+  "appId": "mw.dzalasmart.app",
+  "appName": "DzalaSmart",
+  "webDir": "frontend",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true,
+    "allowNavigation": [
+      "10.0.2.2",
+      "localhost",
+      "127.0.0.1"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
