@@ -1,0 +1,11 @@
+{
+  "name": "dzalasmart",
+  "private": true,
+  "workspaces": ["server"],
+  "scripts": {
+    "start": "npm start -w server",
+    "dev": "npm run dev -w server",
+    "test": "npm test -w server",
+    "ussd": "npm run ussd -w server"
+  }
+}
