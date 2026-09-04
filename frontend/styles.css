@@ -80,11 +80,14 @@ code, .mono, pre { font-family: "IBM Plex Mono", monospace; }
 
 .layout {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1fr;
   gap: 20px;
   padding: 24px;
-  max-width: 1180px;
+  max-width: 760px;
   margin: 0 auto;
+}
+.ussd-layout {
+  max-width: 420px;
 }
 .panel {
   background: var(--card);

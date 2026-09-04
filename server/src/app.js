@@ -500,9 +500,12 @@ export function createApp(db, options = {}) {
     app.get("/staff", (_req, res) => {
       res.sendFile(path.join(options.frontendDir, "staff.html"));
     });
+    app.get("/ussd-sim", (_req, res) => {
+      res.sendFile(path.join(options.frontendDir, "ussd.html"));
+    });
     app.use(express.static(options.frontendDir));
     app.get(/.*/, (req, res, next) => {
-      if (req.path.startsWith("/api") || req.path === "/ussd" || req.path === "/health") {
+      if (req.path.startsWith("/api") || req.path === "/ussd" || req.path === "/health" || req.path === "/ussd-sim") {
         next();
         return;
       }

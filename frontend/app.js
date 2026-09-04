@@ -29,16 +29,11 @@ function applyNativeShell() {
 
 const authView = document.getElementById("authView");
 const farmView = document.getElementById("farmView");
-const wireLog = document.getElementById("wireLog");
-const ussdScreen = document.getElementById("ussdScreen");
-const ussdKeys = document.getElementById("ussdKeys");
 const serverPill = document.getElementById("serverPill");
 
 let token = localStorage.getItem(TOKEN_KEY) || "";
 let status = null;
 let districts = [];
-let ussdText = "";
-let ussdOpen = false;
 let chatLang = "en";
 let advisor = { soils: [], nutrients: [], copy: {} };
 let chatReady = false;
@@ -114,18 +109,8 @@ function fmtMoney(n) {
   return `MWK ${Number(n || 0).toLocaleString("en")}`;
 }
 
-function addWire(method, path, requestBody, responseBody, httpStatus) {
-  const item = document.createElement("article");
-  item.className = "wire-item";
-  const req = requestBody == null || requestBody === "" ? "(empty)" : JSON.stringify(requestBody, null, 2);
-  const res = typeof responseBody === "string" ? responseBody : JSON.stringify(responseBody, null, 2);
-  item.innerHTML = `
-    <header>
-      <span>${method} ${path}</span>
-      <span>${httpStatus}</span>
-    </header>
-    <pre>→ ${req}\n\n← ${res}</pre>`;
-  wireLog.prepend(item);
+function addWire(_method, _path, _requestBody, _responseBody, _httpStatus) {
+  // Traffic logging lives on /ussd-sim for developer testing.
 }
 
 async function api(method, path, { body, auth = false, plain = false } = {}) {
@@ -583,43 +568,6 @@ function logout() {
   farmView.hidden = true;
 }
 
-function renderUssdKeypad(open) {
-  ussdKeys.innerHTML = "";
-  if (!open) return;
-  for (let n = 1; n <= 9; n++) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = String(n);
-    btn.setAttribute("aria-label", `USSD ${n}`);
-    btn.addEventListener("click", () => sendUssdKey(String(n)));
-    ussdKeys.appendChild(btn);
-  }
-  const zero = document.createElement("button");
-  zero.type = "button";
-  zero.textContent = "0";
-  zero.setAttribute("aria-label", "USSD 0");
-  zero.addEventListener("click", () => sendUssdKey("0"));
-  ussdKeys.appendChild(zero);
-}
-
-async function sendUssd(text) {
-  const phoneNumber = document.getElementById("ussdPhone").value.trim();
-  const reply = await api("POST", "/ussd", { body: { sessionId: "browser-sim", serviceCode: "*413#", phoneNumber, text }, plain: true });
-  ussdScreen.textContent = String(reply).replace(/^(CON|END) /, "");
-  ussdOpen = String(reply).startsWith("CON ");
-  renderUssdKeypad(ussdOpen);
-  if (!ussdOpen) ussdText = "";
-  if (status?.farmer && phoneNumber.replace(/\D/g, "").endsWith(status.farmer.phone.replace(/\D/g, "").slice(-9))) {
-    try { await loadStatus(); } catch { /* still logged out or mismatch */ }
-  }
-}
-
-async function sendUssdKey(key) {
-  if (!ussdOpen) return;
-  ussdText = ussdText ? `${ussdText}*${key}` : key;
-  await sendUssd(ussdText);
-}
-
 document.querySelectorAll("[data-auth-tab]").forEach((btn) => {
   btn.addEventListener("click", () => renderAuthTabs(btn.dataset.authTab));
 });
@@ -681,7 +629,6 @@ document.getElementById("registerForm").addEventListener("submit", async (event)
 
 document.getElementById("regDistrict").addEventListener("change", fillEpas);
 document.getElementById("logoutBtn").addEventListener("click", logout);
-document.getElementById("clearWire").addEventListener("click", () => { wireLog.innerHTML = ""; });
 
 document.getElementById("advanceBtn").addEventListener("click", async () => {
   showError("advanceError", "");
@@ -691,22 +638,6 @@ document.getElementById("advanceBtn").addEventListener("click", async () => {
   } catch (error) {
     showError("advanceError", error.message);
   }
-});
-
-document.getElementById("ussdDial").addEventListener("click", async () => {
-  ussdText = "";
-  try {
-    await sendUssd("");
-  } catch (error) {
-    ussdScreen.textContent = error.message;
-  }
-});
-
-document.getElementById("ussdHangup").addEventListener("click", () => {
-  ussdText = "";
-  ussdOpen = false;
-  renderUssdKeypad(false);
-  ussdScreen.textContent = "Session ended. Press Dial to start again.";
 });
 
 document.getElementById("nativeServerForm")?.addEventListener("submit", async (event) => {

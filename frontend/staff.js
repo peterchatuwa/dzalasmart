@@ -2,7 +2,6 @@ const TOKEN_KEY = "nzeru.staffToken";
 
 const authView = document.getElementById("authView");
 const deskView = document.getElementById("deskView");
-const wireLog = document.getElementById("wireLog");
 const serverPill = document.getElementById("serverPill");
 
 let token = localStorage.getItem(TOKEN_KEY) || "";
@@ -34,18 +33,8 @@ function fmtMoney(n) {
   return `MWK ${Number(n || 0).toLocaleString("en")}`;
 }
 
-function addWire(method, path, requestBody, responseBody, httpStatus) {
-  const item = document.createElement("article");
-  item.className = "wire-item";
-  const req = requestBody == null ? "(empty)" : JSON.stringify(requestBody, null, 2);
-  const res = typeof responseBody === "string" ? responseBody : JSON.stringify(responseBody, null, 2);
-  item.innerHTML = `
-    <header>
-      <span>${method} ${path}</span>
-      <span>${httpStatus}</span>
-    </header>
-    <pre>→ ${req}\n\n← ${res}</pre>`;
-  wireLog.prepend(item);
+function addWire(_method, _path, _requestBody, _responseBody, _httpStatus) {
+  // Traffic logging lives on /ussd-sim for developer testing.
 }
 
 async function api(method, path, { body, auth = false } = {}) {
@@ -685,7 +674,6 @@ document.querySelectorAll("[data-demo]").forEach((btn) => {
 });
 
 document.getElementById("logoutBtn").addEventListener("click", logout);
-document.getElementById("clearWire").addEventListener("click", () => { wireLog.innerHTML = ""; });
 document.getElementById("districtFilter").addEventListener("change", renderList);
 
 document.getElementById("marketManualSource")?.addEventListener("change", (event) => {
