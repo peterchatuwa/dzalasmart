@@ -625,6 +625,18 @@ html.native .native-server { margin-bottom: 16px; }
   padding-top: 12px;
   border-top: 1px solid #e8dfd0;
 }
+.price-low { color: var(--green); font-weight: 700; }
+.price-high { color: var(--alert); font-weight: 700; }
+.hint.procurement {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #efe8dc;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .market-row {
   display: flex;
   justify-content: space-between;

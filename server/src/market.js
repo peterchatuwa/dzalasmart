@@ -3,9 +3,12 @@ export {
   getMarketPrice,
   getMarketPriceFromDb,
   getMarketRows,
+  marketComparePayload,
   marketHistoryPayload,
+  marketOpportunitiesPayload,
   marketPayload,
   marketPricesPayload,
+  marketSourcesComparePayload,
   marketView,
   nearestWarehouseHub,
   parseLocalBuyHtml,
@@ -20,4 +23,5 @@ export {
 } from "./market/service.js";
 
 export { recordManualObservation } from "./market/admin.js";
+export { importMarketCsv, parseMarketCsv } from "./market/import.js";
 export { seedMarketCatalog } from "./market/seed.js";

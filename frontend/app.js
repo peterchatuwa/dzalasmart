@@ -316,6 +316,52 @@ async function loadWeather(district) {
   }
 }
 
+async function loadMarketCompare(commoditySlug, district) {
+  const summary = document.getElementById("marketCompareSummary");
+  const table = document.getElementById("marketCompareTable");
+  const sourcePanel = document.getElementById("marketSourceCompare");
+  const opportunitiesPanel = document.getElementById("marketOpportunities");
+  if (!summary || !commoditySlug) return;
+
+  summary.textContent = "Loading comparison…";
+  table.innerHTML = "";
+  sourcePanel.innerHTML = "";
+  opportunitiesPanel.innerHTML = "";
+
+  try {
+    const compare = await api("GET", `/api/market/compare?commodity=${encodeURIComponent(commoditySlug)}`);
+    if (compare.stats) {
+      summary.textContent = `${compare.commodity}: lowest ${compare.stats.lowestBuyLabel} (${compare.stats.lowestDistrict}) · highest ${compare.stats.highestBuyLabel} (${compare.stats.highestDistrict}) · spread ${compare.stats.spread.toLocaleString("en")} MWK/kg`;
+    } else {
+      summary.textContent = `No district comparison yet for ${compare.commodity}.`;
+    }
+    table.innerHTML = (compare.districts || []).map((row) => `
+      <div class="kv-row${row.buyPricePerKg === compare.stats?.lowestBuy ? " price-low" : row.buyPricePerKg === compare.stats?.highestBuy ? " price-high" : ""}">
+        <span>${row.district} · ${row.source}${row.priceKind === "procurement" ? " · gov" : ""}</span>
+        <strong>${row.buyPrice || "—"}${row.sellPrice ? ` / ${row.sellPrice}` : ""}</strong>
+      </div>`).join("") || `<p class="hint">Need warehouse quotes in at least two hubs.</p>`;
+
+    if (district) {
+      const sources = await api("GET", `/api/market/sources/compare?commodity=${encodeURIComponent(commoditySlug)}&district=${encodeURIComponent(district)}`);
+      sourcePanel.innerHTML = `<p class="eyebrow">Sources in ${district}</p>${(sources.sources || []).map((row) => `
+        <div class="kv-row${row.buyPricePerKg === sources.stats?.lowestBuy ? " price-low" : row.buyPricePerKg === sources.stats?.highestBuy ? " price-high" : ""}">
+          <span>${row.source}${row.priceKind === "procurement" ? " · procurement" : ""}</span>
+          <strong>${row.buyPrice || "—"}</strong>
+        </div>`).join("") || `<p class="hint">No source quotes for your district yet.</p>`}`;
+    }
+
+    const opps = await api("GET", `/api/market/opportunities?commodity=${encodeURIComponent(commoditySlug)}`);
+    opportunitiesPanel.innerHTML = `<p class="eyebrow">Top warehouse spreads</p>${(opps.opportunities || []).slice(0, 3).map((row) => `
+      <div class="kv-row">
+        <span>${row.commodity}: ${row.buyLow?.district || row.buyLow?.market} → ${row.buyHigh?.district || row.buyHigh?.market}</span>
+        <strong>${row.spreadLabel}</strong>
+      </div>
+      <p class="hint">${row.note}</p>`).join("") || `<p class="hint">No spreads detected yet across warehouse hubs.</p>`}`;
+  } catch (error) {
+    summary.textContent = error.message || "Could not load comparison.";
+  }
+}
+
 async function loadMarketHistory(commoditySlug, district) {
   const panel = document.getElementById("marketHistoryPanel");
   const list = document.getElementById("marketHistoryList");
@@ -356,7 +402,16 @@ async function loadMarket(options = {}) {
     if (commodityFilter && commodityFilter.options.length <= 1) {
       commodityFilter.innerHTML = `<option value="">All commodities</option>${(payload.commodities || []).map((row) =>
         `<option value="${row.slug}">${row.name}</option>`).join("")}`;
+      const compareSelect = document.getElementById("marketCompareCommodity");
+      if (compareSelect && compareSelect.options.length <= 1) {
+        compareSelect.innerHTML = (payload.commodities || []).map((row) =>
+          `<option value="${row.slug}">${row.name}</option>`).join("");
+      }
     }
+
+    const buyValues = prices.map((row) => row.buyPricePerKg).filter((value) => value != null);
+    const minBuy = buyValues.length ? Math.min(...buyValues) : null;
+    const maxBuy = buyValues.length ? Math.max(...buyValues) : null;
 
     const scope = document.getElementById("marketScopeNote");
     if (scope) {
@@ -369,9 +424,9 @@ async function loadMarket(options = {}) {
     if (tbody) {
       tbody.innerHTML = prices.map((row) => `
         <tr data-slug="${row.commoditySlug || ""}">
-          <td><strong>${row.crop}</strong>${row.priceKind === "procurement" ? ' <span class="hint procurement">gov</span>' : ""}</td>
+          <td><strong>${row.crop}</strong>${row.priceKind === "procurement" ? ' <span class="hint procurement">gov</span>' : row.priceKind === "reference" ? ' <span class="hint procurement">ref</span>' : ""}</td>
           <td>${row.market}${row.district ? `<div class="hint">${row.district}</div>` : ""}</td>
-          <td>${row.buyPrice || "—"}</td>
+          <td class="${row.buyPricePerKg === minBuy ? "price-low" : row.buyPricePerKg === maxBuy ? "price-high" : ""}">${row.buyPrice || "—"}</td>
           <td>${row.sellPrice || "—"}</td>
           <td>${row.source}</td>
           <td>${row.updatedLabel || "—"}</td>
@@ -395,9 +450,14 @@ async function loadMarket(options = {}) {
       const sources = (payload.sources || []).map((s) =>
         `${s.name} (${s.status === "ok" ? s.updatedLabel : s.status})`).join(" · ");
       note.textContent = sources
-        ? `Sources: ${sources}. Tap a row for 30-day history. Ministry floor prices below still govern off-take contracts.`
+        ? `Sources: ${sources}. Tap a row for 30-day history. Lowest/highest buy prices are highlighted. Ministry floor prices below still govern off-take contracts.`
         : "Market prices are stored in PostgreSQL each time feeds refresh.";
     }
+
+    const compareCommodity = document.getElementById("marketCompareCommodity")?.value
+      || commodity
+      || "maize";
+    await loadMarketCompare(compareCommodity, district);
   } catch {
     document.getElementById("marketPriceBody").innerHTML = `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
     document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;
@@ -987,6 +1047,14 @@ async function boot() {
   loadMarket();
   document.getElementById("marketCommodityFilter")?.addEventListener("change", () => loadMarket());
   document.getElementById("marketRefreshBtn")?.addEventListener("click", () => loadMarket({ refresh: true }));
+  document.getElementById("marketCompareBtn")?.addEventListener("click", () => {
+    const slug = document.getElementById("marketCompareCommodity")?.value || "maize";
+    loadMarketCompare(slug, status?.farmer?.district);
+  });
+  document.getElementById("marketCompareCommodity")?.addEventListener("change", () => {
+    const slug = document.getElementById("marketCompareCommodity")?.value || "maize";
+    loadMarketCompare(slug, status?.farmer?.district);
+  });
   await loadAdvisor();
   if (token) {
     try {

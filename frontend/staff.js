@@ -249,9 +249,12 @@ async function loadDesk() {
 async function loadMarketAdmin() {
   const panel = document.getElementById("marketAdminPanel");
   const form = document.getElementById("marketManualForm");
+  const importForm = document.getElementById("marketImportForm");
   if (!panel) return;
   const canEdit = staff?.role === "ministry" || staff?.role === "cooperative";
+  const canImport = staff?.role === "ministry";
   if (form) form.hidden = !canEdit;
+  if (importForm) importForm.hidden = !canImport;
   try {
     const payload = await api("GET", "/api/staff/market/sources", { auth: true });
     document.getElementById("marketSourceList").innerHTML = (payload.sources || []).map((row) => `
@@ -591,6 +594,15 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("clearWire").addEventListener("click", () => { wireLog.innerHTML = ""; });
 document.getElementById("districtFilter").addEventListener("change", renderList);
 
+document.getElementById("marketManualSource")?.addEventListener("change", (event) => {
+  const source = event.target.value;
+  const kind = document.getElementById("marketManualKind");
+  if (!kind) return;
+  if (source === "admarc" || source === "nfra") kind.value = "procurement";
+  else if (source === "worldbank") kind.value = "reference";
+  else kind.value = "market";
+});
+
 document.getElementById("marketManualForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
   showError("marketManualError", "");
@@ -600,17 +612,38 @@ document.getElementById("marketManualForm")?.addEventListener("submit", async (e
       body: {
         crop: document.getElementById("marketManualCrop").value,
         district: document.getElementById("marketManualDistrict").value,
+        sourceSlug: document.getElementById("marketManualSource").value,
+        priceKind: document.getElementById("marketManualKind").value,
         buyPricePerKg: Number(document.getElementById("marketManualBuy").value),
         sellPricePerKg: document.getElementById("marketManualSell").value
           ? Number(document.getElementById("marketManualSell").value)
           : undefined,
         notes: document.getElementById("marketManualNotes").value,
-        priceKind: "market",
       },
     });
     await loadMarketAdmin();
   } catch (error) {
     showError("marketManualError", error.message);
+  }
+});
+
+document.getElementById("marketImportForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showError("marketImportError", "");
+  try {
+    const result = await api("POST", "/api/staff/market/import", {
+      auth: true,
+      body: {
+        sourceSlug: document.getElementById("marketImportSource").value,
+        priceKind: document.getElementById("marketImportKind").value,
+        csv: document.getElementById("marketImportCsv").value,
+      },
+    });
+    document.getElementById("marketImportCsv").value = "";
+    showError("marketImportError", `Imported ${result.saved} row(s) from ${result.sourceSlug}.`);
+    await loadMarketAdmin();
+  } catch (error) {
+    showError("marketImportError", error.message);
   }
 });
 

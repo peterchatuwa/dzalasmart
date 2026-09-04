@@ -16,7 +16,7 @@ import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
 import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
-import { marketPayload, marketPricesPayload, marketHistoryPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, refreshAllSources } from "./market.js";
+import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
@@ -73,6 +73,41 @@ export function createApp(db, options = {}) {
         sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
         locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
         days: Number(req.query.days) || 30,
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/compare", async (req, res, next) => {
+    try {
+      const commodity = String(req.query.commodity || req.query.commoditySlug || "maize").trim();
+      res.json(await marketComparePayload(db, {
+        commodity,
+        districts: String(req.query.districts || "").trim() || undefined,
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/sources/compare", async (req, res, next) => {
+    try {
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
+      const district = String(req.query.district || farmer?.district || "").trim();
+      res.json(await marketSourcesComparePayload(db, {
+        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+        district,
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/opportunities", async (req, res, next) => {
+    try {
+      res.json(await marketOpportunitiesPayload(db, {
+        commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
       }));
     } catch (error) {
       next(error);
@@ -333,6 +368,14 @@ export function createApp(db, options = {}) {
   app.post("/api/staff/market/observations", requireStaff(db, jwtSecret), requireStaffRole("ministry", "cooperative"), async (req, res, next) => {
     try {
       res.status(201).json(await recordManualObservation(db, req.staff, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/staff/market/import", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.status(201).json(await importMarketCsv(db, req.staff, req.body || {}));
     } catch (error) {
       next(error);
     }

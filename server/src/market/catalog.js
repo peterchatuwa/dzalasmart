@@ -2,6 +2,11 @@ export const MARKET_SOURCES = [
   { slug: "localbuy", name: "LocalBuyEx", kind: "scrape", url: "https://www.localbuyex.com/" },
   { slug: "ulimi", name: "Ulimi", kind: "scrape", url: "https://www.ulimi.online/" },
   { slug: "manual", name: "Manual entry", kind: "manual", url: null },
+  { slug: "admarc", name: "ADMARC", kind: "manual", url: "https://www.admarc.co.mw/" },
+  { slug: "nfra", name: "NFRA", kind: "manual", url: null },
+  { slug: "ace", name: "ACE Africa", kind: "manual", url: null },
+  { slug: "namis", name: "NAMIS", kind: "manual", url: null },
+  { slug: "worldbank", name: "World Bank", kind: "import", url: "https://data.worldbank.org/" },
 ];
 
 export const MARKET_COMMODITIES = [

@@ -14,6 +14,12 @@ import {
   updateSourceStatus,
 } from "./store.js";
 import { warehouseLocationId } from "./seed.js";
+import {
+  compareDistrictPrices,
+  compareSourcePrices,
+  findMarketOpportunities,
+  resolveCompareCommodity,
+} from "./compare.js";
 
 const CACHE_MS = 30 * 60 * 1000;
 
@@ -341,6 +347,36 @@ export async function marketHistoryPayload(db, filters = {}) {
     source: filters.sourceSlug || null,
     days: Math.min(365, Math.max(1, Number(filters.days) || 30)),
     points: history,
+  };
+}
+
+export async function marketComparePayload(db, filters = {}) {
+  const commodity = await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug);
+  if (!commodity) throw new Error("Unknown commodity");
+  const districts = String(filters.districts || "")
+    .split(",")
+    .map((row) => row.trim())
+    .filter(Boolean);
+  return compareDistrictPrices(db, { commoditySlug: commodity.slug, districts });
+}
+
+export async function marketSourcesComparePayload(db, filters = {}) {
+  const commodity = await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug);
+  if (!commodity) throw new Error("Unknown commodity");
+  const district = String(filters.district || "").trim();
+  if (!district) throw new Error("District is required");
+  return compareSourcePrices(db, { commoditySlug: commodity.slug, district });
+}
+
+export async function marketOpportunitiesPayload(db, filters = {}) {
+  const commodity = filters.commodity || filters.commoditySlug
+    ? (await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug))?.slug
+    : undefined;
+  const opportunities = await findMarketOpportunities(db, { commoditySlug: commodity });
+  return {
+    commodity: commodity || null,
+    count: opportunities.length,
+    opportunities,
   };
 }
 

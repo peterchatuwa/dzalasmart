@@ -111,6 +111,23 @@
             <label>District
               <select id="marketManualDistrict"></select>
             </label>
+            <label>Source
+              <select id="marketManualSource">
+                <option value="manual">Manual entry</option>
+                <option value="admarc">ADMARC (procurement)</option>
+                <option value="nfra">NFRA (procurement)</option>
+                <option value="ace">ACE Africa</option>
+                <option value="namis">NAMIS</option>
+                <option value="worldbank">World Bank (reference)</option>
+              </select>
+            </label>
+            <label>Price kind
+              <select id="marketManualKind">
+                <option value="market">Market price</option>
+                <option value="procurement">Procurement / floor</option>
+                <option value="reference">Reference / historical</option>
+              </select>
+            </label>
             <label>Buy price (MWK / kg)
               <input id="marketManualBuy" inputmode="numeric" placeholder="900">
             </label>
@@ -125,6 +142,30 @@
               <button type="submit" class="primary">Save price</button>
             </div>
             <p class="form-error" id="marketManualError" hidden></p>
+          </form>
+          <form id="marketImportForm" class="stack intake-form" hidden>
+            <p class="eyebrow">Import CSV prices</p>
+            <label>Source
+              <select id="marketImportSource">
+                <option value="admarc">ADMARC</option>
+                <option value="nfra">NFRA</option>
+                <option value="worldbank">World Bank</option>
+                <option value="ace">ACE Africa</option>
+                <option value="namis">NAMIS</option>
+              </select>
+            </label>
+            <label>Default price kind
+              <select id="marketImportKind">
+                <option value="procurement">Procurement</option>
+                <option value="reference">Reference</option>
+                <option value="market">Market</option>
+              </select>
+            </label>
+            <label>CSV text
+              <textarea id="marketImportCsv" rows="6" placeholder="commodity,district,buy_price_per_kg,sell_price_per_kg,price_kind,observed_at,notes&#10;Maize,Lilongwe,450,500,procurement,2026-01-15,ADMARC buy"></textarea>
+            </label>
+            <button type="submit" class="primary">Import rows</button>
+            <p class="form-error" id="marketImportError" hidden></p>
           </form>
         </div>
         <div id="contractPanel">

@@ -1,5 +1,7 @@
 import { DISTRICT_COORDS } from "../places.js";
 
+export const WAREHOUSE_HUBS = ["Lilongwe", "Kasungu", "Mchinji"];
+
 export const WAREHOUSE_COORDS = {
   Lilongwe: [-13.98, 33.78],
   Kasungu: [-13.03, 33.48],
