@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        Ulimi Marketplace    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/output.css?v=2">
+    <link rel="icon" type="image/png" href="/logo.png">
+
+    <!-- transalator -->
+    <!-- <div class="gtranslate_wrapper"></div>
+    <script>window.gtranslateSettings = {"default_language":"en","languages":["en","fr","it","es","ny"],"wrapper_selector":".gtranslate_wrapper"}</script>
+    <script src="https://cdn.gtranslate.net/widgets/latest/float.js" defer></script> -->
+    <style>
+        html {
+            overflow-x: hidden;
+        }
+        
+        body {
+            scrollbar-color: #cbd5e1 #f8fafc;
+        }
+        
+        @keyframes ticker {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(-50%);
+            }
+        }
+        /* Scroll animations - Tailwind-compatible approach */
+        
+        .scroll-animate {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease-out;
+        }
+        
+        .scroll-animate.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .scroll-animate:not(.animate-in) {
+            opacity: 0.7;
+            transform: translateY(10px);
+        }
+        
+        .scroll-animate-scale {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 0.6s ease-out;
+        }
+        
+        .scroll-animate-scale.animate-in {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .scroll-animate-scale:not(.animate-in) {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
+        /* Hero Section Styles - Based on Example Design */
+        
+        #top {
+            background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.6) 30%, rgba(255, 255, 255, 0.4) 60%, rgba(255, 255, 255, 0.6) 90%, rgba(255, 255, 255, 0.85) 100%), url('/assets/images/hero.jfif');
+            background-size: 200% 100%, cover;
+            background-position: center, center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            font-family: "Open Sans", Verdana, Geneva, Tahoma, sans-serif;
+            color: #020202;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        #top header {
+            width: 700px;
+            height: 400px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        #top .container {
+            flex-direction: column;
+            justify-content: flex-start;
+            width: 37%;
+            margin-top: 50px;
+            margin-left: 40px;
+        }
+        /* Responsive Design */
+        
+        @media (max-width: 768px) {
+            #top header {
+                width: 100%;
+                padding: 0 20px;
+            }
+            #top .container {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 30px;
+                padding: 0 20px;
+            }
+            #top h2 {
+                font-size: 28px;
+            }
+            #top p {
+                font-size: 1.1em;
+            }
+            #top .cta-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            #top .stats-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            #top .stat-item .counter {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #top h2 {
+                font-size: 24px;
+            }
+            #top p {
+                font-size: 1em;
+            }
+            #top .stat-item .counter {
+                font-size: 1.8rem;
+            }
+        }
+        
+        #top h2 {
+            font-size: 36px;
+            font-weight: 900;
+            margin-bottom: 1em;
+            line-height: 1.2;
+            color: #16642e;
+            /* Primary color */
+            font-family: 'DM Serif Display', Georgia, serif;
+            letter-spacing: -0.02em;
+        }
+        
+        #top p {
+            font-weight: 500;
+            font-size: 1.3em;
+            line-height: 1.6;
+            margin-bottom: 2em;
+            color: #1d1c16;
+            /* On background color */
+            font-family: 'DM Sans', sans-serif;
+            max-width: 600px;
+        }
+        
+        #top .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3em;
+            flex-wrap: wrap;
+        }
+        
+        #top .cta-buttons button {
+            padding: 14px 32px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50px;
+            font-family: 'DM Sans', sans-serif;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #top .cta-buttons button:first-child {
+            background-color: #347e44;
+            /* Earth/Leaf color */
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(52, 126, 68, 0.3);
+        }
+        
+        #top .cta-buttons button:first-child:hover {
+            background-color: #2a5e35;
+            /* Fern dark */
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 126, 68, 0.4);
+        }
+        
+        #top .cta-buttons button:last-child {
+            background-color: transparent;
+            border: 2px solid #347e44;
+            /* Earth/Leaf color */
+            color: #347e44;
+        }
+        
+        #top .cta-buttons button:last-child:hover {
+            background-color: #347e44;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 126, 68, 0.3);
+        }
+        
+        #top .stats-container {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2em;
+        }
+        
+        #top .stat-item {
+            text-align: center;
+        }
+        
+        #top .stat-item .counter {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #be9e47;
+            /* Crop color */
+            margin-bottom: 0.5rem;
+            font-family: 'DM Serif Display', Georgia, serif;
+        }
+        
+        #top .stat-item div:last-child {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1d1c16;
+            /* On background color */
+            font-family: 'DM Sans', sans-serif;
+        }
+        
+        #top .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #347e44;
+            /* Earth/Leaf color */
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+        }
+        
+        #top .scroll-indicator span:first-child {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        #top .scroll-indicator span:last-child {
+            font-size: 1.5rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            40% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+            60% {
+                transform: translateX(-50%) translateY(-5px);
+            }
+        }
+
+        .material-icons, .material-symbols-outlined {
+        translate: no;
+        }
+
+        .hero-gradient {
+            background-color: #ffffff;
+            background-image:
+                radial-gradient(circle at 0% 0%,   hsla(30,  70%, 75%, 0.18) 3%, transparent 44%),
+                radial-gradient(circle at 100% 0%,  hsla(35,  65%, 82%, 0.16) 3%, transparent 44%),
+                radial-gradient(circle at 50% 0%,   hsla(132, 45%, 78%, 0.13) 4%, transparent 44%),
+                linear-gradient(261deg, #ffffff, #fef6f0, #f4faf1, #fefcfb, #ffffff);
+            background-size: auto, auto, auto, 600% 600%;
+            background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0%;
+            background-blend-mode: normal;
+            -webkit-animation: HeroGradient 37s ease infinite;
+            -moz-animation: HeroGradient 37s ease infinite;
+            -o-animation: HeroGradient 37s ease infinite;
+            animation: HeroGradient 37s ease infinite;
+        }
+
+        @-webkit-keyframes HeroGradient {
+            0%   { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+            50%  { background-position: 0% 0%, 0% 0%, 0% 0%, 31% 100% }
+            100% { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+        }
+        @-moz-keyframes HeroGradient {
+            0%   { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+            50%  { background-position: 0% 0%, 0% 0%, 0% 0%, 31% 100% }
+            100% { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+        }
+        @-o-keyframes HeroGradient {
+            0%   { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+            50%  { background-position: 0% 0%, 0% 0%, 0% 0%, 31% 100% }
+            100% { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+        }
+        @keyframes HeroGradient {
+            0%   { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+            50%  { background-position: 0% 0%, 0% 0%, 0% 0%, 31% 100% }
+            100% { background-position: 0% 0%, 0% 0%, 0% 0%, 70% 0% }
+        }
+    </style>
+
+</head>
+
+<body class="m-0 p-0">
+
+    
+        
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+<script>
+    Weglot.initialize({
+        api_key: 'PUB-f8QiKDShT9vkTSySNG0dEgnAUSDJrme5'
+    });
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta name="csrf-token" content="bd40d7c981b877fd6a903963cb3c4a493a5eb2abbac411475226808742951fe3">
+
+<header class="bg-white border-b border-ash-grey/30 sticky top-0 z-50">
+  <nav aria-label="Global" class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+    <!-- Logo -->
+    <div class="flex lg:flex-1 items-center">
+          <a href="https://ulimi.online/" class="-m-1.5 -ml-2.5 p-1.5  flex items-center">
+          <span class="sr-only">Ulimi</span>
+          <div class="flex items-center gap-2">
+            <img src="/logo.png" alt="Ulimi Logo" class="w-8 h-8 rounded-lg object-cover">
+            <span class="text-xl font-semibold text-dark-fern">Ulimi</span>
+          </div>
+      </a>
+    </div>
+
+    <!-- Mobile menu button -->
+    <div class="flex lg:hidden">
+      <button type="button" id="mobile-menu-button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-ash-grey">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Desktop navigation -->
+    <div class="hidden lg:flex lg:gap-x-8">
+      <a href="https://ulimi.online/" class="text-fern text-sm font-semibold hover:text-olive transition-colors">Home</a>
+      <a href="https://ulimi.online/browse" class="text-dark-fern text-sm font-semibold hover:text-olive transition-colors">Browse</a>
+      <a href="https://ulimi.online/marketplace-site" class="text-dark-fern text-sm font-semibold hover:text-olive transition-colors">Marketplace</a>
+      <a href="https://ulimi.online/services" class="text-dark-fern text-sm font-semibold hover:text-olive transition-colors">Services</a>
+      <a href="https://ulimi.online/about" class="text-dark-fern text-sm font-semibold hover:text-olive transition-colors">About Ulimi</a>
+      <a href="https://ulimi.online/support" class="text-dark-fern text-sm font-semibold hover:text-olive transition-colors">Support</a>
+    </div>
+
+    <!-- Desktop auth buttons -->
+    <div class="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
+              <a href="https://ulimi.online/login" class="text-sm font-semibold text-dark-fern hover:text-fern transition-colors">Log in →</a>
+        <a href="https://ulimi.online/register" class="ml-4 rounded-lg bg-fern px-4 py-2 text-sm font-semibold text-white hover:bg-olive transition-colors">Sign Up</a>
+          </div>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden lg:hidden">
+    <div class="fixed inset-0 z-50">
+      <div class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-ash-grey/30">
+        <div class="flex items-center justify-between">
+          <a href="https://ulimi.online/" class="-m-1.5 p-1.5 flex items-center">
+            <span class="sr-only">Ulimi</span>
+            <div class="flex items-center gap-2">
+              <img src="/logo.png" alt="Ulimi Logo" class="w-8 h-8 rounded-lg object-cover">
+              <span class="text-xl font-semibold text-dark-fern">Ulimi</span>
+            </div>
+          </a>
+          <button type="button" id="mobile-menu-close" class="-m-2.5 rounded-md p-2.5 text-ash-grey">
+            <span class="sr-only">Close menu</span>
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="mt-6 flow-root">
+          <div class="-my-6 divide-y divide-ash-grey/20">
+            <div class="space-y-2 py-6">
+              <a href="https://ulimi.online/" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-dark-fern hover:bg-soft-linen">Home</a>
+              <a href="https://ulimi.online/browse" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-dark-fern hover:bg-soft-linen">Browse</a>
+              <a href="https://ulimi.online/marketplace-site" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-dark-fern hover:bg-soft-linen">Marketplace</a>
+              <a href="https://ulimi.online/services" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-dark-fern hover:bg-soft-linen">Services</a>
+              <a href="https://ulimi.online/about" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-dark-fern hover:bg-soft-linen">About Us</a>
+              <a href="https://ulimi.online/support" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-dark-fern hover:bg-soft-linen">Support</a>
+            </div>
+            <div class="py-6">
+                              <a href="https://ulimi.online/login" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-dark-fern hover:bg-soft-linen">Log in</a>
+                <a href="https://ulimi.online/register" class="-mx-3 block rounded-lg bg-fern px-3 py-2 text-base font-semibold text-white hover:bg-olive">Sign Up</a>
+                          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+window.currentUserId = 0;
+
+// Mobile menu toggle
+const mobileMenuButton = document.getElementById('mobile-menu-button');
+const mobileMenuClose = document.getElementById('mobile-menu-close');
+const mobileMenu = document.getElementById('mobile-menu');
+
+if (mobileMenuButton && mobileMenu && mobileMenuClose) {
+  mobileMenuButton.addEventListener('click', () => {
+    mobileMenu.classList.remove('hidden');
+    if (typeof updateNotificationBadge === 'function') {
+      updateNotificationBadge();
+    }
+  });
+
+  mobileMenuClose.addEventListener('click', () => {
+    mobileMenu.classList.add('hidden');
+  });
+}
+
+// User dropdown toggle
+const userMenuButton = document.getElementById('user-menu-button');
+const userDropdown = document.getElementById('user-dropdown');
+
+if (userMenuButton && userDropdown) {
+  userMenuButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    
+    // Position the dropdown based on button position
+    const buttonRect = userMenuButton.getBoundingClientRect();
+    userDropdown.style.top = (buttonRect.bottom + 8) + 'px';
+    userDropdown.style.right = (window.innerWidth - buttonRect.right) + 'px';
+    
+    userDropdown.classList.toggle('hidden');
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
+      userDropdown.classList.add('hidden');
+    }
+  });
+
+  // Reposition dropdown on window resize
+  window.addEventListener('resize', () => {
+    if (!userDropdown.classList.contains('hidden')) {
+      const buttonRect = userMenuButton.getBoundingClientRect();
+      userDropdown.style.top = (buttonRect.bottom + 8) + 'px';
+      userDropdown.style.right = (window.innerWidth - buttonRect.right) + 'px';
+    }
+  });
+}
+
+// Start notification polling if logged in
+</script>
+<script src="/assets/js/chat.js?v=1" defer></script>
+
+        <!-- Cookie Notice Banner -->
+        <div id="cookie-banner" class="hidden fixed bottom-0 left-0 right-0 z-40 text-white px-6 py-4 shadow-2xl" role="region" aria-label="Cookie notice" style="background:#1A1A16;">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-sm leading-relaxed text-center md:text-left">
+                    We use essential cookies to keep you secure and logged in. By continuing to browse this website, you agree to our use of cookies.
+                    <a href="https://ulimi.online/cookies" class="underline hover:text-[#66c27c] transition-colors" style="color:#66c27c;">Learn more</a>
+                </p>
+                <div class="flex items-center gap-3 shrink-0">
+                    <a href="https://ulimi.online/cookies" class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-white/10 transition-colors" style="border-color:rgba(255,255,255,0.3);">Cookie settings</a>
+                    <button id="cookie-banner-accept" type="button" class="rounded-md px-4 py-2 text-sm font-medium text-white transition-colors" style="background:#347e44;" onmouseover="this.style.background='#2a6a37'" onmouseout="this.style.background='#347e44'">Accept cookies</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                var banner = document.getElementById('cookie-banner');
+                var acceptBtn = document.getElementById('cookie-banner-accept');
+                if (!banner || !acceptBtn) return;
+
+                if (localStorage.getItem('cookiesAccepted') !== '1') {
+                    banner.classList.remove('hidden');
+                }
+
+                acceptBtn.addEventListener('click', function() {
+                    localStorage.setItem('cookiesAccepted', '1');
+                    banner.classList.add('hidden');
+                });
+            })();
+        </script>
+
+        <section class="hero-gradient grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:items-center px-8 py-8 lg:py-16">
+            <!-- Hero Content -->
+            <div class="lg:col-span-6 z-10 space-y-4 lg:space-y-8">
+                <!-- Hero Content -->
+                <div class="inline-flex items-center align-middle gap-2 px-4 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label text-xs uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1; font-family: Verdana, Geneva, Tahoma, sans-serif;"> <span class="animate-pulse">⦿</span> Number One in Malawi </span>
+                </div>
+                <h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold font-display text-on-surface leading-[1.1] tracking-tight">
+                    The Best <span class="text-primary">Agricultural</span> Platform in Malawi.
+                </h1>
+                <p class="text-base lg:text-xl text-on-surface-variant leading-relaxed font-body max-w-xl">
+                    Ulimi is a digital agricultural marketplace where farmers, businesses, and individual buyers connect to trade agricultural commodities with transparency, trust, and real-time market insights.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button class="font-bold px-8 py-4 text-slate-100 rounded-full text-lg organic-glow hover:scale-105 transition-transform bg-fern-dark ">
+                        <a href="https://ulimi.online/marketplace-site" class="text-white font-semibol"> Explore Marketplace</a>
+                    </button>
+                    <a href="https://ulimi.online/support" class="bg-surface-container-high text-on-surface font-semibold px-8 py-4 rounded-full text-lg hover:bg-surface-container-highest transition-colors inline-block">Learn More</a>
+                </div>
+                <div class="flex items-center gap-6 pt-3 lg:pt-8 border-t border-outline-variant/20">
+                    <div class="flex -space-x-3">
+                        <div class="w-12 h-12 rounded-full border-2 border-surface bg-surface-container overflow-hidden">
+                            <img alt="Farmer" data-alt="A close-up portrait of a smiling elderly farmer wearing a straw hat, set against a blurred background of a lush green tea plantation. The lighting is golden and warm, highlighting the weathered textures of their face. The image communicates a sense of wisdom, hard work, and connection to the land in the Ulimi organic aesthetic."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBGZLMHWL5WUIFcUQTYTJqol69jnSsa5EU3FCCgXbhnf2Srd9Ry4xeZ2Er_Tp3cn17fImdO10U3G1T_yImXNTku4q1crnoqKjQfcehPmAAHdm9mtGhqbJyhNjb-7rEl3MedNYX2j6z94GRTs5PhrNQyRxvAcwxaWVVqtY7mQKUzB_TXax4NmPbjEobsgIZYDJTKjFGMwOGjxETjUtMdnhBYUu4lhTGTrFsL96l4lxuPcu1vNwJO-NFlD2JfvU-Wy4IHyiWRufics0"
+                            />
+                        </div>
+                        <div class="w-12 h-12 rounded-full border-2 border-surface bg-surface-container overflow-hidden">
+                            <img alt="Buyer" data-alt="A professional young man in a clean, modern warehouse setting looking at a tablet with a focused expression. He is surrounded by high-quality organic produce in wooden crates. The scene is bright and airy, reflecting a high-tech yet grounded agricultural trading environment."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ_KOEF6zW15Ox_rJ8xlvDXWzx2ne6Ag32nvaR_H8Lc2i4TFdrfimjRyRUUv6UDrViB9jrBy1T9SpkpjTVCPsjpuCetBwqQoOQgz1vC_oAHbgnA9f8lB3_bmhpUn9PsPuDbEKMvk74jCu1iAty5qSlvejYfGwdpqs99zDYle_TOxXrhRAPUJMAehPmerkpRAeG1S96vxgJHft1GhPhQV7riyUP1cQOoJWkbTvjJbihI4SLQ1VpaU12mxuecrJpv5YyI4uPhzKSVH8"
+                            />
+                        </div>
+                        <div class="w-12 h-12 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center font-bold text-primary">
+                            +53</div>
+                    </div>
+                    <p class="text-sm text-on-surface-variant font-medium">
+                        Trusted by <span class="text-on-surface font-bold">53+ Farmers</span> across the Malawi.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Hero Visual -->
+            <div class="lg:col-span-6 relative -mt-12">
+                <div class="relative">
+                    <!-- Abstract Blob Behind -->
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] opacity-20 pointer-events-none">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M44.7,-76.4C58.3,-69.2,70.1,-58.5,78.5,-45.6C86.9,-32.7,92,-17.6,90.3,-2.8C88.6,12,80,26.5,70.1,39.3C60.2,52.1,48.9,63.1,35.6,71.1C22.3,79.1,7,84,-9.1,83.4C-25.1,82.8,-41.8,76.6,-54.6,66.8C-67.4,57,-76.2,43.6,-81.4,29.1C-86.6,14.6,-88.2,-1,-85.4,-15.6C-82.6,-30.2,-75.4,-43.8,-64.7,-53.4C-54,-63,-39.8,-68.6,-26,-75.8C-12.2,-83.1,1.1,-92,15.7,-91.3C30.3,-90.6,31.1,-83.5,44.7,-76.4Z" fill="#16642E" transform="translate(100 100)"></path>
+                        </svg>
+                    </div>
+                    <img 
+                        src="/images/hero-devices.png" 
+                        alt="Ulimi Platform - Digital Agricultural Marketplace" 
+                        class="w-[80%] h-auto object-contain rounded-2xl drop-shadow-2xl mx-auto relative z-10"
+                    />
+                    <!-- Floating Accent Elements -->
+                    <div class="absolute -top-6 -right-6 w-24 h-24 bg-secondary-container/30 rounded-full blur-2xl"></div>
+                    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="bg-crop overflow-hidden">
+            <div class="flex overflow-hidden">
+                <div class="flex items-center gap-0 whitespace-nowrap" id="ticker" style="animation: ticker 25s linear infinite;">
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Maize</span><span class="font-medium">MWK 900/kg</span><span class="text-xs text-green-600">▲ 2.4%</span></div>
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Ground Nuts</span><span class="font-medium">MWK 2300/kg</span><span class="text-xs text-red-600">▼ 0.8%</span></div>
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Soya</span><span class="font-medium">MWK 800/kg</span><span class="text-xs text-green-600">▲ 1.1%</span></div>
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Pigeon Peas</span><span class="font-medium">MWK 1500/kg</span><span class="text-xs text-green-600">▲ 0.6%</span></div>
+                    <!-- <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Tobacco</span><span class="font-medium">MWK 0.85/kg</span><span class="text-xs text-red-600">▼ 1.3%</span></div> -->
+                    <!-- <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Cotton</span><span class="font-medium">MWK 0.32/kg</span><span class="text-xs text-green-600">▲ 0.9%</span></div> -->
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Beans</span><span class="font-medium">MWK 2000/kg</span><span class="text-xs text-green-600">▲ 0.3%</span></div>
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Maize</span><span class="font-medium">MWK 900/kg</span><span class="text-xs text-green-600">▲ 2.4%</span></div>
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Ground Nuts</span><span class="font-medium">MWK 2300/kg</span><span class="text-xs text-red-600">▼ 0.8%</span></div>
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Soya</span><span class="font-medium">MWK 800/kg</span><span class="text-xs text-green-600">▲ 1.1%</span></div>
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Pigeon Peas</span><span class="font-medium">MWK 1500/kg</span><span class="text-xs text-green-600">▲ 0.6%</span></div>
+                    <!-- <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Tobacco</span><span class="font-medium">MWK 0.85/kg</span><span class="text-xs text-red-600">▼ 1.3%</span></div> -->
+                    <!-- <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Cotton</span><span class="font-medium">MWK 0.32/kg</span><span class="text-xs text-green-600">▲ 0.9%</span></div> -->
+                    <div class="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 border-r border-earth/15 text-xs sm:text-sm font-medium text-charcoal"><span class="opacity-70">Beans</span><span class="font-medium">MWK 2000/kg</span><span class="text-xs text-green-600">▲ 0.3%</span></div>
+                </div>
+            </div>
+        </div>
+
+        <section class="mt-12 py-12 lg:py-16 bg-white" id="about">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full box-border">
+                <div class="inline-block text-xs font-medium uppercase tracking-[1.5px] text-leaf mb-3.5 scroll-animate">How it works</div>
+                <h2 class="font-head text-[clamp(32px,4vw,48px)] leading-[1.15] tracking-[-1px] text-charcoal mb-16 scroll-animate">Buy and sell at the<br>best possible price</h2>
+                <div class="flex flex-wrap gap-6">
+                    <div class="bg-cream rounded-2xl border border-earth/12 p-8 shadow-lg transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-xl flex-1 min-w-[280px] scroll-animate">
+                        <div class="font-head text-[48px] text-crop leading-none mb-5">01</div>
+                        <div class="text-lg font-medium text-charcoal mb-3">Register your farm or business</div>
+                        <div class="text-sm leading-[1.7] text-text-muted">Create your profile for free in minutes. No commitments, no technical skills required. Anyone can trade on Ulimi regardless of business scale.</div>
+                    </div>
+                    <div class="bg-cream rounded-2xl border border-earth/12 p-8 shadow-lg transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-xl flex-1 min-w-[280px] scroll-animate" style="transition-delay: 0.1s;">
+                        <div class="font-head text-[48px] text-crop leading-none mb-5">02</div>
+                        <div class="text-lg font-medium text-charcoal mb-3">Connect with buyers &amp; sellers</div>
+                        <div class="text-sm leading-[1.7] text-text-muted">Browse Malawi's agricultural marketplace. Filter by commodity, region, and distance. Receive real-time offers and compare them side-by-side.</div>
+                    </div>
+                    <div class="bg-cream rounded-2xl border border-earth/12 p-8 shadow-lg transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-xl flex-1 min-w-[280px] scroll-animate" style="transition-delay: 0.2s;">
+                        <div class="font-head text-[48px] text-crop leading-none mb-5">03</div>
+                        <div class="text-lg font-medium text-charcoal mb-3">Close deals with confidence</div>
+                        <div class="text-sm leading-[1.7] text-text-muted">Negotiate over phone or through digital listings. Protect 100% of your transaction — money and goods — with zero bureaucracy.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-12 py-12 lg:py-16" id="audience" style="background-color: #f2ede4; background-image: linear-gradient(#e5e0d5 1px, transparent 1px), linear-gradient(90deg, #e5e0d5 1px, transparent 1px); background-size: 100px 100px;">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full box-border">
+                <div class="inline-block text-xs font-medium uppercase tracking-[1.5px] text-leaf mb-6 mt-8 scroll-animate">Who is Ulimi for?</div>
+                <h2 class="font-head text-[clamp(32px,4vw,48px)] leading-[1.15] tracking-[-1px] text-charcoal mb-8 scroll-animate">Built for every role<br>in the agricultural supply chain</h2>
+                <div class="flex flex-wrap gap-3 my-10">
+                    <button class="tab-btn px-6 py-3 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none transition-all duration-280 ease-custom bg-leaf text-white" data-tab="farmers">For Farmers</button>
+                    <button class="tab-btn px-6 py-3 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none transition-all duration-280 ease-custom bg-white text-charcoal border border-earth/12 hover:border-leaf hover:text-leaf" data-tab="wholesalers">Wholesalers &amp; Brokers</button>
+                    <button class="tab-btn px-6 py-3 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none transition-all duration-280 ease-custom bg-white text-charcoal border border-earth/12 hover:border-leaf hover:text-leaf" data-tab="processors">Processors &amp; Manufacturers</button>
+                    <button class="tab-btn px-6 py-3 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none transition-all duration-280 ease-custom bg-white text-charcoal border border-earth/12 hover:border-leaf hover:text-leaf" data-tab="retailers">Retailers &amp; HoReCa</button>
+                </div>
+                <div id="tab-farmers" class="tab-content grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-12">
+                    <div>
+                        <h3 class="font-head text-[28px] leading-[1.2] text-charcoal mb-4">Sell directly to buyers across Malawi</h3>
+                        <p class="text-base leading-[1.7] text-text-muted mb-6">Whether you have a small farm or a large operation, Ulimi gives you access to processors, manufacturers, retailers, and government buyers across Malawi's agricultural market.</p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Wholesale selling across Malawi's regions</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Open your own online retail store and deliver locally</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Purchase farm inputs at the best possible price</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Risk-free transactions with 100% deal protection</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Quick-pay funding for deferred transactions</li>
+                        </ul>
+                        <a href="/register" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none bg-leaf text-white transition-all duration-280 ease-custom hover:bg-leaf-light hover:-translate-y-0.5 hover:shadow-lg">Start Selling Now</a>
+                    </div>
+                </div>
+                <div id="tab-wholesalers" class="tab-content hidden grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-12">
+                    <div>
+                        <h3 class="font-head text-[28px] leading-[1.2] text-charcoal mb-4">Find every farmer and supplier across Malawi</h3>
+                        <p class="text-base leading-[1.7] text-text-muted mb-6">Discover suppliers by commodity, region, and distance. Receive offers, compare prices, send counteroffers, and close the most profitable deals across Malawi.</p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Real-time offer comparison and counteroffer tools</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Market monitoring: crops, prices, news by region</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>100% transaction protection for all deals</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Quick-pay funding and fulfillment service</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Expand your network of clients &amp; suppliers across Malawi</li>
+                        </ul>
+                        <a href="/register" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none bg-leaf text-white transition-all duration-280 ease-custom hover:bg-leaf-light hover:-translate-y-0.5 hover:shadow-lg">Find Suppliers Now</a>
+                    </div>
+                </div>
+                <div id="tab-processors" class="tab-content hidden grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-12">
+                    <div>
+                        <h3 class="font-head text-[28px] leading-[1.2] text-charcoal mb-4">Source raw materials at peak efficiency</h3>
+                        <p class="text-base leading-[1.7] text-text-muted mb-6">Find all farmers for a specific commodity, country, and distance from your facility. Monitor harvest conditions and forecasts to make procurement decisions with confidence.</p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Filter farmers by commodity, location and distance</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Request dedicated production from farmers</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Compare offers across all input categories in Malawi</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Financing solutions for commodity purchases</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Fulfillment service — let Ulimi manage everything</li>
+                        </ul>
+                        <a href="/register" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none bg-leaf text-white transition-all duration-280 ease-custom hover:bg-leaf-light hover:-translate-y-0.5 hover:shadow-lg">Start Sourcing</a>
+                    </div>
+                </div>
+                <div id="tab-retailers" class="tab-content hidden grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-12">
+                    <div>
+                        <h3 class="font-head text-[28px] leading-[1.2] text-charcoal mb-4">Buy directly from farmers, delivered fresh</h3>
+                        <p class="text-base leading-[1.7] text-text-muted mb-6">The only working solution for your specific delivery needs. Buy directly from farmers in your region with personal delivery from them, scheduled at a fixed date and time — including next-day options.</p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Direct farm-to-store sourcing</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Scheduled delivery at a date and time you choose</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Receive offers from multiple farmers simultaneously</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Guaranteed quality and secured deliveries</li>
+                            <li class="flex items-start gap-3 text-sm text-charcoal"><span class="text-leaf mt-0.5">✓</span>Submit a request — Ulimi handles the rest</li>
+                        </ul>
+                        <a href="/register" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-[50px] font-body text-base font-medium cursor-pointer text-decoration-none border-none bg-leaf text-white transition-all duration-280 ease-custom hover:bg-leaf-light hover:-translate-y-0.5 hover:shadow-lg">Get Started</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-12 py-12 lg:py-16 bg-white" id="features">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full box-border">
+                <div class="inline-block text-xs font-medium uppercase tracking-[1.5px] text-leaf mb-6 mt-8 scroll-animate">Platform features</div>
+                <h2 class="font-head text-[clamp(32px,4vw,48px)] leading-[1.15] tracking-[-1px] text-charcoal mb-8 scroll-animate">Everything you need to trade smarter</h2>
+                <p class="text-base leading-[1.7] text-text-muted max-w-[600px] mb-16 scroll-animate">Unique, fast, easy, and designed for everyone — regardless of business scale or technological skills.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-globe"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">Malawi Agricultural Platform</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Locate and connect with buyers, sellers, and suppliers based on commodity and location. The platform provides detailed contacts and activity, helping you find the best match for your trade needs.</p>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.1s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-chart-line"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">Real-Time Market Insights</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Stay on top of commodity prices, market fluctuations, and crop conditions across multiple countries. Access AI-powered price forecasts that help you make informed decisions.</p>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.2s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-shield-alt"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">100% Deal Protection</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Guarantee secure transactions for both money and goods. Ulimi ensures your trade is protected with no unnecessary bureaucracy, making every deal safer and smoother.</p>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.3s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-handshake"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">Negotiation & Listings Tools</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Easily create listings or auctions for your goods. Receive and compare offers in real-time, send counteroffers, and negotiate directly with buyers or suppliers to get the best deal.</p>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.4s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-coins"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">Trade Financing</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Avoid timing gaps in payments. Ulimi offers quick-pay funding for farmers and deferred payment options for buyers, allowing you to close deals even if cash flow is tight.</p>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.5s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-language"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">Multi-Language Support with AI Translation</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Ulimi's AI-powered translation enables you to communicate in your native language, making it easier to trade with anyone, anywhere, and understand complex market trends.</p>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.6s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-mobile-alt"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">Mobile-Friendly Trading</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Continue doing business through your mobile device. Easily search for partners, access listings, and negotiate transactions via phone without needing to be on a desktop.</p>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.7s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-tractor"></i></div>
+                        <h3 class="font-medium text-charcoal mb-3">Agricultural Supply Platform</h3>
+                        <p class="text-sm leading-[1.6] text-text-muted">Buy agricultural supplies such as seeds, fertilizers, chemicals, and machinery. Compare prices across Malawi and take advantage of bulk purchasing discounts through group buying.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-12 lg:py-16" id="testimonials" style="background-color: #f2ede4;">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full box-border">
+                <div class="text-center mb-16 scroll-animate">
+                    <div class="inline-block text-xs font-medium uppercase tracking-[1.5px] text-leaf mb-3.5">Testimonials</div>
+                    <h2 class="font-head text-[clamp(32px,4vw,48px)] leading-[1.15] tracking-[-1px] text-charcoal mb-4.5">What our customers say</h2>
+                    <p class="text-base leading-[1.7] text-text-muted max-w-[600px] mx-auto">Thousands of farmers, traders, and processors are already closing better deals on Ulimi.</p>
+                </div>
+                <div class="flex flex-wrap gap-8">
+                    <div class="bg-white rounded-2xl p-8 shadow-lg transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-xl flex-1 min-w-[300px] scroll-animate">
+                        <div class="flex items-center gap-1 mb-4">
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                        </div>
+                        <p class="text-sm leading-[1.7] text-charcoal mb-6">We simply publish our needs and start receiving offers in real time from sellers who meet all our requirements, including delivery dates and times. Their technology for matching and finding new potential business partners works
+                            exceptionally well.</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-leaf flex items-center justify-center text-white font-head text-lg">K</div>
+                            <div>
+                                <div class="font-medium text-charcoal">Kiril</div>
+                                <div class="text-xs text-text-muted">Retailer · Blantyre</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-8 shadow-lg transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-xl flex-1 min-w-[300px] scroll-animate" style="transition-delay: 0.1s;">
+                        <div class="flex items-center gap-1 mb-4">
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                        </div>
+                        <p class="text-sm leading-[1.7] text-charcoal mb-6">We make numerous spot deals throughout the year, and thanks to Ulimi, we have been able to find many new suppliers and customers. Their innovative platform where you can compare offers has been particularly valuable.</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-leaf flex items-center justify-center text-white font-head text-lg">M</div>
+                            <div>
+                                <div class="font-medium text-charcoal">Miroslav</div>
+                                <div class="text-xs text-text-muted">Trader · Mzuzu</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-8 shadow-lg transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-xl flex-1 min-w-[300px] scroll-animate" style="transition-delay: 0.2s;">
+                        <div class="flex items-center gap-1 mb-4">
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                            <i class="fas fa-star text-crop text-sm"></i>
+                        </div>
+                        <p class="text-sm leading-[1.7] text-charcoal mb-6">We were thrilled to discover Ulimi and their solution for tracking farmers based on distance from your location. This has helped us find many new suppliers. Their financing solution for commodity purchases is a game-changer.</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-leaf flex items-center justify-center text-white font-head text-lg">M</div>
+                            <div>
+                                <div class="font-medium text-charcoal">Mihaela</div>
+                                <div class="text-xs text-text-muted">Food Manufacturer · Zomba</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-12 py-12 lg:py-16 bg-white" id="additional-services">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full box-border">
+                <div class="inline-block text-xs font-medium uppercase tracking-[1.5px] text-leaf mb-3.5">Additional Services</div>
+                <h2 class="font-head text-[clamp(32px,4vw,48px)] leading-[1.15] tracking-[-1px] text-charcoal mb-12">Trade with complete security</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-shield-alt"></i></div>
+                        <div class="text-xs font-medium uppercase tracking-[1px] text-earth mb-2">Risk management</div>
+                        <h3 class="font-head text-2xl text-charcoal mb-4">Deal Protection</h3>
+                        <p class="text-sm leading-[1.7] text-text-muted mb-6">Protect 100% of your transactions — both money and goods — for all deals across Malawi. No bureaucracy, no risk, guaranteed execution on both sides.</p>
+                        <a href="#" class="inline-flex items-center gap-2 text-sm font-medium text-leaf hover:text-leaf-light transition-colors duration-280">Learn More <i class="fas fa-arrow-right text-xs"></i></a>
+                    </div>
+                    <div class="bg-cream rounded-2xl p-8 transition-all duration-280 ease-custom hover:-translate-y-1 hover:shadow-lg scroll-animate" style="transition-delay: 0.1s;">
+                        <div class="text-crop text-3xl mb-5"><i class="fas fa-coins"></i></div>
+                        <div class="text-xs font-medium uppercase tracking-[1px] text-earth mb-2">Financial solutions</div>
+                        <h3 class="font-head text-2xl text-charcoal mb-4">Funding</h3>
+                        <p class="text-sm leading-[1.7] text-text-muted mb-6">Quick-pay funding for farmers and buyers. Don't let timing gaps kill a profitable deal. Flexible financing designed specifically for agricultural transactions.</p>
+                        <a href="#" class="inline-flex items-center gap-2 text-sm font-medium text-leaf hover:text-leaf-light transition-colors duration-280">Learn More <i class="fas fa-arrow-right text-xs"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-12 py-12 lg:py-16 bg-cream" id="malawi-registry">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full box-border">
+                <h2 class="font-head text-[clamp(32px,4vw,48px)] leading-[1.15] tracking-[-1px] text-charcoal mb-4.5 scroll-animate">Discover every participant<br>in agriculture</h2>
+                <div class="text-base font-medium text-earth mb-2 scroll-animate">Search by Commodity, Location, Distance</div>
+                <p class="text-base leading-[1.7] text-text-muted max-w-[600px] mb-8 scroll-animate">Access companies with up-to-date details and contacts from across Malawi.</p>
+                <div class="flex flex-wrap gap-3 mb-12">
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Buyers</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Sellers</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Importers</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Exporters</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Lessees</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Lessors</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Barter Participants</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Service Providers</span>
+                    <span class="px-4 py-2 bg-white rounded-full text-sm text-charcoal">Service Seekers</span>
+                </div>
+                <div class="text-sm font-medium uppercase tracking-[1px] text-earth mb-6">Explore by commodity</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="flex items-center gap-3 p-4 bg-white rounded-xl scroll-animate">
+                        <div class="w-10 h-10 rounded-full bg-leaf flex items-center justify-center text-white font-head text-sm">M</div>
+                        <div>
+                            <div class="font-medium text-charcoal text-sm">Maize Sellers</div>
+                            <div class="text-xs text-text-muted">Across Malawi</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-4 bg-white rounded-xl scroll-animate">
+                        <div class="w-10 h-10 rounded-full bg-leaf flex items-center justify-center text-white font-head text-sm">G</div>
+                        <div>
+                            <div class="font-medium text-charcoal text-sm">Groundnut Suppliers</div>
+                            <div class="text-xs text-text-muted">Across Malawi</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-4 bg-white rounded-xl scroll-animate">
+                        <div class="w-10 h-10 rounded-full bg-leaf flex items-center justify-center text-white font-head text-sm">S</div>
+                        <div>
+                            <div class="font-medium text-charcoal text-sm">Soya Bean Traders</div>
+                            <div class="text-xs text-text-muted">Across Malawi</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-4 bg-white rounded-xl scroll-animate">
+                        <div class="w-10 h-10 rounded-full bg-leaf flex items-center justify-center text-white font-head text-sm">P</div>
+                        <div>
+                            <div class="font-medium text-charcoal text-sm">Pigeon Pea Buyers</div>
+                            <div class="text-xs text-text-muted">Across Malawi</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-4 bg-white rounded-xl scroll-animate">
+                        <div class="w-10 h-10 rounded-full bg-leaf flex items-center justify-center text-white font-head text-sm">B</div>
+                        <div>
+                            <div class="font-medium text-charcoal text-sm">Beans Suppliers</div>
+                            <div class="text-xs text-text-muted">Across Malawi</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-4 bg-white rounded-xl scroll-animate">
+                        <div class="w-10 h-10 rounded-full bg-leaf flex items-center justify-center text-white font-head text-sm">R</div>
+                        <div>
+                            <div class="font-medium text-charcoal text-sm">Rice Traders</div>
+                            <div class="text-xs text-text-muted">Across Malawi</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-12 lg:py-16" id="cta" style="background-color: #2d4a3e;">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 w-full box-border text-center">
+                <h2 class="font-head text-[clamp(32px,4vw,48px)] leading-[1.15] tracking-[-1px] text-white mb-6 scroll-animate">Join thousands who are already<br>trading smarter</h2>
+                <p class="text-base leading-[1.7] text-white max-w-[600px] mx-auto mb-12 scroll-animate">Free registration. No commitments. Start in minutes.</p>
+                <div class="flex flex-wrap gap-4 justify-center mb-12">
+                    <div onclick="window.location.href='https://ulimi.online/register'" class="cursor-pointer px-8 py-4 rounded-[50px] font-body text-base font-medium text-charcoal transition-all duration-280 ease-custom hover:-translate-y-0.5 hover:shadow-lg" style="background-color: #C8A84B;">Create Free Account</div>
+                    <div onclick="window.location.href='https://ulimi.online/login'" class="cursor-pointer px-8 py-4 rounded-[50px] font-body text-base font-medium bg-cream text-charcoal transition-all duration-280 ease-custom hover:bg-cream/80 hover:-translate-y-0.5 hover:shadow-lg">Log In</div>
+                </div>
+                <p class="text-sm leading-[1.7] text-white/70">Need help? Call <a href="tel:+2659994500084" class="text-white hover:text-white/90 underline underline-offset-2">+265 994 500 084</a> or email <a href="/cdn-cgi/l/email-protection#30434540405f424470455c595d591e5f5e5c595e55" class="text-white hover:text-white/90 underline underline-offset-2"><span class="__cf_email__" data-cfemail="bbc8cecbcbd4c9cffbced7d2d6d295d4d5d7d2d5de">[email&#160;protected]</span></a></p>
+            </div>
+        </section>
+
+        
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<footer style="background: #1A1A16; color: rgba(255,255,255,0.6); padding: 64px 0 32px;">
+  <div class="mx-auto max-w-7xl px-6 lg:px-8">
+    <div class="grid grid-cols-1 gap-12 md:grid-cols-3 lg:grid-cols-5 lg:gap-8">
+      <!-- Brand Section -->
+      <div class="space-y-4">
+        <a href="https://ulimi.online/" class="flex items-center gap-2" style="color: rgba(255,255,255,0.9); text-decoration: none;">
+          <img src="/logo.png" alt="Ulimi Logo" class="w-8 h-8 rounded-lg object-cover">
+          <span class="text-xl font-semibold">Ulimi</span>
+        </a>
+        <p style="font-size: 13px; line-height: 1.7; max-width: 260px;">Ulimi is building a platform that connects farms to markets and helps solve the challenges ahead in Malawi's agricultural supply chain.</p>
+        <div class="flex gap-4">
+          <a href="#" target="_blank" title="Facebook" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(151,134,61,0.2); display: flex; align-items: center; justify-content: center; color: rgba(242,237,228,0.8); text-decoration: none; font-size: 13px; transition: 0.28s;">
+            <i class="fa-brands fa-facebook"></i>
+          </a>
+          <a href="#" target="_blank" title="Twitter" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(151,134,61,0.2); display: flex; align-items: center; justify-content: center; color: rgba(242,237,228,0.8); text-decoration: none; font-size: 13px; transition: 0.28s;">
+            <i class="fa-brands fa-twitter"></i>
+          </a>
+          <a href="#" target="_blank" title="Instagram" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(151,134,61,0.2); display: flex; align-items: center; justify-content: center; color: rgba(242,237,228,0.8); text-decoration: none; font-size: 13px; transition: 0.28s;">
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+          <a href="#" target="_blank" title="YouTube" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(151,134,61,0.2); display: flex; align-items: center; justify-content: center; color: rgba(242,237,228,0.8); text-decoration: none; font-size: 13px; transition: 0.28s;">
+            <i class="fa-brands fa-youtube"></i>
+          </a>
+          <a href="#" target="_blank" title="LinkedIn" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(151,134,61,0.2); display: flex; align-items: center; justify-content: center; color: rgba(242,237,228,0.8); text-decoration: none; font-size: 13px; transition: 0.28s;">
+            <i class="fa-brands fa-linkedin"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Company Links -->
+      <div>
+        <h6 style="font-size: 13px; font-weight: 500; color: rgba(242,237,228,0.9); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px;">Company</h6>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px;">
+          <li><a href="https://ulimi.online/about" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">About Us</a></li>
+          <li><a href="#" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">Investors</a></li>
+          <li><a href="#" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">Careers</a></li>
+          <li><a href="#" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">Blog</a></li>
+        </ul>
+      </div>
+
+      <!-- Services Links -->
+      <div>
+        <h6 style="font-size: 13px; font-weight: 500; color: rgba(242,237,228,0.9); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px;">Services</h6>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px;">
+          <li><a href="https://ulimi.online/business-suite" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">Business Suite</a></li>
+          <li><a href="https://ulimi.online/rent-a-plot" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">Rent a Plot</a></li>
+          <li><a href="https://ulimi.online/marketplace-site" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">Marketplace</a></li>
+          <li><a href="https://ulimi.online/services" style="font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.28s;">All Services</a></li>
+        </ul>
+      </div>
+
+      <!-- Legal Links -->
+      <div>
+        <h6 style="font-size: 13px; font-weight: 500; color: rgba(242,237,228,0.9); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px;">Legal</h6>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px;">
+          <li><a href="https://ulimi.online/terms" style="font-size: 13px; color: rgba(242,237,228,0.6); text-decoration: none; transition: 0.28s;">Terms</a></li>
+          <li><a href="https://ulimi.online/privacy" style="font-size: 13px; color: rgba(242,237,228,0.6); text-decoration: none; transition: 0.28s;">Privacy Policy</a></li>
+          <li><a href="https://ulimi.online/cookies" style="font-size: 13px; color: rgba(242,237,228,0.6); text-decoration: none; transition: 0.28s;">Cookies Policy</a></li>
+        </ul>
+      </div>
+
+      <!-- Support Links -->
+      <div>
+        <h6 style="font-size: 13px; font-weight: 500; color: rgba(242,237,228,0.9); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px;">Support</h6>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px;">
+          <li><a href="https://ulimi.online/support" style="font-size: 13px; color: rgba(242,237,228,0.6); text-decoration: none; transition: 0.28s;">Help & Support</a></li>
+          <li><a href="https://ulimi.online/support#faq" style="font-size: 13px; color: rgba(242,237,228,0.6); text-decoration: none; transition: 0.28s;">FAQ</a></li>
+          <li><a href="#" style="font-size: 13px; color: rgba(242,237,228,0.6); text-decoration: none; transition: 0.28s;">Report a Bug</a></li>
+          <li><a href="#" style="font-size: 13px; color: rgba(242,237,228,0.6); text-decoration: none; transition: 0.28s;">Ideas & Suggestions</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(171,175,159,0.2); display: flex; align-items: center; justify-content: space-between; font-size: 12px; flex-wrap: wrap; gap: 16px;">
+      <span style="color: rgba(242,237,228,0.6);">Ulimi © 2026 — Agricultural Platform</span>
+      <div style="display: flex; gap: 20px;">
+        <a href="#" style="color: rgba(242,237,228,0.4); text-decoration: none;">English</a>
+        <a href="#" style="color: rgba(242,237,228,0.4); text-decoration: none;">Français</a>
+        <a href="#" style="color: rgba(242,237,228,0.4); text-decoration: none;">Swahili</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://ulimi.online/assets/js/app.js" defer></script>
+
+        <script src="https://ulimi.online/assets/js/app.js" defer></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const tabs = document.querySelectorAll('.tab-btn');
+                const contents = document.querySelectorAll('.tab-content');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        tabs.forEach(t => {
+                            t.classList.remove('bg-leaf', 'text-white');
+                            t.classList.add('bg-white', 'text-charcoal', 'border', 'border-earth/12');
+                        });
+                        this.classList.remove('bg-white', 'text-charcoal', 'border', 'border-earth/12');
+                        this.classList.add('bg-leaf', 'text-white');
+
+                        const targetId = this.getAttribute('data-tab');
+                        contents.forEach(content => {
+                            content.classList.add('hidden');
+                        });
+                        document.getElementById('tab-' + targetId).classList.remove('hidden');
+                    });
+                });
+
+                // Scroll animations using Tailwind-compatible approach
+                const observerOptions = {
+                    root: null,
+                    rootMargin: '0px',
+                    threshold: 0.1
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('animate-in');
+                        }
+                    });
+                }, observerOptions);
+
+                // Observe all animate elements
+                const animateElements = document.querySelectorAll('.scroll-animate, .scroll-animate-scale');
+                animateElements.forEach(el => observer.observe(el));
+
+                // Counter animation
+                const counters = document.querySelectorAll('.counter');
+
+                function animateCounter(counter) {
+                    const target = +counter.getAttribute('data-target');
+                    const suffix = counter.getAttribute('data-suffix') || '';
+                    const addPlus = !suffix && counter.textContent.includes('+');
+                    const duration = 2000; // 2 seconds
+                    const increment = target / (duration / 16); // 60fps
+                    let current = 0;
+
+                    const updateCounter = () => {
+                        current += increment;
+                        if (current < target) {
+                            const displayValue = Math.ceil(current);
+                            counter.textContent = displayValue.toLocaleString() + suffix + (addPlus && displayValue >= target ? '+' : '');
+                            requestAnimationFrame(updateCounter);
+                        } else {
+                            counter.textContent = target.toLocaleString() + suffix + (addPlus ? '+' : '');
+                        }
+                    };
+
+                    updateCounter();
+                }
+
+                // Start counter animation when page loads
+                setTimeout(() => {
+                    counters.forEach((counter, index) => {
+                        setTimeout(() => {
+                            animateCounter(counter);
+                        }, index * 200); // Stagger animations
+                    });
+                }, 500);
+
+                // Button click handlers
+                const signUpBtn = document.querySelector('button[aria-label="Sign up for Ulimi platform"]');
+
+                if (signUpBtn) {
+                    signUpBtn.addEventListener('click', function() {
+                        window.location.href = '/register';
+                    });
+                }
+            });
+        </script>
+
+        <!-- Coming Soon Modal -->
+        <div id="comingSoonModal" class="fixed inset-0 z-[100] hidden" aria-hidden="true">
+            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop"></div>
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 transform scale-95 opacity-0 transition-all duration-300" id="modalContent">
+                    <button id="closeModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-ash-grey/20 flex items-center justify-center text-charcoal hover:bg-ash-grey/40 transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-leaf/10 text-leaf text-sm font-medium mb-4">
+                            <i class="fa-solid fa-rocket"></i>
+                            <span>Coming Soon</span>
+                        </div>
+                        <h3 class="font-head text-2xl text-forest mb-2">New services on the way</h3>
+                        <p class="text-sm text-charcoal/70">We're expanding Ulimi to help you do even more with your agri-business.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex gap-4 p-4 rounded-xl border border-ash-grey/15 hover:border-leaf/30 transition-colors">
+                            <div class="w-12 h-12 rounded-xl bg-leaf/10 flex items-center justify-center text-leaf flex-shrink-0">
+                                <i class="fa-solid fa-briefcase text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-charcoal text-sm mb-1">Ulimi Business Suite</h4>
+                                <p class="text-xs text-charcoal/70 leading-relaxed">The B2B marketplace for agriculture — buy and sell in bulk. Source suppliers, move volume, and negotiate better terms.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 p-4 rounded-xl border border-ash-grey/15 hover:border-leaf/30 transition-colors">
+                            <div class="w-12 h-12 rounded-xl bg-crop/10 flex items-center justify-center text-crop flex-shrink-0">
+                                <i class="fa-solid fa-map text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-charcoal text-sm mb-1">Ulimi Rent a Plot</h4>
+                                <p class="text-xs text-charcoal/70 leading-relaxed">Browse and lease verified farmland. List your own plots and earn from idle land.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 text-center">
+                        <button id="dismissModal" class="px-6 py-3 rounded-[50px] font-medium text-white transition-all hover:shadow-lg text-sm" style="background-color: #347e44;">Got it, thanks!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                const modal = document.getElementById('comingSoonModal');
+                const backdrop = document.getElementById('modalBackdrop');
+                const content = document.getElementById('modalContent');
+                const closeBtn = document.getElementById('closeModal');
+                const dismissBtn = document.getElementById('dismissModal');
+
+                function showModal() {
+                    modal.classList.remove('hidden');
+                    requestAnimationFrame(() => {
+                        backdrop.classList.remove('opacity-0');
+                        content.classList.remove('scale-95', 'opacity-0');
+                        content.classList.add('scale-100', 'opacity-100');
+                    });
+                }
+
+                function hideModal() {
+                    backdrop.classList.add('opacity-0');
+                    content.classList.remove('scale-100', 'opacity-100');
+                    content.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 300);
+                }
+
+                if (!localStorage.getItem('ulimiComingSoonDismissed')) {
+                    setTimeout(showModal, 1200);
+                }
+
+                closeBtn.addEventListener('click', function() {
+                    localStorage.setItem('ulimiComingSoonDismissed', '1');
+                    hideModal();
+                });
+                dismissBtn.addEventListener('click', function() {
+                    localStorage.setItem('ulimiComingSoonDismissed', '1');
+                    hideModal();
+                });
+                backdrop.addEventListener('click', function() {
+                    localStorage.setItem('ulimiComingSoonDismissed', '1');
+                    hideModal();
+                });
+            })();
+        </script>
+</body>
+
+</html>

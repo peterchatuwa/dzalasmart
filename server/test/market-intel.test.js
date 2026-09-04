@@ -46,8 +46,9 @@ test("market prices API returns persisted multi-source rows", async (t) => {
 
   const payload = await fetch(`${url}/api/market/prices?district=Kasungu`).then((r) => r.json());
   assert.ok(payload.prices.length >= 1);
-  assert.equal(payload.prices[0].crop, "Maize");
-  assert.equal(payload.prices[0].buyPricePerKg, 1050);
+  const maize = payload.prices.find((row) => row.crop === "Maize" && row.sourceSlug === "localbuy");
+  assert.ok(maize);
+  assert.equal(maize.buyPricePerKg, 1050);
   assert.ok(payload.sources.some((row) => row.slug === "localbuy"));
 });
 
