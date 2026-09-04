@@ -1,10 +1,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
+import { APP_NAME } from "./brand.js";
 import { createApp } from "./app.js";
 import { openDatabase } from "./db.js";
 import { seedIfEmpty } from "./farmers.js";
-import { seedStaffIfEmpty } from "./staff.js";
+import { seedContractsIfEmpty, seedFloorsIfEmpty } from "./floors.js";
+import { seedStaffIfEmpty, staffIdByRole } from "./staff.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(here, "..", ".env") });
@@ -18,11 +20,13 @@ const databasePath = process.env.DATABASE_PATH
 const db = openDatabase(databasePath);
 const seeded = seedIfEmpty(db);
 const staffSeeded = seedStaffIfEmpty(db);
+seedFloorsIfEmpty(db);
+seedContractsIfEmpty(db, staffIdByRole(db, "cooperative"));
 const frontendDir = path.join(here, "..", "..", "frontend");
 const app = createApp(db, { jwtSecret, frontendDir });
 
 app.listen(port, "0.0.0.0", () => {
-  console.log(`DzalaSmart app: http://localhost:${port}`);
+  console.log(`${APP_NAME} app: http://localhost:${port}`);
   console.log(`Staff desk:     http://localhost:${port}/staff`);
   console.log(`API health:     http://localhost:${port}/health`);
   console.log("Listening on all interfaces so an Android emulator can use http://10.0.2.2:4000");
@@ -31,6 +35,8 @@ app.listen(port, "0.0.0.0", () => {
     console.log("Seeded demo staff (PIN 1234):");
     console.log("  Mercy Chirwa  +265888000101  — Extension, Zidyana EPA");
     console.log("  Joseph Phiri  +265888000102  — Cooperative, Kasungu warehouse");
+    console.log("  Chikondi Moyo +265888000103  — Ministry of Agriculture");
+    console.log("  Davis Mwale   +265888000104  — Farmers Union of Malawi");
   }
   if (seeded) {
     console.log("Seeded demo farmers (PIN 1234):");

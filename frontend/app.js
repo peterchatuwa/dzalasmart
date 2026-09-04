@@ -1,5 +1,5 @@
-const TOKEN_KEY = "dzalasmart.token";
-const API_BASE_KEY = "dzalasmart.apiBase";
+const TOKEN_KEY = "nzeru.token";
+const API_BASE_KEY = "nzeru.apiBase";
 
 function isNative() {
   return Boolean(window.Capacitor?.isNativePlatform?.());
@@ -39,6 +39,61 @@ let status = null;
 let districts = [];
 let ussdText = "";
 let ussdOpen = false;
+let chatLang = "en";
+let advisor = { soils: [], nutrients: [], copy: {} };
+let chatReady = false;
+let farmPlan = null;
+let planDraft = { crops: [], readiness: {} };
+let farmPlot = null;
+let planTab = "budget";
+
+const CHAT_UI = {
+  en: {
+    title: "Ask in English, Chichewa, or Tumbuka",
+    disclaimer: "This assistant gives simplified demo advice. Confirm chemical products and rates with your extension officer before use. Photo diagnosis is not live yet.",
+    weather: "Today's weather",
+    market: "What's my crop worth?",
+    crop: "Best crop for my soil",
+    pest: "My plant looks sick",
+    soil: "Soil type",
+    nutrient: "Nutrient status",
+    ask: "Ask a farming question",
+    placeholder: "e.g. holes in the leaves, yellow streaks, or what fertiliser to use",
+    send: "Send",
+    recommend: "Recommend a crop",
+    pestPrompt: "holes in the leaves and worms on the maize",
+  },
+  ny: {
+    title: "Funsani mu Chingerezi, Chichewa, kapena Chitumbuka",
+    disclaimer: "Wothandizirayu akupereka malangizo osavuta a chitsanzo. Onetsetsani ndi wa Ulimi musanagwiritse ntchito mankhwala. Chithunzi sichikuwunikidwa pano.",
+    weather: "Nyengo lero",
+    market: "Mitengo ya msika",
+    crop: "Mbewu yabwino pa nthaka yanga",
+    pest: "Mbewu yanga ikudwala",
+    soil: "Mtundu wa nthaka",
+    nutrient: "Zakudya za nthaka",
+    ask: "Funsani za ulimi",
+    placeholder: "mwachitsanzo: mabowo pa masamba, mawanga achikasu, kapena feteleza",
+    send: "Tumizani",
+    recommend: "Langizani mbewu",
+    pestPrompt: "mphutsi pa masamba ndi mabowo",
+  },
+  tum: {
+    title: "Fumbani mu Chizungu, Chichewa, panji Chitumbuka",
+    disclaimer: "Wovwira uyu wakupeleka ulongozgi wapadera wa chiyelezgero. Fumbani wa vilimo pambere mundagwiliskire ntchito mankhwala. Chithuzithuzi chikulutila yayi pano.",
+    weather: "Nyengo yasono",
+    market: "Mitengo ya msika",
+    crop: "Mbeu yiwemi pa charu chane",
+    pest: "Mbeu yane yikulwala",
+    soil: "Mtundu wa charu",
+    nutrient: "Vyakulya vya charu",
+    ask: "Fumbani za ulimi",
+    placeholder: "mwachiyelezgero: viwaya pa masamba, vibiriwiri, panji feteleza",
+    send: "Tumizgani",
+    recommend: "Longozgani mbeu",
+    pestPrompt: "mphutsi pa masamba na viwaya",
+  },
+};
 
 function showError(id, message) {
   const el = document.getElementById(id);
@@ -53,6 +108,10 @@ function fmtTime(ts) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function fmtMoney(n) {
+  return `MWK ${Number(n || 0).toLocaleString("en")}`;
 }
 
 function addWire(method, path, requestBody, responseBody, httpStatus) {
@@ -147,6 +206,7 @@ function renderFarm() {
   document.getElementById("farmerCode").textContent = farmer.code;
   document.getElementById("farmerName").textContent = farmer.name;
   document.getElementById("farmerPlace").textContent = [farmer.district, farmer.epa, farmer.region].filter(Boolean).join(" · ");
+  renderPassport(status.passport);
   document.getElementById("currentStage").textContent = status.currentStage?.name || "Not started";
   document.getElementById("nextStage").textContent = status.nextStage?.name || "Season complete";
   const btn = document.getElementById("advanceBtn");
@@ -166,11 +226,126 @@ function renderFarm() {
           <span class="channel ${event.channel}">${event.channel}</span>
         </div>`).join("")
     : `<p class="hint">No stages logged yet. Use the button above or dial *413#.</p>`;
+  const receipts = status.receipts || [];
+  const receiptCard = document.getElementById("receiptCard");
+  receiptCard.hidden = receipts.length === 0;
+  document.getElementById("receiptList").innerHTML = receipts.map((row) => `
+    <div class="ledger-row">
+      <div>
+        <strong>${row.code}</strong>
+        <div class="hint">${row.crop} · ${row.weightKg} kg · ${row.moisturePct}% · ${fmtTime(row.createdAt)}</div>
+      </div>
+      <div class="ledger-side">
+        <span class="badge ${row.loanPending ? "loan_pending" : row.status}">${row.loanPending ? "Loan waiting" : row.statusLabel}</span>
+        <div class="hint">${row.loanDisbursed ? `Loan ${fmtMoney(row.loanDisbursed)} sent` : row.loanPending ? `Advance ${fmtMoney(row.loanCap)}` : "No loan"}</div>
+        ${row.loanPending ? `<button type="button" class="primary" data-accept-loan="${row.id}" style="margin-top:8px;">Accept ${fmtMoney(row.loanCap)}</button>` : ""}
+      </div>
+    </div>`).join("");
+  document.querySelectorAll("[data-accept-loan]").forEach((btn) => {
+    btn.addEventListener("click", () => acceptLoan(btn.dataset.acceptLoan));
+  });
+  loadWeather(farmer.district);
+  fillChatSelects();
+  if (!chatReady) {
+    renderChatGreeting();
+    chatReady = true;
+  }
+  loadPlan();
+  loadPlot();
 }
 
 async function loadStatus() {
   status = await api("GET", "/api/farmers/me/status", { auth: true });
   renderFarm();
+}
+
+function renderPassport(passport) {
+  if (!passport) return;
+  document.getElementById("passportId").textContent = `Farmer Passport · ${passport.code}`;
+  document.getElementById("passportPlace").textContent = [passport.district, passport.epa, passport.phone].filter(Boolean).join(" · ");
+  document.getElementById("passportGrade").textContent = passport.grade;
+  document.getElementById("passportLabel").textContent = passport.label;
+  document.getElementById("passportIncome").textContent = fmtMoney(passport.netIncome);
+  document.getElementById("passportScore").textContent = passport.stagesLogged ? String(passport.score) : "—";
+  document.getElementById("passportLoan").textContent = passport.loanPending
+    ? `${fmtMoney(passport.loanPending)} waiting`
+    : fmtMoney(passport.loanDisbursed);
+  document.getElementById("passportStatus").textContent = passport.status;
+  document.getElementById("passportChecks").innerHTML = (passport.checks || []).map((row) => `
+    <div class="passport-check">
+      <span class="mark">${row.done ? "✓" : "·"}</span>
+      <span>${row.label}</span>
+    </div>`).join("");
+}
+
+async function acceptLoan(receiptId) {
+  showError("advanceError", "");
+  try {
+    const payload = await api("POST", "/api/farmers/me/loans", { auth: true, body: { receiptId } });
+    status = payload.farmer;
+    renderFarm();
+  } catch (error) {
+    showError("advanceError", error.message);
+  }
+}
+
+async function loadWeather(district) {
+  const note = document.getElementById("wxNote");
+  try {
+    const wx = await api("GET", `/api/weather?district=${encodeURIComponent(district)}`);
+    document.getElementById("weatherTitle").textContent = wx.district;
+    const pill = document.getElementById("weatherAlert");
+    pill.textContent = (wx.alert || "—").toUpperCase();
+    pill.className = "alert-pill " + wx.alert;
+    document.getElementById("wxNow").textContent = wx.nowC + "°C";
+    document.getElementById("wxHumidity").textContent = wx.humidity + "%";
+    document.getElementById("wxRain3").textContent = wx.rain3dayMm + " mm";
+    document.getElementById("wxWind").textContent = wx.windKmh + " km/h";
+    document.getElementById("wxForecast").innerHTML = (wx.forecast || []).map((day) => `
+      <div class="wx-day">
+        <div class="wx-lbl">${day.day}</div>
+        <div class="wx-val">${Math.round(day.max)}°/${Math.round(day.min)}°</div>
+        <div class="hint">${Number(day.rain || 0).toFixed(0)}mm</div>
+      </div>`).join("");
+    document.getElementById("wxSeason").textContent = `${wx.season.label} — ${wx.season.text}`;
+    document.getElementById("wxField").textContent = wx.fieldAdvice;
+    note.textContent = `Live from Open-Meteo · ${wx.district}`;
+  } catch (error) {
+    note.textContent = error.message || "Could not load weather.";
+  }
+}
+
+async function loadMarket() {
+  try {
+    const payload = await api("GET", "/api/market");
+    document.getElementById("marketTable").innerHTML = (payload.rows || []).map((row) => `
+      <div class="market-row">
+        <div>
+          <strong>${row.crop}</strong>
+          <div class="hint">${row.price} · ${row.yieldKg}/ha</div>
+        </div>
+        <div class="trend ${row.trend}">${row.trendLabel}<div class="hint">${row.net}/ha</div></div>
+      </div>`).join("");
+    const note = document.getElementById("marketNote");
+    if (note) {
+      const link = payload.sourceUrl
+        ? `<a href="${payload.sourceUrl}" target="_blank" rel="noopener">Ulimi marketplace</a>`
+        : "market feed";
+      note.innerHTML = `${payload.source || "Market prices"} · sourced from ${link}. A buyer offer below the ministry floor is blocked and cannot pay you.`;
+    }
+  } catch {
+    document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;
+  }
+  try {
+    const floors = await api("GET", "/api/floors");
+    document.getElementById("floorTable").innerHTML = (floors.floors || []).map((row) => `
+      <div class="kv-row">
+        <span>${row.crop} floor</span>
+        <strong>MWK ${Number(row.pricePerKg).toLocaleString("en")}/kg</strong>
+      </div>`).join("");
+  } catch {
+    document.getElementById("floorTable").innerHTML = "";
+  }
 }
 
 function setSession(payload) {
@@ -181,6 +356,7 @@ function setSession(payload) {
 function logout() {
   token = "";
   status = null;
+  chatReady = false;
   localStorage.removeItem(TOKEN_KEY);
   renderFarm();
   authView.hidden = false;
@@ -319,6 +495,421 @@ document.getElementById("nativeServerForm")?.addEventListener("submit", async (e
   await checkServer();
 });
 
+function fillChatSelects() {
+  const soilEl = document.getElementById("chatSoil");
+  const nutrientEl = document.getElementById("chatNutrient");
+  if (!soilEl || !advisor.soils.length) return;
+  const farmer = status?.farmer;
+  soilEl.innerHTML = advisor.soils.map((s) => `<option value="${s}">${s}</option>`).join("");
+  nutrientEl.innerHTML = advisor.nutrients.map((s) => `<option value="${s}">${s}</option>`).join("");
+  if (farmer?.soilType) soilEl.value = farmer.soilType;
+  if (farmer?.nutrientStatus) nutrientEl.value = farmer.nutrientStatus;
+}
+
+function applyChatLang() {
+  const ui = CHAT_UI[chatLang] || CHAT_UI.en;
+  const copy = advisor.copy?.[chatLang];
+  document.getElementById("chatTitle").textContent = ui.title;
+  document.getElementById("chatDisclaimer").textContent = copy?.disclaimer || ui.disclaimer;
+  document.querySelector('[data-chat-topic="weather"]').textContent = ui.weather;
+  document.querySelector('[data-chat-topic="market"]').textContent = ui.market;
+  document.querySelector('[data-chat-topic="crop"]').textContent = ui.crop;
+  document.querySelector('[data-chat-topic="pest"]').textContent = ui.pest;
+  document.getElementById("chatSoilLabel").firstChild.textContent = ui.soil + " ";
+  document.getElementById("chatNutrientLabel").firstChild.textContent = ui.nutrient + " ";
+  document.getElementById("chatAskLabel").firstChild.textContent = ui.ask + " ";
+  document.getElementById("chatInput").placeholder = ui.placeholder;
+  document.getElementById("chatSend").textContent = ui.send;
+  document.getElementById("chatCropBtn").textContent = ui.recommend;
+  document.querySelectorAll("[data-chat-lang]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.chatLang === chatLang);
+  });
+}
+
+function addChatBubble(text, who) {
+  const win = document.getElementById("chatWindow");
+  if (!win || !text) return;
+  const div = document.createElement("div");
+  div.className = "chat-bubble " + (who || "bot");
+  div.textContent = text;
+  win.appendChild(div);
+  win.scrollTop = win.scrollHeight;
+}
+
+function renderChatGreeting() {
+  const win = document.getElementById("chatWindow");
+  if (!win) return;
+  win.innerHTML = "";
+  const copy = advisor.copy?.[chatLang];
+  addChatBubble(copy?.greeting || CHAT_UI[chatLang].title, "bot");
+}
+
+async function loadAdvisor() {
+  try {
+    advisor = await api("GET", "/api/advisor");
+    fillChatSelects();
+    applyChatLang();
+  } catch {
+    advisor = {
+      soils: ["Sandy", "Sandy loam", "Loamy", "Clay loam", "Clay"],
+      nutrients: ["Low nitrogen", "Low phosphorus", "Low potassium", "Balanced / fertile", "Acidic soil"],
+      copy: {},
+    };
+    fillChatSelects();
+    applyChatLang();
+  }
+}
+
+async function askChat({ text, topic, soil, nutrient, showUser = true }) {
+  showError("chatError", "");
+  if (showUser && text) addChatBubble(text, "user");
+  try {
+    const payload = await api("POST", "/api/advisor/ask", {
+      auth: true,
+      body: {
+        text: text || "",
+        topic: topic || "auto",
+        lang: chatLang,
+        soil: soil || document.getElementById("chatSoil").value,
+        nutrient: nutrient || document.getElementById("chatNutrient").value,
+        channel: "mobile",
+      },
+    });
+    addChatBubble(payload.reply || "No reply.", "bot");
+  } catch (error) {
+    showError("chatError", error.message);
+  }
+}
+
+document.querySelectorAll("[data-chat-lang]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    chatLang = btn.dataset.chatLang;
+    applyChatLang();
+    renderChatGreeting();
+  });
+});
+
+document.querySelectorAll("[data-chat-topic]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const topic = btn.dataset.chatTopic;
+    const ui = CHAT_UI[chatLang] || CHAT_UI.en;
+    if (topic === "pest") {
+      document.getElementById("chatInput").value = ui.pestPrompt;
+      await askChat({ text: ui.pestPrompt, topic: "pest" });
+      return;
+    }
+    if (topic === "crop") {
+      await askChat({
+        text: ui.crop,
+        topic: "crop",
+        soil: document.getElementById("chatSoil").value,
+        nutrient: document.getElementById("chatNutrient").value,
+      });
+      return;
+    }
+    await askChat({ text: btn.textContent, topic });
+  });
+});
+
+document.getElementById("chatCropBtn").addEventListener("click", async () => {
+  const ui = CHAT_UI[chatLang] || CHAT_UI.en;
+  await askChat({
+    text: ui.crop,
+    topic: "crop",
+    soil: document.getElementById("chatSoil").value,
+    nutrient: document.getElementById("chatNutrient").value,
+  });
+});
+
+document.getElementById("chatForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const text = document.getElementById("chatInput").value.trim();
+  if (!text) {
+    showError("chatError", "Type a question, or tap Recommend a crop.");
+    return;
+  }
+  document.getElementById("chatInput").value = "";
+  await askChat({ text, topic: "auto" });
+});
+
+function renderPlotPolygon(svgEl, polygon) {
+  if (!svgEl || !polygon?.length) return;
+  const lats = polygon.map((point) => point.lat);
+  const lons = polygon.map((point) => point.lon);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons);
+  const maxLon = Math.max(...lons);
+  const pad = 8;
+  const width = 200 - pad * 2;
+  const height = 120 - pad * 2;
+  const points = polygon.map((point) => {
+    const x = pad + ((point.lon - minLon) / (maxLon - minLon || 1)) * width;
+    const y = pad + ((maxLat - point.lat) / (maxLat - minLat || 1)) * height;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  svgEl.innerHTML = `<polygon points="${points}" fill="rgba(214,154,34,0.15)" stroke="#D69A22" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+}
+
+function renderPlotMap(mapEl, embedUrl) {
+  if (!mapEl) return;
+  mapEl.innerHTML = embedUrl
+    ? `<iframe title="OpenStreetMap plot" src="${embedUrl}" loading="lazy" referrerpolicy="no-referrer"></iframe>`
+    : `<p class="hint">Map unavailable offline.</p>`;
+}
+
+function renderPlot(payload) {
+  if (!payload?.plot) return;
+  farmPlot = payload;
+  const plot = payload.plot;
+  document.getElementById("plotNote").textContent = payload.note || "";
+  document.getElementById("plotCoords").textContent = payload.coordsLabel || "—";
+  document.getElementById("plotArea").textContent = `${plot.hectares} ha`;
+  document.getElementById("plotNdvi").textContent = `${plot.ndvi.toFixed(2)} · ${plot.ndviLabel}`;
+  const badge = document.getElementById("plotBadge");
+  badge.textContent = plot.verified ? "GPS verified" : "EPA estimate";
+  badge.className = `badge ${plot.verified ? "accepted" : "routine"}`;
+  renderPlotMap(document.getElementById("plotMap"), payload.map?.embedUrl);
+  renderPlotPolygon(document.getElementById("plotPolygon"), plot.polygon);
+  const openLink = document.getElementById("plotOpenMap");
+  if (payload.map?.openUrl) {
+    openLink.href = payload.map.openUrl;
+    openLink.hidden = false;
+  } else {
+    openLink.hidden = true;
+  }
+}
+
+async function loadPlot() {
+  showError("plotError", "");
+  try {
+    const payload = await api("GET", "/api/farmers/me/plot", { auth: true });
+    renderPlot(payload);
+  } catch (error) {
+    document.getElementById("plotNote").textContent = error.message;
+  }
+}
+
+async function saveGpsPlot() {
+  showError("plotError", "");
+  const btn = document.getElementById("plotGpsBtn");
+  if (!navigator.geolocation) {
+    showError("plotError", "GPS is not available in this browser.");
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "Getting location…";
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const payload = await api("PUT", "/api/farmers/me/plot", {
+        auth: true,
+        body: {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          accuracyM: pos.coords.accuracy,
+          source: "gps",
+        },
+      });
+      renderPlot(payload);
+    } catch (error) {
+      showError("plotError", error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Use my location";
+    }
+  }, (err) => {
+    showError("plotError", err.message || "Could not read GPS.");
+    btn.disabled = false;
+    btn.textContent = "Use my location";
+  }, { enableHighAccuracy: true, timeout: 15000 });
+}
+
+document.getElementById("plotGpsBtn").addEventListener("click", saveGpsPlot);
+
+async function loadPlan() {
+  try {
+    farmPlan = await api("GET", "/api/farmers/me/plan", { auth: true });
+    planDraft = {
+      crops: farmPlan.crops.map((row) => ({
+        crop: row.crop,
+        hectares: row.hectares,
+        startMonth: row.startMonth,
+      })),
+      readiness: { ...farmPlan.readiness },
+    };
+    renderPlan();
+  } catch (error) {
+    document.getElementById("planIntro").textContent = error.message;
+  }
+}
+
+function collectPlanDraft() {
+  const rows = [...document.querySelectorAll(".plan-crop-row")].map((row) => ({
+    crop: row.querySelector("[data-plan-crop]").value,
+    hectares: Number(row.querySelector("[data-plan-ha]").value) || 1,
+    startMonth: row.querySelector("[data-plan-month]").value,
+  }));
+  const readiness = {
+    waterSource: document.getElementById("planWaterSource").value,
+    experience: document.getElementById("planExperience").value,
+    storage: document.querySelector('[data-plan-toggle="storage"]').classList.contains("on"),
+    equipment: document.querySelector('[data-plan-toggle="equipment"]').classList.contains("on"),
+    agritex: document.querySelector('[data-plan-toggle="agritex"]').classList.contains("on"),
+  };
+  return { crops: rows, readiness };
+}
+
+function renderPlanCropRows() {
+  const options = (farmPlan?.cropOptions || ["Maize"]).map((crop) =>
+    `<option value="${crop}">${crop}</option>`
+  ).join("");
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const m = String(i + 1);
+    const label = new Date(2026, i, 1).toLocaleString("en", { month: "short" });
+    return `<option value="${m}">${label}</option>`;
+  }).join("");
+  document.getElementById("planCropRows").innerHTML = planDraft.crops.map((row, index) => `
+    <div class="plan-crop-row">
+      <label>Crop
+        <select data-plan-crop data-index="${index}">${options}</select>
+      </label>
+      <label>Hectares
+        <input data-plan-ha data-index="${index}" inputmode="decimal" value="${row.hectares}">
+      </label>
+      <label>Start month
+        <select data-plan-month data-index="${index}">${monthOptions}</select>
+      </label>
+      <button type="button" data-plan-remove="${index}" aria-label="Remove crop">✕</button>
+    </div>`).join("");
+  planDraft.crops.forEach((row, index) => {
+    document.querySelector(`[data-plan-crop][data-index="${index}"]`).value = row.crop;
+    document.querySelector(`[data-plan-month][data-index="${index}"]`).value = row.startMonth;
+  });
+  document.querySelectorAll("[data-plan-remove]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      planDraft.crops.splice(Number(btn.dataset.planRemove), 1);
+      if (!planDraft.crops.length) planDraft.crops.push({ crop: "Maize", hectares: 1, startMonth: String(new Date().getMonth() + 1) });
+      renderPlanCropRows();
+    });
+  });
+}
+
+function applyReadinessToForm() {
+  const r = planDraft.readiness || {};
+  if (r.waterSource) document.getElementById("planWaterSource").value = r.waterSource;
+  if (r.experience) document.getElementById("planExperience").value = r.experience;
+  ["storage", "equipment", "agritex"].forEach((key) => {
+    document.querySelector(`[data-plan-toggle="${key}"]`).classList.toggle("on", !!r[key]);
+  });
+}
+
+function renderPlan() {
+  if (!farmPlan) return;
+  applyReadinessToForm();
+  renderPlanCropRows();
+  const bank = farmPlan.bankability;
+  const border = bank.score >= 70 ? "var(--green)" : bank.score >= 40 ? "var(--gold-deep)" : "var(--alert)";
+  document.getElementById("planBankability").innerHTML = `
+    <div class="plan-bank-top">
+      <div class="plan-bank-score" style="border-color:${border}">
+        <strong>${bank.score}</strong><span>/100</span>
+      </div>
+      <div>
+        <strong>${bank.status}</strong>
+        <p class="hint">Grade ${bank.grade} · saved ${farmPlan.updatedAt ? fmtTime(farmPlan.updatedAt) : "just now"}</p>
+      </div>
+    </div>`;
+  document.getElementById("planWeatherNote").textContent = farmPlan.weatherNote || "";
+  const c = farmPlan.combined;
+  document.getElementById("planSummary").innerHTML = `
+    <div class="plan-metric"><div class="lbl">Total area</div><div class="val">${c.hectares.toFixed(1)} ha</div></div>
+    <div class="plan-metric"><div class="lbl">Total cost</div><div class="val">${fmtMoney(c.totalCost)}</div></div>
+    <div class="plan-metric"><div class="lbl">Revenue</div><div class="val">${fmtMoney(c.totalRevenue)}</div></div>
+    <div class="plan-metric"><div class="lbl">Net margin</div><div class="val">${fmtMoney(c.totalMargin)}</div></div>`;
+
+  const primary = farmPlan.crops[0]?.budget;
+  document.getElementById("planTabBudget").innerHTML = farmPlan.crops.map((row) => `
+    <div class="market-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <strong>${row.crop} · ${row.hectares} ha</strong>
+        <span class="badge ${row.planting.status === "ontime" ? "accepted" : row.planting.status === "early" ? "routine" : "drying_required"}">${row.planting.label}</span>
+      </div>
+      <div class="hint">${row.cropInfo?.reason || "Crop fit notes from your soil record."}</div>
+      <div class="hint">Price ${fmtMoney(row.budget.priceMwkKg)}/kg${row.budget.marketPrice ? " · live market" : ""}${row.budget.belowFloor ? " · below ministry floor" : ""}</div>
+      ${row.budget.costBreakdown.map((part) => `
+        <div class="plan-costbar">
+          <span style="width:72px;color:var(--ink-soft);">${part.label}</span>
+          <span class="plan-costbar-track"><span class="plan-costbar-fill" style="width:${Math.round(part.amount / row.budget.totalCost * 100)}%;"></span></span>
+          <span class="mono">${fmtMoney(part.amount)}</span>
+        </div>`).join("")}
+    </div>`).join("");
+
+  document.getElementById("planTabDaily").innerHTML = (farmPlan.tabs.dailyPlan || []).map((row) => `
+    <div class="daily-plan-row ${row.tone || ""}">
+      <span class="daily-plan-day">${row.day}</span>
+      <div><strong>${row.title}</strong><div class="hint">${row.desc}</div></div>
+    </div>`).join("");
+
+  let running = 0;
+  document.getElementById("planTabCashflow").innerHTML = `
+    <table class="market-row" style="display:block;padding:0;background:transparent;">
+      ${(farmPlan.tabs.cashflow || []).map((row) => {
+        running += row.amount;
+        return `<div class="market-row"><span>${row.label}</span><strong>${fmtMoney(row.amount)} · running ${fmtMoney(running)}</strong></div>`;
+      }).join("")}
+    </table>`;
+
+  document.getElementById("planTabDecisions").innerHTML = (farmPlan.decisions || []).map((row) => `
+    <div class="plan-decision"><span>${row.icon}</span><div><strong>${row.title}</strong><div class="hint">${row.detail}</div></div></div>`).join("");
+
+  document.querySelectorAll("[data-plan-tab]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.planTab === planTab);
+  });
+  ["budget", "daily", "cashflow", "decisions"].forEach((name) => {
+    document.getElementById(`planTab${name.charAt(0).toUpperCase()}${name.slice(1)}`).hidden = planTab !== name;
+  });
+}
+
+document.getElementById("planAddCrop").addEventListener("click", () => {
+  planDraft.crops.push({ crop: "Groundnuts", hectares: 0.5, startMonth: String(new Date().getMonth() + 1) });
+  renderPlanCropRows();
+});
+
+document.getElementById("planSuggestCrop").addEventListener("click", () => {
+  const pick = farmPlan?.suggestedCrops?.[0];
+  if (!pick) return;
+  planDraft.crops.unshift({ crop: pick.crop, hectares: 1, startMonth: String(new Date().getMonth() + 1) });
+  renderPlanCropRows();
+});
+
+document.querySelectorAll("[data-plan-toggle]").forEach((btn) => {
+  btn.addEventListener("click", () => btn.classList.toggle("on"));
+});
+
+document.querySelectorAll("[data-plan-tab]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    planTab = btn.dataset.planTab;
+    renderPlan();
+  });
+});
+
+document.getElementById("planSaveBtn").addEventListener("click", async () => {
+  showError("planError", "");
+  try {
+    farmPlan = await api("PUT", "/api/farmers/me/plan", {
+      auth: true,
+      body: collectPlanDraft(),
+    });
+    planDraft = {
+      crops: farmPlan.crops.map((row) => ({ crop: row.crop, hectares: row.hectares, startMonth: row.startMonth })),
+      readiness: { ...farmPlan.readiness },
+    };
+    renderPlan();
+  } catch (error) {
+    showError("planError", error.message);
+  }
+});
+
 async function boot() {
   applyNativeShell();
   await checkServer();
@@ -327,6 +918,8 @@ async function boot() {
   const districtPayload = await api("GET", "/api/districts");
   districts = districtPayload.districts || [];
   fillDistricts();
+  loadMarket();
+  await loadAdvisor();
   if (token) {
     try {
       await loadStatus();

@@ -26,6 +26,20 @@ export function signStaffToken(staff, secret) {
   );
 }
 
+export function readOptionalFarmer(db, secret, req) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (!token) return null;
+  try {
+    const payload = jwt.verify(token, secret);
+    if (payload.role && payload.role !== "farmer") return null;
+    const farmer = db.prepare("SELECT * FROM farmers WHERE id = ?").get(payload.sub);
+    return farmer ? publicFarmer(farmer) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function requireFarmer(db, secret) {
   return (req, res, next) => {
     const header = req.headers.authorization || "";
@@ -78,4 +92,19 @@ export function requireStaff(db, secret) {
       res.status(401).json({ error: "Invalid or expired session" });
     }
   };
+}
+
+export function requireStaffRole(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.staff?.role)) {
+      const who = roles.join(" or ");
+      res.status(403).json({ error: `Only ${who} staff can do this` });
+      return;
+    }
+    next();
+  };
+}
+
+export function requireCooperative() {
+  return requireStaffRole("cooperative");
 }

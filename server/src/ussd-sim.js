@@ -1,7 +1,8 @@
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { APP_NAME } from "./brand.js";
 
-const base = process.env.DZALASMART_URL || "http://localhost:4000";
+const base = process.env.NZERU_URL || process.env.DZALASMART_URL || "http://localhost:4000";
 
 async function postUssd(phoneNumber, text) {
   const res = await fetch(`${base}/ussd`, {
@@ -26,7 +27,7 @@ function printReply(reply) {
 
 async function main() {
   const rl = readline.createInterface({ input, output });
-  console.log(`DzalaSmart USSD simulator → ${base}/ussd`);
+  console.log(`${APP_NAME} USSD simulator → ${base}/ussd`);
   console.log("Demo phones: +265888000001  +265888000002  +265888000003  PIN 1234\n");
   const phone = (await rl.question("Phone number: ")).trim();
   let text = "";

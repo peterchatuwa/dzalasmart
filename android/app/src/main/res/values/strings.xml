@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">DzalaSmart</string>
-    <string name="title_activity_main">DzalaSmart</string>
+    <string name="app_name">Nzeru za Alimi</string>
+    <string name="title_activity_main">Nzeru za Alimi</string>
     <string name="package_name">mw.dzalasmart.app</string>
     <string name="custom_url_scheme">mw.dzalasmart.app</string>
 </resources>

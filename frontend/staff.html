@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DzalaSmart — Staff desk</title>
+  <title>Nzeru za Alimi — Staff desk</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=4">
+  <link rel="stylesheet" href="/styles.css?v=15">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="seed"></span>DzalaSmart</div>
-    <p class="topbar-note">Staff can read farmer records. They cannot write season stages from here.</p>
+    <div class="brand"><span class="seed"></span>Nzeru za Alimi</div>
+    <p class="topbar-note" id="staffTopbarNote">Staff can read farmer records. Cooperative managers can also record warehouse intake.</p>
     <a class="nav-link" href="/">Farmer app</a>
     <div class="server-pill" id="serverPill">Checking server…</div>
   </header>
@@ -19,8 +19,8 @@
   <div id="authView" class="staff-layout">
     <section class="panel">
       <div class="panel-label">Staff desk · HTTP JSON</div>
-      <h1>Sign in as extension or cooperative</h1>
-      <p class="lede">This uses <code>POST /api/staff/login</code>. After that you only <code>GET</code> farmer records — the same rows the app and USSD already wrote.</p>
+      <h1>Sign in to the staff desk</h1>
+      <p class="lede">Extension and FUM only read. Cooperatives write warehouse intake and off-take offers. The ministry sets national floor prices. Offers below the floor are blocked automatically.</p>
       <form id="loginForm" class="stack">
         <label>Phone
           <input id="loginPhone" name="phone" inputmode="tel" value="+265888000101">
@@ -35,6 +35,8 @@
         <span>Demo PIN 1234:</span>
         <button type="button" class="chip" data-demo="+265888000101">Mercy · Extension</button>
         <button type="button" class="chip" data-demo="+265888000102">Joseph · Cooperative</button>
+        <button type="button" class="chip" data-demo="+265888000103">Chikondi · Ministry</button>
+        <button type="button" class="chip" data-demo="+265888000104">Davis · FUM</button>
       </div>
     </section>
   </div>
@@ -55,6 +57,83 @@
             <option value="">All districts</option>
           </select>
         </label>
+        <h2>District alerts</h2>
+        <p class="hint">Live Open-Meteo conditions for the nine watch districts from the original site.</p>
+        <div id="alertGrid" class="alert-grid"></div>
+        <div id="visitPanel">
+          <h2>Farmers flagged for a visit</h2>
+          <p class="hint" id="visitHint">Pest reports, stalled stages, and harvests still waiting at the warehouse — scoped to this officer's EPA when they are extension staff.</p>
+          <div id="visitStats" class="status-card warehouse-stats"></div>
+          <div id="visitList" class="ledger-list"></div>
+        </div>
+        <div id="nationalPanel" hidden>
+          <h2>National crop-health map</h2>
+          <p class="hint" id="nationalHint">Satellite NDVI sampled every five days across every EPA, paired with live pest reports and weather alerts from the register.</p>
+          <div id="nationalStats" class="status-card warehouse-stats"></div>
+          <div id="nationalMap" class="epa-map"></div>
+          <div class="ndvi-legend">
+            <span><i class="sw healthy"></i>Healthy</span>
+            <span><i class="sw watch"></i>Watch</span>
+            <span><i class="sw alert"></i>Alert</span>
+          </div>
+          <div id="nationalRegions" class="region-grid"></div>
+          <div id="nationalRisk" class="ledger-list"></div>
+        </div>
+        <h2>Grain intake ledger</h2>
+        <p class="hint">Warehouse staff test moisture before accepting grain. Accepted lots write Post-Harvest Handling onto the farmer record and offer a 60% warehouse-receipt loan. The farmer accepts it on the app or *413# option 5.</p>
+        <div id="warehouseStats" class="status-card warehouse-stats"></div>
+        <div id="intakeLedger" class="ledger-list"></div>
+        <div id="floorPanel">
+          <h2>Ministry floor prices</h2>
+          <p class="hint">FUM checks every off-take against these national floors at the point of sale — the same rule as the original Farmers Union view.</p>
+          <div id="floorList" class="floor-list"></div>
+          <form id="floorForm" class="stack intake-form" hidden>
+            <p class="eyebrow">Set a floor</p>
+            <label>Crop
+              <select id="floorCrop"></select>
+            </label>
+            <label>Floor (MWK / kg)
+              <input id="floorPrice" inputmode="numeric" placeholder="550">
+            </label>
+            <button type="submit" class="primary">Publish floor</button>
+            <p class="form-error" id="floorError" hidden></p>
+          </form>
+        </div>
+        <div id="contractPanel">
+          <h2>Live off-take contracts</h2>
+          <p class="hint" id="contractHint">Offers below the ministry floor are blocked automatically and cannot pay the farmer.</p>
+          <form id="contractForm" class="stack intake-form" hidden>
+            <p class="eyebrow">Record a buyer offer</p>
+            <label>Buyer
+              <input id="offerBuyer" placeholder="AgroBuy Traders">
+            </label>
+            <label>Crop
+              <select id="offerCrop"></select>
+            </label>
+            <label>District
+              <select id="offerDistrict"></select>
+            </label>
+            <label>Price (MWK / kg)
+              <input id="offerPrice" inputmode="numeric" placeholder="610">
+            </label>
+            <label class="check-row">
+              <input type="checkbox" id="offerLinkFarmer"> Link to the farmer selected on the right
+            </label>
+            <div class="demo-row">
+              <span>Presets from the original FUM monitor:</span>
+              <button type="button" class="chip" data-offer="fair">Maize 610 · above floor</button>
+              <button type="button" class="chip" data-offer="low">Groundnuts 380 · below floor</button>
+            </div>
+            <button type="submit" class="primary">Submit offer</button>
+            <p class="form-error" id="offerError" hidden></p>
+          </form>
+          <div id="contractList" class="ledger-list"></div>
+        </div>
+        <div id="pestPanel">
+          <h2>Open pest reports</h2>
+          <p class="hint">Farmers who described a pest in the assistant or on *413# option 4. Extension can use this list for field visits.</p>
+          <div id="pestList" class="ledger-list"></div>
+        </div>
         <h2>Farmers on the register</h2>
         <div id="farmerList" class="farmer-list"></div>
       </section>
@@ -65,7 +144,67 @@
           <p class="eyebrow" id="detailCode">—</p>
           <h1 id="detailName">—</h1>
           <p class="lede" id="detailPlace">—</p>
-          <div class="readonly-banner">Read only — stages are logged by the farmer app or by *413#, not from this desk.</div>
+          <div class="passport-card staff-passport" id="detailPassport" hidden>
+            <div class="passport-top">
+              <div>
+                <p class="eyebrow">Farmer Passport</p>
+                <p class="hint" id="detailPassportLabel">—</p>
+              </div>
+              <div class="passport-grade-wrap">
+                <span class="passport-grade" id="detailPassportGrade">—</span>
+                <span class="hint" id="detailPassportScore">—</span>
+              </div>
+            </div>
+            <div class="status-card passport-stats">
+              <div>
+                <p class="eyebrow">Net income</p>
+                <p class="stat" id="detailPassportIncome">—</p>
+              </div>
+              <div>
+                <p class="eyebrow">Loan paid</p>
+                <p class="stat" id="detailPassportLoan">—</p>
+              </div>
+            </div>
+          </div>
+          <div class="plot-card staff-plot" id="detailPlot" hidden>
+            <p class="eyebrow">GPS plot</p>
+            <div class="plot-head">
+              <div>
+                <p class="eyebrow">Coordinates</p>
+                <p class="stat" id="detailPlotCoords">—</p>
+              </div>
+              <div>
+                <p class="eyebrow">Area</p>
+                <p class="stat" id="detailPlotArea">—</p>
+              </div>
+              <div>
+                <p class="eyebrow">Plot NDVI</p>
+                <p class="stat" id="detailPlotNdvi">—</p>
+              </div>
+              <span class="badge accepted" id="detailPlotBadge">—</span>
+            </div>
+            <div id="detailPlotMap" class="plot-map"></div>
+          </div>
+          <div class="readonly-banner" id="detailBanner">Read only — stages are logged by the farmer app or by *413#, not from this desk.</div>
+          <form id="intakeForm" class="stack intake-form" hidden>
+            <p class="eyebrow">Warehouse intake</p>
+            <label>Crop
+              <select id="intakeCrop"></select>
+            </label>
+            <label>Weight (kg)
+              <input id="intakeWeight" inputmode="decimal" placeholder="82">
+            </label>
+            <label>Moisture (%)
+              <input id="intakeMoisture" inputmode="decimal" placeholder="12.4">
+            </label>
+            <div class="demo-row">
+              <span>Meter presets:</span>
+              <button type="button" class="chip" data-intake="accept">Maize 12.4% · accept</button>
+              <button type="button" class="chip" data-intake="wet">Maize 15.1% · drying</button>
+            </div>
+            <button type="submit" class="primary">Grade and take in</button>
+            <p class="form-error" id="intakeError" hidden></p>
+          </form>
           <div class="status-card">
             <div>
               <p class="eyebrow">Current stage</p>
@@ -79,6 +218,8 @@
           <ol class="stepper" id="detailStepper"></ol>
           <h2>Season log</h2>
           <div id="detailEvents" class="event-log"></div>
+          <h2 id="detailReceiptsTitle" hidden>Warehouse receipts</h2>
+          <div id="detailReceipts" class="ledger-list"></div>
         </div>
       </section>
     </main>
@@ -89,10 +230,10 @@
       <h2>Live traffic to the server</h2>
       <button type="button" class="ghost" id="clearWire">Clear</button>
     </div>
-    <p class="hint">Staff requests are GET-only after login.</p>
+    <p class="hint">Cooperatives POST warehouse intake and buyer offers. The ministry PUTs floor prices. FUM only reads the blocked and cleared contracts.</p>
     <div id="wireLog" class="wire-log"></div>
   </section>
 
-  <script src="/staff.js?v=4"></script>
+  <script src="/staff.js?v=15"></script>
 </body>
 </html>

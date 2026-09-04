@@ -1,4 +1,4 @@
-# DzalaSmart
+# Nzeru za Alimi
 
 Server-backed farming system for Malawi. One farmer record, written by the mobile app and by USSD, stored on this machine for now.
 
@@ -52,8 +52,13 @@ The Android app logs the same season events as the browser farmer app. USSD stay
 - **Season events** — eight stages from input redemption to net income, in order
 - **Mobile/API** — register, login, log a stage, read status
 - **USSD** — Africa's Talking-style `POST /ussd` so a real `*413#` can point here later
+- **Extension visit queue** — pest reports, stalled seasons, and harvests not yet taken in, scoped to the officer's EPA
+- **Ministry NDVI map** — five-day satellite-style crop health by district, adjusted for live pest reports and weather alerts
+- **Plan My Farm** — saved season budget, bankability score, planting windows, and cash-flow plan using live market prices
+- **GPS plot mapping** — EPA centroid estimate, phone GPS pin, OpenStreetMap embed, plot NDVI, polygon from plan hectares
+- **Live market prices** — pulled from [Ulimi marketplace](https://ulimi.online/) with fallback if the feed is down
 
-Both channels write the same SQLite database (`server/data/dzalasmart.db`).
+Both channels write the same SQLite database (`server/data/dzalasmart.db`). The filename is unchanged so existing local data keeps working.
 
 ### Useful commands
 
@@ -73,6 +78,8 @@ The USSD simulator needs the server running in another terminal.
 | `POST` | `/api/farmers/login` | no |
 | `GET` | `/api/farmers/me` | Bearer token |
 | `GET` | `/api/farmers/me/status` | Bearer token |
+| `GET` | `/api/farmers/me/plot` | Bearer token |
+| `PUT` | `/api/farmers/me/plot` | Bearer token (`lat`, `lon`, optional `accuracyM`, `source: "gps"`) |
 | `POST` | `/api/farmers/me/events` | Bearer token |
 | `GET` | `/api/stages` | no |
 | `GET` | `/api/districts` | no |
