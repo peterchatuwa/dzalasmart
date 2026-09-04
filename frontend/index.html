@@ -6,7 +6,7 @@
   <title>Nzeru za Alimi — Farmer app</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=19">
+  <link rel="stylesheet" href="/styles.css?v=20">
 </head>
 <body>
   <header class="topbar">
@@ -206,6 +206,29 @@
             <h3 id="marketHistoryTitle">—</h3>
             <div id="marketHistoryList" class="ledger-list"></div>
           </div>
+          <div id="marketTrendPanel" class="market-history">
+            <p class="eyebrow">Price trends</p>
+            <div class="market-filters">
+              <label>Trend commodity
+                <select id="marketTrendCommodity">
+                  <option value="maize">Maize</option>
+                </select>
+              </label>
+              <label>Range
+                <select id="marketTrendRange">
+                  <option value="30d">30 days</option>
+                  <option value="3m">3 months</option>
+                  <option value="1y">1 year</option>
+                </select>
+              </label>
+              <button type="button" class="ghost" id="marketTrendBtn">Update chart</button>
+              <button type="button" class="ghost" id="marketExportBtn">Download CSV</button>
+            </div>
+            <p class="hint" id="marketTrendSummary"></p>
+            <div class="market-chart-wrap">
+              <canvas id="marketTrendChart" height="220"></canvas>
+            </div>
+          </div>
           <div id="marketComparePanel" class="market-history">
             <p class="eyebrow">Compare & opportunities</p>
             <div class="market-filters">
@@ -363,6 +386,7 @@
     <div id="wireLog" class="wire-log"></div>
   </section>
 
-  <script src="/app.js?v=17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="/app.js?v=18"></script>
 </body>
 </html>

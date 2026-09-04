@@ -362,6 +362,87 @@ async function loadMarketCompare(commoditySlug, district) {
   }
 }
 
+const TREND_COLORS = ["#2d6a4f", "#bc6c25", "#1d3557", "#9b2226", "#6a4c93", "#457b9d"];
+let marketTrendChartInstance = null;
+
+function renderMarketTrendChart(payload, canvasId = "marketTrendChart") {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !window.Chart) return;
+  if (marketTrendChartInstance) {
+    marketTrendChartInstance.destroy();
+    marketTrendChartInstance = null;
+  }
+  if (!payload?.series?.length) return;
+
+  const labels = payload.labels || [];
+  marketTrendChartInstance = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: payload.series.map((row, index) => ({
+        label: row.source,
+        data: labels.map((date) => row.points.find((point) => point.date === date)?.buyPricePerKg ?? null),
+        borderColor: TREND_COLORS[index % TREND_COLORS.length],
+        backgroundColor: "transparent",
+        tension: 0.25,
+        spanGaps: true,
+      })),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
+      scales: {
+        y: { title: { display: true, text: "MWK / kg (buy)" } },
+      },
+    },
+  });
+}
+
+async function loadMarketTrends(commoditySlug, district, range) {
+  const summary = document.getElementById("marketTrendSummary");
+  if (!summary || !commoditySlug) return;
+  summary.textContent = "Loading trend chart…";
+  try {
+    const qs = new URLSearchParams({ commodity: commoditySlug, range: range || "30d" });
+    if (district) qs.set("district", district);
+    const payload = await api("GET", `/api/market/trends?${qs}`);
+    if (payload.stats) {
+      const change = payload.stats.change >= 0 ? `+${payload.stats.change}` : payload.stats.change;
+      summary.textContent = `${payload.commodity} · ${payload.rangeLabel}${district ? ` · ${district}` : ""} · `
+        + `${payload.stats.count} observations · last buy MWK ${payload.stats.lastBuy?.toLocaleString("en")}/kg `
+        + `(${change} MWK${payload.stats.changePct != null ? `, ${payload.stats.changePct}%` : ""})`;
+    } else {
+      summary.textContent = `No trend data yet for ${payload.commodity}. Refresh feeds or import historical prices.`;
+    }
+    renderMarketTrendChart(payload);
+  } catch (error) {
+    summary.textContent = error.message || "Could not load trends.";
+    if (marketTrendChartInstance) {
+      marketTrendChartInstance.destroy();
+      marketTrendChartInstance = null;
+    }
+  }
+}
+
+async function downloadMarketCsv({ commodity, district, range }) {
+  const qs = new URLSearchParams();
+  if (commodity) qs.set("commodity", commodity);
+  if (district) qs.set("district", district);
+  if (range) qs.set("range", range);
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${apiBase()}/api/market/export?${qs}`, { headers });
+  if (!res.ok) throw new Error("Could not download CSV export");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] || "market-prices.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 async function loadMarketHistory(commoditySlug, district) {
   const panel = document.getElementById("marketHistoryPanel");
   const list = document.getElementById("marketHistoryList");
@@ -385,6 +466,10 @@ async function loadMarketHistory(commoditySlug, district) {
   } catch (error) {
     list.innerHTML = `<p class="hint">${error.message || "Could not load history."}</p>`;
   }
+  const trendRange = document.getElementById("marketTrendRange")?.value || "30d";
+  const trendSelect = document.getElementById("marketTrendCommodity");
+  if (trendSelect) trendSelect.value = commoditySlug;
+  await loadMarketTrends(commoditySlug, district, trendRange);
 }
 
 async function loadMarket(options = {}) {
@@ -405,6 +490,11 @@ async function loadMarket(options = {}) {
       const compareSelect = document.getElementById("marketCompareCommodity");
       if (compareSelect && compareSelect.options.length <= 1) {
         compareSelect.innerHTML = (payload.commodities || []).map((row) =>
+          `<option value="${row.slug}">${row.name}</option>`).join("");
+      }
+      const trendSelect = document.getElementById("marketTrendCommodity");
+      if (trendSelect && trendSelect.options.length <= 1) {
+        trendSelect.innerHTML = (payload.commodities || []).map((row) =>
           `<option value="${row.slug}">${row.name}</option>`).join("");
       }
     }
@@ -458,6 +548,10 @@ async function loadMarket(options = {}) {
       || commodity
       || "maize";
     await loadMarketCompare(compareCommodity, district);
+
+    const trendCommodity = document.getElementById("marketTrendCommodity")?.value || compareCommodity;
+    const trendRange = document.getElementById("marketTrendRange")?.value || "30d";
+    await loadMarketTrends(trendCommodity, district, trendRange);
   } catch {
     document.getElementById("marketPriceBody").innerHTML = `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
     document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;
@@ -1054,6 +1148,27 @@ async function boot() {
   document.getElementById("marketCompareCommodity")?.addEventListener("change", () => {
     const slug = document.getElementById("marketCompareCommodity")?.value || "maize";
     loadMarketCompare(slug, status?.farmer?.district);
+  });
+  document.getElementById("marketTrendBtn")?.addEventListener("click", () => {
+    const slug = document.getElementById("marketTrendCommodity")?.value || "maize";
+    const range = document.getElementById("marketTrendRange")?.value || "30d";
+    loadMarketTrends(slug, status?.farmer?.district, range);
+  });
+  document.getElementById("marketTrendRange")?.addEventListener("change", () => {
+    const slug = document.getElementById("marketTrendCommodity")?.value || "maize";
+    const range = document.getElementById("marketTrendRange")?.value || "30d";
+    loadMarketTrends(slug, status?.farmer?.district, range);
+  });
+  document.getElementById("marketExportBtn")?.addEventListener("click", async () => {
+    try {
+      await downloadMarketCsv({
+        commodity: document.getElementById("marketTrendCommodity")?.value || "maize",
+        district: status?.farmer?.district,
+        range: document.getElementById("marketTrendRange")?.value || "30d",
+      });
+    } catch (error) {
+      alert(error.message || "Export failed");
+    }
   });
   await loadAdvisor();
   if (token) {

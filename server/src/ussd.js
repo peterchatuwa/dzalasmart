@@ -1,6 +1,7 @@
 import { APP_NAME } from "./brand.js";
 import { askAdvisor, logPestReport } from "./advisor.js";
 import { findFarmerByPhone, farmerStatus, logStage } from "./farmers.js";
+import { getMarketPriceFromDb } from "./market.js";
 import { acceptWarehouseLoan, listReceiptsForFarmer, pendingLoanReceipts } from "./warehouse.js";
 import { fetchDistrictWeather, publicWeather, ussdWeatherLine } from "./weather.js";
 
@@ -8,6 +9,13 @@ const USSD_PEST = {
   1: "worms on leaves holes in the leaves caterpillar mphutsi",
   2: "yellow spots yellow streak mawanga achikasu",
   3: "wilt kufota",
+};
+
+const USSD_CROPS = {
+  1: "Maize",
+  2: "Groundnuts",
+  3: "Soybeans",
+  4: "Beans",
 };
 
 function ussdReply(message) {
@@ -32,7 +40,7 @@ export async function handleUssd(db, body = {}) {
 
   if (parts.length === 0) {
     return ussdReply(
-      `CON ${APP_NAME} — ${farmer.name}\n1. Log next milestone\n2. My season status\n3. Weather for my district\n4. Report a pest problem\n5. Warehouse & loan`
+      `CON ${APP_NAME} — ${farmer.name}\n1. Log next milestone\n2. My season status\n3. Weather for my district\n4. Report a pest problem\n5. Warehouse & loan\n6. Market price`
     );
   }
 
@@ -118,6 +126,19 @@ export async function handleUssd(db, body = {}) {
     } catch (error) {
       return ussdReply(`END ${error.message}`);
     }
+  }
+
+  if (parts[0] === "6") {
+    if (parts.length === 1) {
+      return ussdReply("CON Choose crop\n1. Maize\n2. Groundnuts\n3. Soybeans\n4. Beans");
+    }
+    const crop = USSD_CROPS[parts[1]];
+    if (!crop) return ussdReply("END Invalid choice.");
+    const price = await getMarketPriceFromDb(db, crop, farmer.district);
+    if (price == null) {
+      return ussdReply(`END No live ${crop} price stored for ${farmer.district} yet. Try again after the market feeds refresh.`);
+    }
+    return ussdReply(`END ${crop} in ${farmer.district}: MWK ${Math.round(price).toLocaleString("en")}/kg`);
   }
 
   return ussdReply("END Invalid choice.");

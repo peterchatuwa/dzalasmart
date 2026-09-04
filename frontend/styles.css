@@ -637,6 +637,14 @@ html.native .native-server { margin-bottom: 16px; }
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.market-chart-wrap {
+  position: relative;
+  height: 240px;
+  margin-top: 8px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+}
 .market-row {
   display: flex;
   justify-content: space-between;

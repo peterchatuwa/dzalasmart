@@ -250,11 +250,13 @@ async function loadMarketAdmin() {
   const panel = document.getElementById("marketAdminPanel");
   const form = document.getElementById("marketManualForm");
   const importForm = document.getElementById("marketImportForm");
+  const trendPanel = document.getElementById("marketTrendStaffPanel");
   if (!panel) return;
   const canEdit = staff?.role === "ministry" || staff?.role === "cooperative";
   const canImport = staff?.role === "ministry";
   if (form) form.hidden = !canEdit;
   if (importForm) importForm.hidden = !canImport;
+  if (trendPanel) trendPanel.hidden = false;
   try {
     const payload = await api("GET", "/api/staff/market/sources", { auth: true });
     document.getElementById("marketSourceList").innerHTML = (payload.sources || []).map((row) => `
@@ -273,6 +275,98 @@ async function loadMarketAdmin() {
   if (districtSelect && districtSelect.options.length <= 1) {
     districtSelect.innerHTML = districts.map((name) => `<option value="${name}">${name}</option>`).join("");
   }
+  const staffTrendDistrict = document.getElementById("staffTrendDistrict");
+  if (staffTrendDistrict && staffTrendDistrict.options.length <= 1) {
+    staffTrendDistrict.innerHTML = `<option value="">All districts</option>${districts.map((name) => `<option value="${name}">${name}</option>`).join("")}`;
+  }
+  try {
+    const prices = await api("GET", "/api/market/prices", { auth: true });
+    const trendCommodity = document.getElementById("staffTrendCommodity");
+    if (trendCommodity && trendCommodity.options.length <= 1) {
+      trendCommodity.innerHTML = (prices.commodities || [{ slug: "maize", name: "Maize" }]).map((row) =>
+        `<option value="${row.slug}">${row.name}</option>`).join("");
+    }
+    await loadStaffTrends();
+  } catch {
+    await loadStaffTrends();
+  }
+}
+
+const STAFF_TREND_COLORS = ["#2d6a4f", "#bc6c25", "#1d3557", "#9b2226", "#6a4c93", "#457b9d"];
+let staffTrendChartInstance = null;
+
+function renderStaffTrendChart(payload) {
+  const canvas = document.getElementById("staffTrendChart");
+  if (!canvas || !window.Chart) return;
+  if (staffTrendChartInstance) {
+    staffTrendChartInstance.destroy();
+    staffTrendChartInstance = null;
+  }
+  if (!payload?.series?.length) return;
+  const labels = payload.labels || [];
+  staffTrendChartInstance = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: payload.series.map((row, index) => ({
+        label: row.source,
+        data: labels.map((date) => row.points.find((point) => point.date === date)?.buyPricePerKg ?? null),
+        borderColor: STAFF_TREND_COLORS[index % STAFF_TREND_COLORS.length],
+        backgroundColor: "transparent",
+        tension: 0.25,
+        spanGaps: true,
+      })),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { title: { display: true, text: "MWK / kg (buy)" } } },
+    },
+  });
+}
+
+async function loadStaffTrends() {
+  const summary = document.getElementById("staffTrendSummary");
+  if (!summary) return;
+  summary.textContent = "Loading trend chart…";
+  try {
+    const qs = new URLSearchParams({
+      commodity: document.getElementById("staffTrendCommodity")?.value || "maize",
+      range: document.getElementById("staffTrendRange")?.value || "90d",
+    });
+    const district = document.getElementById("staffTrendDistrict")?.value;
+    if (district) qs.set("district", district);
+    const payload = await api("GET", `/api/staff/market/trends?${qs}`, { auth: true });
+    if (payload.stats) {
+      summary.textContent = `${payload.commodity} · ${payload.rangeLabel}${payload.district ? ` · ${payload.district}` : ""} · ${payload.stats.count} observations`;
+    } else {
+      summary.textContent = `No trend data yet for ${payload.commodity}.`;
+    }
+    renderStaffTrendChart(payload);
+  } catch (error) {
+    summary.textContent = error.message || "Could not load trends.";
+  }
+}
+
+async function downloadStaffExport() {
+  const qs = new URLSearchParams({
+    commodity: document.getElementById("staffTrendCommodity")?.value || "maize",
+    range: document.getElementById("staffTrendRange")?.value || "90d",
+  });
+  const district = document.getElementById("staffTrendDistrict")?.value;
+  if (district) qs.set("district", district);
+  const res = await fetch(`/api/staff/market/export?${qs}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error("Could not export CSV");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] || "market-prices.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function fillCrops() {
@@ -654,6 +748,19 @@ document.getElementById("marketRefreshBtn")?.addEventListener("click", async () 
     await loadMarketAdmin();
   } catch (error) {
     showError("marketManualError", error.message);
+  }
+});
+
+document.getElementById("staffTrendBtn")?.addEventListener("click", () => loadStaffTrends());
+document.getElementById("staffTrendRange")?.addEventListener("change", () => loadStaffTrends());
+document.getElementById("staffTrendCommodity")?.addEventListener("change", () => loadStaffTrends());
+document.getElementById("staffTrendDistrict")?.addEventListener("change", () => loadStaffTrends());
+document.getElementById("staffExportBtn")?.addEventListener("click", async () => {
+  showError("marketImportError", "");
+  try {
+    await downloadStaffExport();
+  } catch (error) {
+    showError("marketImportError", error.message);
   }
 });
 

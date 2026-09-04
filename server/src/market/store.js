@@ -173,11 +173,12 @@ export async function priceHistory(db, filters = {}) {
     where.push(`l.slug = $${params.length}`);
   }
 
+  const limit = Math.min(5000, Math.max(1, Number(filters.maxRows) || 500));
   const sql = `
     ${OBS_SELECT}
     WHERE ${where.join(" AND ")}
     ORDER BY o.fetched_at ASC
-    LIMIT 500
+    LIMIT ${limit}
   `;
   const rows = await db.query(sql, params);
   return rows.rows.map(mapObservationRow);

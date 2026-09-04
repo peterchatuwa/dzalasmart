@@ -20,6 +20,8 @@ import {
   findMarketOpportunities,
   resolveCompareCommodity,
 } from "./compare.js";
+import { buildMarketExport } from "./export.js";
+import { buildTrendSeries } from "./trends.js";
 
 const CACHE_MS = 30 * 60 * 1000;
 
@@ -378,6 +380,22 @@ export async function marketOpportunitiesPayload(db, filters = {}) {
     count: opportunities.length,
     opportunities,
   };
+}
+
+export async function marketTrendsPayload(db, filters = {}) {
+  const commodity = await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug || "maize");
+  if (!commodity) throw new Error("Unknown commodity");
+  return buildTrendSeries(db, {
+    commoditySlug: commodity.slug,
+    district: filters.district || undefined,
+    sourceSlug: filters.sourceSlug || undefined,
+    locationSlug: filters.locationSlug || undefined,
+    range: filters.range || "30d",
+  });
+}
+
+export async function marketExportPayload(db, filters = {}) {
+  return buildMarketExport(db, filters);
 }
 
 export function resetMarketCacheForTests() {

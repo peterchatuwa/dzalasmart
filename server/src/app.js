@@ -16,7 +16,7 @@ import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
 import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
-import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
+import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, marketTrendsPayload, marketExportPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
@@ -109,6 +109,40 @@ export function createApp(db, options = {}) {
       res.json(await marketOpportunitiesPayload(db, {
         commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
       }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/trends", async (req, res, next) => {
+    try {
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
+      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      res.json(await marketTrendsPayload(db, {
+        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+        district: district || undefined,
+        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+        range: String(req.query.range || "30d").trim(),
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/export", async (req, res, next) => {
+    try {
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
+      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      const payload = await marketExportPayload(db, {
+        commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+        district: district || undefined,
+        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+        range: String(req.query.range || "").trim() || undefined,
+        days: Number(req.query.days) || undefined,
+      });
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${payload.filename}"`);
+      res.send(payload.csv);
     } catch (error) {
       next(error);
     }
@@ -376,6 +410,37 @@ export function createApp(db, options = {}) {
   app.post("/api/staff/market/import", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
     try {
       res.status(201).json(await importMarketCsv(db, req.staff, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/market/export", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const payload = await marketExportPayload(db, {
+        commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+        district: String(req.query.district || "").trim() || undefined,
+        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+        range: String(req.query.range || "90d").trim(),
+        days: Number(req.query.days) || undefined,
+        maxRows: 5000,
+      });
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${payload.filename}"`);
+      res.send(payload.csv);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/market/trends", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await marketTrendsPayload(db, {
+        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+        district: String(req.query.district || "").trim() || undefined,
+        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+        range: String(req.query.range || "90d").trim(),
+      }));
     } catch (error) {
       next(error);
     }
