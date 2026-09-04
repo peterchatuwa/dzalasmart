@@ -84,8 +84,8 @@ function mapObservationRow(row) {
     sourceSlug: row.source_slug,
     priceKind: row.price_kind,
     grade: row.grade,
-    observedAt: row.observed_at,
-    fetchedAt: row.fetched_at,
+    observedAt: Number(row.observed_at) || null,
+    fetchedAt: Number(row.fetched_at) || null,
     updatedLabel: relativeUpdatedLabel(row.fetched_at),
     metadata: row.metadata_json ? JSON.parse(row.metadata_json) : null,
   };

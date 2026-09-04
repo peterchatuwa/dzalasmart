@@ -8,6 +8,11 @@ function csvCell(value) {
   return text;
 }
 
+function safeIso(timestamp) {
+  const date = new Date(timestamp);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : "";
+}
+
 export function observationsToCsv(rows) {
   const header = [
     "observed_at",
@@ -24,7 +29,7 @@ export function observationsToCsv(rows) {
     "notes",
   ].join(",");
   const lines = rows.map((row) => [
-    new Date(row.fetchedAt || row.observedAt).toISOString(),
+    safeIso(row.fetchedAt || row.observedAt),
     row.commodity,
     row.commoditySlug,
     row.district || "",

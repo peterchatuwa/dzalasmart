@@ -8,12 +8,19 @@ export function parseTrendRange(range = "30d") {
   return { days: 30, label: "30 days", range: "30d" };
 }
 
+function safeDate(timestamp) {
+  const date = new Date(timestamp);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
 function dayKey(timestamp) {
-  return new Date(timestamp).toISOString().slice(0, 10);
+  const date = safeDate(timestamp);
+  return date ? date.toISOString().slice(0, 10) : null;
 }
 
 function upsertDailyPoint(bucket, point) {
-  const date = dayKey(point.fetchedAt);
+  const date = dayKey(point.fetchedAt || point.observedAt);
+  if (!date) return;
   const existing = bucket.find((row) => row.date === date);
   if (existing) {
     existing.buyPricePerKg = point.buyPricePerKg;
