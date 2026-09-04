@@ -242,7 +242,34 @@ async function loadDesk() {
   await loadPests();
   await loadVisits();
   await loadNational();
+  await loadMarketAdmin();
   loadAlerts();
+}
+
+async function loadMarketAdmin() {
+  const panel = document.getElementById("marketAdminPanel");
+  const form = document.getElementById("marketManualForm");
+  if (!panel) return;
+  const canEdit = staff?.role === "ministry" || staff?.role === "cooperative";
+  if (form) form.hidden = !canEdit;
+  try {
+    const payload = await api("GET", "/api/staff/market/sources", { auth: true });
+    document.getElementById("marketSourceList").innerHTML = (payload.sources || []).map((row) => `
+      <div class="ledger-row">
+        <div>
+          <strong>${row.name}</strong>
+          <div class="meta">${row.kind}${row.url ? ` · ${row.url}` : ""}</div>
+          ${row.lastError ? `<div class="meta">${row.lastError}</div>` : ""}
+        </div>
+        <span class="badge ${row.status === "ok" ? "accepted" : row.status === "error" ? "rejected" : "drying_required"}">${row.status} · ${row.updatedLabel}</span>
+      </div>`).join("") || `<p class="hint">No market sources configured yet.</p>`;
+  } catch (error) {
+    document.getElementById("marketSourceList").innerHTML = `<p class="hint">${error.message}</p>`;
+  }
+  const districtSelect = document.getElementById("marketManualDistrict");
+  if (districtSelect && districtSelect.options.length <= 1) {
+    districtSelect.innerHTML = districts.map((name) => `<option value="${name}">${name}</option>`).join("");
+  }
 }
 
 function fillCrops() {
@@ -563,6 +590,39 @@ document.querySelectorAll("[data-demo]").forEach((btn) => {
 document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("clearWire").addEventListener("click", () => { wireLog.innerHTML = ""; });
 document.getElementById("districtFilter").addEventListener("change", renderList);
+
+document.getElementById("marketManualForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showError("marketManualError", "");
+  try {
+    await api("POST", "/api/staff/market/observations", {
+      auth: true,
+      body: {
+        crop: document.getElementById("marketManualCrop").value,
+        district: document.getElementById("marketManualDistrict").value,
+        buyPricePerKg: Number(document.getElementById("marketManualBuy").value),
+        sellPricePerKg: document.getElementById("marketManualSell").value
+          ? Number(document.getElementById("marketManualSell").value)
+          : undefined,
+        notes: document.getElementById("marketManualNotes").value,
+        priceKind: "market",
+      },
+    });
+    await loadMarketAdmin();
+  } catch (error) {
+    showError("marketManualError", error.message);
+  }
+});
+
+document.getElementById("marketRefreshBtn")?.addEventListener("click", async () => {
+  showError("marketManualError", "");
+  try {
+    await api("POST", "/api/staff/market/refresh", { auth: true });
+    await loadMarketAdmin();
+  } catch (error) {
+    showError("marketManualError", error.message);
+  }
+});
 
 document.querySelectorAll("[data-intake]").forEach((btn) => {
   btn.addEventListener("click", () => {

@@ -16,7 +16,7 @@ import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
 import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
-import { marketPayload, refreshMarketCache, getMarketRows, getMarketMeta } from "./market.js";
+import { marketPayload, marketPricesPayload, marketHistoryPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, refreshAllSources } from "./market.js";
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
@@ -41,7 +41,39 @@ export function createApp(db, options = {}) {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
       const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketPayload({ district }));
+      res.json(await marketPayload(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/prices", async (req, res, next) => {
+    try {
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
+      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      res.json(await marketPricesPayload(db, {
+        district: district || undefined,
+        region: String(req.query.region || "").trim() || undefined,
+        commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+        refresh: req.query.refresh === "1",
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/history", async (req, res, next) => {
+    try {
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
+      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      res.json(await marketHistoryPayload(db, {
+        district: district || undefined,
+        commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+        locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
+        days: Number(req.query.days) || 30,
+      }));
     } catch (error) {
       next(error);
     }
@@ -118,7 +150,7 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/me/plan", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      await refreshMarketCache();
+      await refreshMarketCache(db);
       let weather = null;
       try {
         weather = publicWeather(await fetchDistrictWeather(req.farmer.district));
@@ -133,7 +165,7 @@ export function createApp(db, options = {}) {
 
   app.put("/api/farmers/me/plan", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      await refreshMarketCache();
+      await refreshMarketCache(db);
       const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
       res.json(await saveFarmPlan(db, row, req.body || {}));
     } catch (error) {
@@ -199,7 +231,7 @@ export function createApp(db, options = {}) {
         }
       }
       if (result.intent === "market") {
-        await refreshMarketCache();
+        await refreshMarketCache(db);
         const district = farmer?.district || body.district || null;
         const meta = getMarketMeta(district);
         const floors = (await listFloors(db)).map((row) => `${row.crop} floor MWK ${row.pricePerKg}/kg`).join("\n");
@@ -285,6 +317,31 @@ export function createApp(db, options = {}) {
   app.get("/api/staff/visits", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
       res.json(await visitQueue(db, req.staff));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/market/sources", requireStaff(db, jwtSecret), async (_req, res, next) => {
+    try {
+      res.json({ sources: (await marketPricesPayload(db, {})).sources });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/staff/market/observations", requireStaff(db, jwtSecret), requireStaffRole("ministry", "cooperative"), async (req, res, next) => {
+    try {
+      res.status(201).json(await recordManualObservation(db, req.staff, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/staff/market/refresh", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (_req, res, next) => {
+    try {
+      const result = await refreshAllSources(db, true);
+      res.json({ ok: true, errors: result.errors || [], sources: result.sources || [] });
     } catch (error) {
       next(error);
     }

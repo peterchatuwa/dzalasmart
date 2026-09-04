@@ -316,30 +316,90 @@ async function loadWeather(district) {
   }
 }
 
-async function loadMarket() {
+async function loadMarketHistory(commoditySlug, district) {
+  const panel = document.getElementById("marketHistoryPanel");
+  const list = document.getElementById("marketHistoryList");
+  const title = document.getElementById("marketHistoryTitle");
+  if (!panel || !commoditySlug) {
+    if (panel) panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  title.textContent = `${commoditySlug.replace(/-/g, " ")} · last 30 days`;
+  list.innerHTML = `<p class="hint">Loading history…</p>`;
   try {
-    const district = status?.farmer?.district;
-    const path = district ? `/api/market?district=${encodeURIComponent(district)}` : "/api/market";
-    const payload = await api("GET", path);
-    document.getElementById("marketTable").innerHTML = (payload.rows || []).map((row) => `
+    const qs = new URLSearchParams({ commodity: commoditySlug, days: "30" });
+    if (district) qs.set("district", district);
+    const payload = await api("GET", `/api/market/history?${qs}`);
+    list.innerHTML = (payload.points || []).slice(-20).reverse().map((row) => `
+      <div class="kv-row">
+        <span>${new Date(row.fetchedAt).toLocaleDateString()} · ${row.source} · ${row.market}</span>
+        <strong>${row.buyPrice || "—"}${row.sellPrice ? ` / ${row.sellPrice}` : ""}</strong>
+      </div>`).join("") || `<p class="hint">No history yet for this commodity. Prices are stored each time feeds refresh.</p>`;
+  } catch (error) {
+    list.innerHTML = `<p class="hint">${error.message || "Could not load history."}</p>`;
+  }
+}
+
+async function loadMarket(options = {}) {
+  const district = status?.farmer?.district;
+  const commodityFilter = document.getElementById("marketCommodityFilter");
+  const commodity = commodityFilter?.value || "";
+  try {
+    const qs = new URLSearchParams();
+    if (district) qs.set("district", district);
+    if (commodity) qs.set("commodity", commodity);
+    if (options.refresh) qs.set("refresh", "1");
+    const payload = await api("GET", `/api/market/prices?${qs}`);
+    const prices = payload.prices || [];
+
+    if (commodityFilter && commodityFilter.options.length <= 1) {
+      commodityFilter.innerHTML = `<option value="">All commodities</option>${(payload.commodities || []).map((row) =>
+        `<option value="${row.slug}">${row.name}</option>`).join("")}`;
+    }
+
+    const scope = document.getElementById("marketScopeNote");
+    if (scope) {
+      scope.textContent = district
+        ? `Showing prices relevant to ${district}${payload.stats?.count ? ` · ${payload.stats.count} live quote${payload.stats.count === 1 ? "" : "s"}` : ""}.`
+        : "Log in to filter prices for your district.";
+    }
+
+    const tbody = document.getElementById("marketPriceBody");
+    if (tbody) {
+      tbody.innerHTML = prices.map((row) => `
+        <tr data-slug="${row.commoditySlug || ""}">
+          <td><strong>${row.crop}</strong>${row.priceKind === "procurement" ? ' <span class="hint procurement">gov</span>' : ""}</td>
+          <td>${row.market}${row.district ? `<div class="hint">${row.district}</div>` : ""}</td>
+          <td>${row.buyPrice || "—"}</td>
+          <td>${row.sellPrice || "—"}</td>
+          <td>${row.source}</td>
+          <td>${row.updatedLabel || "—"}</td>
+        </tr>`).join("") || `<tr><td colspan="6"><p class="hint">No prices yet. The server refreshes LocalBuyEx and Ulimi automatically.</p></td></tr>`;
+      tbody.querySelectorAll("tr[data-slug]").forEach((tr) => {
+        tr.addEventListener("click", () => loadMarketHistory(tr.dataset.slug, district));
+      });
+    }
+
+    document.getElementById("marketTable").innerHTML = prices.filter((r) => r.sourceSlug === "localbuy").map((row) => `
       <div class="market-row">
         <div>
           <strong>${row.crop}</strong>
-          <div class="hint">${row.price}${row.warehouse ? ` · ${row.warehouse}` : ""}${row.yieldKg ? ` · ${row.yieldKg}/ha` : ""}</div>
+          <div class="hint">${row.buyPrice || "—"}${row.market ? ` · ${row.market}` : ""}</div>
         </div>
-        <div class="trend ${row.trend}">${row.trendLabel}<div class="hint">${row.net || ""}${row.net ? "/ha" : ""}</div></div>
-      </div>`).join("") || `<p class="hint">No LocalBuyEx prices for your nearest warehouse yet.</p>`;
+        <div class="trend flat">${row.source}<div class="hint">${row.updatedLabel || ""}</div></div>
+      </div>`).join("") || `<p class="hint">No warehouse quotes for your nearest hub yet.</p>`;
+
     const note = document.getElementById("marketNote");
     if (note) {
-      const link = payload.sourceUrl
-        ? `<a href="${payload.sourceUrl}" target="_blank" rel="noopener">LocalBuyEx</a>`
-        : "market feed";
-      const scope = payload.warehouseHub
-        ? `Nearest warehouse: <strong>${payload.warehouseHub}</strong>${district ? ` · ${district}` : ""}.`
-        : payload.note || "Log in to see prices for your district.";
-      note.innerHTML = `${payload.source || "Market prices"} · ${scope} Sourced from ${link}. A buyer offer below the ministry floor is blocked and cannot pay you.`;
+      const sources = (payload.sources || []).map((s) =>
+        `${s.name} (${s.status === "ok" ? s.updatedLabel : s.status})`).join(" · ");
+      note.textContent = sources
+        ? `Sources: ${sources}. Tap a row for 30-day history. Ministry floor prices below still govern off-take contracts.`
+        : "Market prices are stored in PostgreSQL each time feeds refresh.";
     }
   } catch {
+    document.getElementById("marketPriceBody").innerHTML = `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
     document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;
   }
   try {
@@ -925,6 +985,8 @@ async function boot() {
   districts = districtPayload.districts || [];
   fillDistricts();
   loadMarket();
+  document.getElementById("marketCommodityFilter")?.addEventListener("change", () => loadMarket());
+  document.getElementById("marketRefreshBtn")?.addEventListener("click", () => loadMarket({ refresh: true }));
   await loadAdvisor();
   if (token) {
     try {

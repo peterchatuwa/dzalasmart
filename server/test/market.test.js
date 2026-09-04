@@ -13,6 +13,7 @@ import {
 } from "../src/market.js";
 import { computeBudget } from "../src/plan.js";
 import { seedFloorsIfEmpty } from "../src/floors.js";
+import { seedMarketCatalog } from "../src/market.js";
 
 const SAMPLE_HTML = `
 <marquee>
@@ -98,6 +99,7 @@ test("GET /api/market scopes rows to the requested district", async (t) => {
   resetMarketCacheForTests();
   setMarketCacheForTests({ catalog: SAMPLE_CATALOG, trendByCode: new Map() });
   const db = await openDatabase(":memory:");
+  await seedMarketCatalog(db);
   await seedIfEmpty(db);
   const { url, close } = await listen(createApp(db, { jwtSecret: "test-secret" }));
   t.after(close);

@@ -1,6 +1,6 @@
 import { CROP_INFO } from "./advisor.js";
 import { listFloors } from "./floors.js";
-import { getMarketPrice } from "./market.js";
+import { getMarketPriceFromDb } from "./market.js";
 import { HttpError } from "./util.js";
 
 export const PLAN_CROPS = [
@@ -122,8 +122,8 @@ const DAILY_PLAN = {
   ],
 };
 
-function parseMarketPrice(crop, district) {
-  return getMarketPrice(crop, district);
+function parseMarketPrice(crop, district, db) {
+  return getMarketPriceFromDb(db, crop, district);
 }
 
 async function floorPrice(db, crop) {
@@ -163,7 +163,7 @@ export function plantingWindowStatus(crop, startMonth, now = new Date()) {
 export async function computeBudget(crop, hectares, db, district = null) {
   const model = getModel(crop);
   const ha = Math.max(0.1, Number(hectares) || 1);
-  const marketPrice = parseMarketPrice(crop, district);
+  const marketPrice = await parseMarketPrice(crop, district, db);
   const floor = await floorPrice(db, crop);
   const priceMwkKg = marketPrice || model.priceMwkKg;
   const totalCost = model.costPerHa * ha;

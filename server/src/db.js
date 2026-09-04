@@ -110,6 +110,62 @@ CREATE TABLE IF NOT EXISTS farm_plots (
   ndvi DOUBLE PRECISION NOT NULL,
   updated_at BIGINT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS market_sources (
+  id TEXT PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  url TEXT,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  last_ok_at BIGINT,
+  last_error TEXT,
+  updated_at BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS market_commodities (
+  id TEXT PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  aliases_json TEXT NOT NULL DEFAULT '[]',
+  active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS market_locations (
+  id TEXT PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  parent_id TEXT REFERENCES market_locations(id),
+  region TEXT,
+  district TEXT,
+  lat DOUBLE PRECISION,
+  lon DOUBLE PRECISION
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_locations_district ON market_locations(district);
+CREATE INDEX IF NOT EXISTS idx_market_locations_region ON market_locations(region);
+
+CREATE TABLE IF NOT EXISTS market_price_observations (
+  id TEXT PRIMARY KEY,
+  source_id TEXT NOT NULL REFERENCES market_sources(id),
+  commodity_id TEXT NOT NULL REFERENCES market_commodities(id),
+  location_id TEXT NOT NULL REFERENCES market_locations(id),
+  buy_price_per_kg DOUBLE PRECISION,
+  sell_price_per_kg DOUBLE PRECISION,
+  raw_unit TEXT,
+  raw_amount DOUBLE PRECISION,
+  price_kind TEXT NOT NULL DEFAULT 'market',
+  grade TEXT,
+  notes TEXT,
+  observed_at BIGINT NOT NULL,
+  fetched_at BIGINT NOT NULL,
+  metadata_json TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_obs_commodity ON market_price_observations(commodity_id, fetched_at DESC);
+CREATE INDEX IF NOT EXISTS idx_market_obs_location ON market_price_observations(location_id, fetched_at DESC);
+CREATE INDEX IF NOT EXISTS idx_market_obs_source ON market_price_observations(source_id, fetched_at DESC);
 `;
 
 function toPgSql(sql) {

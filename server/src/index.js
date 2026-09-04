@@ -7,6 +7,7 @@ import { openDatabase } from "./db.js";
 import { seedIfEmpty } from "./farmers.js";
 import { seedContractsIfEmpty, seedFloorsIfEmpty } from "./floors.js";
 import { seedStaffIfEmpty, staffIdByRole } from "./staff.js";
+import { seedMarketCatalog } from "./market.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(here, "..", ".env") });
@@ -16,6 +17,7 @@ const jwtSecret = process.env.JWT_SECRET || "local-dev-secret";
 
 async function main() {
   const db = await openDatabase(process.env.DATABASE_URL || ":memory:");
+  await seedMarketCatalog(db);
   const seeded = await seedIfEmpty(db);
   const staffSeeded = await seedStaffIfEmpty(db);
   await seedFloorsIfEmpty(db);

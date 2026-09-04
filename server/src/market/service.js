@@ -1,0 +1,376 @@
+import { MARKET as FALLBACK_MARKET } from "../weather.js";
+import { PLAN_CROP_SOURCES } from "./catalog.js";
+import { fetchLocalBuy, LOCALBUY_URL, parseLocalBuyHtml } from "./collectors/localbuy.js";
+import { fetchUlimi, ULIMI_URL, parseUlimiHtml } from "./collectors/ulimi.js";
+import { fmtMoney, relativeUpdatedLabel } from "./normalize.js";
+import { nearestWarehouseHub, warehouseHub } from "./locations.js";
+import {
+  insertObservations,
+  listCommodities,
+  listLatestPrices,
+  listSources,
+  latestPriceForCrop,
+  priceHistory,
+  updateSourceStatus,
+} from "./store.js";
+import { warehouseLocationId } from "./seed.js";
+
+const CACHE_MS = 30 * 60 * 1000;
+
+const YIELD_KG_HA = {
+  Maize: 3500,
+  Soybeans: 1800,
+  "Soya beans": 1800,
+  "Irish Potatoes": 18000,
+  Beans: 900,
+  Sesame: 800,
+  Groundnuts: 1200,
+  "Pigeon peas": 1000,
+  Sorghum: 1200,
+};
+
+let cache = {
+  at: 0,
+  live: false,
+  source: "Reference prices — refresh to load live feeds",
+  sourceUrl: null,
+  catalog: [],
+  trendByCode: new Map(),
+};
+
+let refreshing = null;
+
+function parseFallbackPrice(label) {
+  const row = FALLBACK_MARKET.find((item) => item.crop === label);
+  if (!row) return null;
+  const match = row.price.match(/([\d,]+)/);
+  return match ? Number(match[1].replace(/,/g, "")) : null;
+}
+
+function applyCache(payload) {
+  cache = {
+    at: Date.now(),
+    live: payload.live,
+    source: payload.source,
+    sourceUrl: payload.sourceUrl,
+    catalog: payload.catalog || [],
+    trendByCode: payload.trendByCode || new Map(),
+  };
+  return cache;
+}
+
+function catalogForDistrict(catalog, district) {
+  if (!district) return catalog;
+  const hub = nearestWarehouseHub(district);
+  return catalog.filter((row) => row.hub === hub);
+}
+
+function commodityPriceFromCatalog(catalog, names) {
+  for (const name of names) {
+    const row = catalog.find((item) => item.crop === name || item.product === name);
+    if (row) return row.buyPricePerKg;
+  }
+  return null;
+}
+
+async function persistLocalBuy(db, parsed, fetchedAt) {
+  const rows = [];
+  for (const item of parsed.catalog) {
+    if (!item.commoditySlug) continue;
+    const locId = await warehouseLocationId(db, item.hub);
+    if (!locId) continue;
+    rows.push({
+      commoditySlug: item.commoditySlug,
+      locationId: locId,
+      buyPricePerKg: item.buyPricePerKg,
+      sellPricePerKg: item.sellPricePerKg,
+      grade: item.grade,
+      metadata: { code: item.code, warehouse: item.warehouse, hub: item.hub },
+    });
+  }
+  if (rows.length) {
+    await insertObservations(db, "localbuy", rows, fetchedAt);
+    await updateSourceStatus(db, "localbuy", { ok: true });
+  }
+  return rows.length;
+}
+
+async function persistUlimi(db, parsed, fetchedAt) {
+  const rows = parsed.map((item) => ({
+    commoditySlug: item.commoditySlug,
+    locationSlug: "ulimi-national",
+    buyPricePerKg: item.buyPricePerKg,
+    sellPricePerKg: item.sellPricePerKg,
+    metadata: { market: item.market },
+  }));
+  if (rows.length) {
+    await insertObservations(db, "ulimi", rows, fetchedAt);
+    await updateSourceStatus(db, "ulimi", { ok: true });
+  }
+  return rows.length;
+}
+
+export async function refreshAllSources(db, force = false) {
+  if (!force && cache.catalog.length && Date.now() - cache.at < CACHE_MS) {
+    return { cache, sources: await listSources(db) };
+  }
+  if (refreshing) return refreshing;
+
+  refreshing = (async () => {
+    const fetchedAt = Date.now();
+    let catalog = [];
+    let trendByCode = new Map();
+    let live = false;
+    const errors = [];
+
+    try {
+      const parsed = await fetchLocalBuy();
+      catalog = parsed.catalog;
+      trendByCode = parsed.trendByCode;
+      if (db) await persistLocalBuy(db, parsed, fetchedAt);
+      live = true;
+    } catch (error) {
+      errors.push(`LocalBuyEx: ${error.message}`);
+      if (db) await updateSourceStatus(db, "localbuy", { ok: false, error: error.message });
+    }
+
+    try {
+      const ulimiRows = await fetchUlimi();
+      if (db) await persistUlimi(db, ulimiRows, fetchedAt);
+    } catch (error) {
+      errors.push(`Ulimi: ${error.message}`);
+      if (db) await updateSourceStatus(db, "ulimi", { ok: false, error: error.message });
+    }
+
+    applyCache({
+      live,
+      source: live
+        ? "Live prices from LocalBuyEx and Ulimi — stored in PostgreSQL"
+        : "Reference prices — live feeds unavailable",
+      sourceUrl: LOCALBUY_URL,
+      catalog,
+      trendByCode,
+    });
+
+    return { cache, errors, sources: db ? await listSources(db) : [] };
+  })();
+
+  try {
+    return await refreshing;
+  } finally {
+    refreshing = null;
+  }
+}
+
+export async function refreshMarketCache(db, force = false) {
+  const result = await refreshAllSources(db, force);
+  return result.cache;
+}
+
+export function marketView(district = null) {
+  if (!cache.live || !cache.catalog.length) {
+    return {
+      rows: FALLBACK_MARKET,
+      catalog: [],
+      hub: district ? nearestWarehouseHub(district) : null,
+      scoped: false,
+    };
+  }
+  const scopedCatalog = catalogForDistrict(cache.catalog, district);
+  const rows = scopedCatalog.length
+    ? buildDisplayRows(scopedCatalog, cache.trendByCode, district)
+    : buildDisplayRows(cache.catalog, cache.trendByCode, district);
+  return {
+    rows,
+    catalog: scopedCatalog.length ? scopedCatalog : cache.catalog,
+    hub: district ? nearestWarehouseHub(district) : null,
+    scoped: Boolean(district),
+  };
+}
+
+function buildDisplayRows(catalog, trendByCode, district) {
+  return catalog.map((row) => {
+    const yieldKgHa = YIELD_KG_HA[row.crop] || 1000;
+    const trend = trendByCode.get(row.code) || { trend: "flat", trendLabel: "— live" };
+    return {
+      crop: row.crop,
+      product: row.product,
+      price: `${fmtMoney(row.buyPricePerKg)}/kg buy`,
+      pricePerKg: row.buyPricePerKg,
+      sellPricePerKg: row.sellPricePerKg,
+      trend: trend.trend,
+      trendLabel: trend.trendLabel,
+      yieldKg: `${yieldKgHa.toLocaleString("en")} kg`,
+      net: `${fmtMoney(row.buyPricePerKg * yieldKgHa)}/ha`,
+      warehouse: row.warehouse,
+      hub: row.hub,
+      grade: row.grade,
+      live: true,
+      source: "LocalBuyEx",
+    };
+  });
+}
+
+function rowsFromObservations(observations) {
+  return observations.map((row) => ({
+    crop: row.commodity,
+    commoditySlug: row.commoditySlug,
+    market: row.market,
+    district: row.district,
+    region: row.region,
+    buyPricePerKg: row.buyPricePerKg,
+    sellPricePerKg: row.sellPricePerKg,
+    buyPrice: row.buyPrice,
+    sellPrice: row.sellPrice,
+    source: row.source,
+    sourceSlug: row.sourceSlug,
+    priceKind: row.priceKind,
+    grade: row.grade,
+    observedAt: row.observedAt,
+    fetchedAt: row.fetchedAt,
+    updatedLabel: row.updatedLabel,
+    live: true,
+  }));
+}
+
+export function getMarketRows(district = null) {
+  return marketView(district).rows;
+}
+
+export function getMarketMeta(district = null) {
+  const view = marketView(district);
+  return {
+    source: cache.source,
+    sourceUrl: cache.sourceUrl,
+    live: cache.live,
+    fetchedAt: cache.at || null,
+    district: district || null,
+    warehouseHub: view.hub,
+    scoped: view.scoped,
+  };
+}
+
+export function getMarketPrice(crop, district = null) {
+  if (cache.live && cache.catalog.length) {
+    const scoped = district ? catalogForDistrict(cache.catalog, district) : cache.catalog;
+    const live = commodityPriceFromCatalog(scoped, PLAN_CROP_SOURCES[crop] || [crop]);
+    if (live != null) return live;
+    if (district) return null;
+  }
+  const aliases = {
+    Maize: "Maize (MH26)",
+    Groundnuts: "Groundnuts",
+    Soybeans: "Soya beans",
+    "Pigeon peas": "Pigeon peas",
+    "Irish Potatoes": "Irish potato",
+  };
+  return parseFallbackPrice(aliases[crop] || crop);
+}
+
+export async function getMarketPriceFromDb(db, crop, district = null) {
+  if (db) {
+    const fromDb = await latestPriceForCrop(db, crop, district);
+    if (fromDb != null) return fromDb;
+  }
+  return getMarketPrice(crop, district);
+}
+
+export async function marketPayload(db, options = {}) {
+  await refreshMarketCache(db);
+  const district = options.district || null;
+  const hub = district ? nearestWarehouseHub(district) : null;
+  const observations = db
+    ? await listLatestPrices(db, { district })
+    : [];
+  const tableRows = observations.length
+    ? rowsFromObservations(observations)
+    : rowsFromObservations(
+      marketView(district).rows.map((row) => ({
+        commodity: row.crop,
+        market: row.warehouse || hub,
+        district: row.hub,
+        buyPricePerKg: row.pricePerKg,
+        sellPricePerKg: row.sellPricePerKg,
+        buyPrice: row.price,
+        sellPrice: row.sellPricePerKg ? `${fmtMoney(row.sellPricePerKg)}/kg` : null,
+        source: "LocalBuyEx",
+        sourceSlug: "localbuy",
+        priceKind: "market",
+        grade: row.grade,
+        fetchedAt: cache.at,
+        updatedLabel: relativeUpdatedLabel(cache.at),
+      }))
+    );
+
+  return {
+    ...(getMarketMeta(district)),
+    note: district
+      ? `Prices near ${district}${hub ? ` · nearest warehouse ${hub}` : ""}.`
+      : "Log in or pass your district to see prices near you.",
+    rows: marketView(district).rows,
+    prices: tableRows,
+    commodities: db ? await listCommodities(db) : [],
+    sources: db ? await listSources(db) : [],
+    warehouseHub: hub,
+  };
+}
+
+export async function marketPricesPayload(db, filters = {}) {
+  await refreshMarketCache(db, Boolean(filters.refresh));
+  const observations = await listLatestPrices(db, filters);
+  const prices = rowsFromObservations(observations);
+  const buyValues = prices.map((r) => r.buyPricePerKg).filter((n) => n != null);
+  return {
+    prices,
+    commodities: await listCommodities(db),
+    sources: await listSources(db),
+    filters,
+    stats: {
+      count: prices.length,
+      lowestBuy: buyValues.length ? Math.min(...buyValues) : null,
+      highestBuy: buyValues.length ? Math.max(...buyValues) : null,
+    },
+  };
+}
+
+export async function marketHistoryPayload(db, filters = {}) {
+  const history = await priceHistory(db, filters);
+  return {
+    commodity: filters.commoditySlug || null,
+    district: filters.district || null,
+    source: filters.sourceSlug || null,
+    days: Math.min(365, Math.max(1, Number(filters.days) || 30)),
+    points: history,
+  };
+}
+
+export function resetMarketCacheForTests() {
+  cache = {
+    at: 0,
+    live: false,
+    source: "Reference prices",
+    sourceUrl: null,
+    catalog: [],
+    trendByCode: new Map(),
+  };
+  refreshing = null;
+}
+
+export function setMarketCacheForTests(payload) {
+  applyCache({
+    live: true,
+    source: "Test market feed",
+    sourceUrl: LOCALBUY_URL,
+    catalog: payload.catalog || [],
+    trendByCode: payload.trendByCode || new Map(),
+  });
+}
+
+export {
+  parseLocalBuyHtml,
+  parseUlimiHtml,
+  nearestWarehouseHub,
+  warehouseHub,
+  LOCALBUY_URL,
+  ULIMI_URL,
+};

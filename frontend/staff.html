@@ -99,6 +99,34 @@
             <p class="form-error" id="floorError" hidden></p>
           </form>
         </div>
+        <div id="marketAdminPanel">
+          <h2>Market price feeds</h2>
+          <p class="hint">LocalBuyEx and Ulimi refresh automatically. Manual entries are tagged separately and stored in PostgreSQL for history.</p>
+          <div id="marketSourceList" class="ledger-list"></div>
+          <form id="marketManualForm" class="stack intake-form" hidden>
+            <p class="eyebrow">Enter or correct a price</p>
+            <label>Crop
+              <input id="marketManualCrop" placeholder="Maize">
+            </label>
+            <label>District
+              <select id="marketManualDistrict"></select>
+            </label>
+            <label>Buy price (MWK / kg)
+              <input id="marketManualBuy" inputmode="numeric" placeholder="900">
+            </label>
+            <label>Sell price (MWK / kg, optional)
+              <input id="marketManualSell" inputmode="numeric" placeholder="1050">
+            </label>
+            <label>Notes
+              <input id="marketManualNotes" placeholder="ADMARC procurement · Lilongwe">
+            </label>
+            <div class="demo-row">
+              <button type="button" class="ghost" id="marketRefreshBtn">Refresh live feeds</button>
+              <button type="submit" class="primary">Save price</button>
+            </div>
+            <p class="form-error" id="marketManualError" hidden></p>
+          </form>
+        </div>
         <div id="contractPanel">
           <h2>Live off-take contracts</h2>
           <p class="hint" id="contractHint">Offers below the ministry floor are blocked automatically and cannot pay the farmer.</p>
