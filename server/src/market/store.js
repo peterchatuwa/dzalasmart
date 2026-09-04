@@ -74,6 +74,7 @@ function mapObservationRow(row) {
     commoditySlug: row.commodity_slug,
     market: row.location_name,
     locationSlug: row.location_slug,
+    locationType: row.location_type,
     district: row.district,
     region: row.region,
     buyPricePerKg: row.buy_price_per_kg,
@@ -94,7 +95,7 @@ function mapObservationRow(row) {
 const OBS_SELECT = `
   SELECT o.*,
          c.name AS commodity_name, c.slug AS commodity_slug,
-         l.name AS location_name, l.slug AS location_slug, l.district, l.region,
+         l.name AS location_name, l.slug AS location_slug, l.type AS location_type, l.district, l.region,
          s.name AS source_name, s.slug AS source_slug
   FROM market_price_observations o
   JOIN market_commodities c ON c.id = o.commodity_id
@@ -124,6 +125,10 @@ export async function listLatestPrices(db, filters = {}) {
       OR l.slug = $${params.length}
     )`);
   }
+  if (filters.locationSlug) {
+    params.push(filters.locationSlug);
+    where.push(`l.slug = $${params.length}`);
+  }
   if (filters.region) {
     params.push(filters.region);
     where.push(`l.region = $${params.length}`);
@@ -135,7 +140,7 @@ export async function listLatestPrices(db, filters = {}) {
       o.buy_price_per_kg, o.sell_price_per_kg, o.raw_unit, o.raw_amount,
       o.price_kind, o.grade, o.notes, o.observed_at, o.fetched_at, o.metadata_json,
       c.name AS commodity_name, c.slug AS commodity_slug,
-      l.name AS location_name, l.slug AS location_slug, l.district, l.region,
+      l.name AS location_name, l.slug AS location_slug, l.type AS location_type, l.district, l.region,
       s.name AS source_name, s.slug AS source_slug
     FROM market_price_observations o
     JOIN market_commodities c ON c.id = o.commodity_id

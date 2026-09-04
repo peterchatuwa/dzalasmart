@@ -1,0 +1,4 @@
+date,admin1,admin2,market,market_id,latitude,longitude,category,commodity,commodity_id,unit,priceflag,pricetype,currency,price,usdprice
+2026-08-15,Central Region,Lilongwe,Lilongwe City,1001,-13.97,33.78,cereals,Maize,1,KG,aggregate,Retail,MWK,980,0.57
+2026-08-15,Southern Region,Blantyre,Blantyre City,1002,-15.79,35.00,cereals,Maize,1,KG,aggregate,Retail,MWK,1020,0.59
+2026-08-15,Central Region,Kasungu,Kasungu Boma,1003,-13.03,33.48,pulses and nuts,Groundnuts (shelled),2,KG,aggregate,Retail,MWK,8500,4.90

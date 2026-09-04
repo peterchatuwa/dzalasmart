@@ -1,6 +1,6 @@
 import { REGION_DISTRICTS, DISTRICT_COORDS, regionForDistrict } from "../places.js";
 import { MARKET_COMMODITIES, MARKET_SOURCES } from "./catalog.js";
-import { districtSlug } from "./locations.js";
+import { districtSlug, MAJOR_TRADING_CENTRES, ensureTradingCentre } from "./locations.js";
 import { seedLogisticsRoutes } from "./logistics.js";
 
 export async function seedMarketCatalog(db) {
@@ -122,6 +122,10 @@ export async function seedMarketCatalog(db) {
       lat: DISTRICT_COORDS[hub]?.[0] ?? null,
       lon: DISTRICT_COORDS[hub]?.[1] ?? null,
     });
+  }
+
+  for (const centre of MAJOR_TRADING_CENTRES) {
+    await ensureTradingCentre(db, centre);
   }
 
   await seedLogisticsRoutes(db);

@@ -101,7 +101,7 @@
         </div>
         <div id="marketAdminPanel">
           <h2>Market price feeds</h2>
-          <p class="hint">LocalBuyEx and Ulimi refresh automatically. Manual entries are tagged separately and stored in PostgreSQL for history.</p>
+          <p class="hint">LocalBuyEx, Ulimi, ACE, and NAMIS refresh automatically. Manual entries and CSV imports are stored in PostgreSQL for history.</p>
           <div id="marketSourceList" class="ledger-list"></div>
           <form id="marketManualForm" class="stack intake-form" hidden>
             <p class="eyebrow">Enter or correct a price</p>
@@ -218,6 +218,16 @@
               <button type="submit" class="primary">Save route</button>
               <p class="form-error" id="marketRouteError" hidden></p>
             </form>
+          </div>
+          <div id="marketLocationsPanel" class="stack intake-form">
+            <p class="eyebrow">Market location hierarchy</p>
+            <p class="hint">Regions, districts, warehouse markets, and trading centres used by NAMIS retail imports.</p>
+            <div id="marketLocationsList" class="ledger-list"></div>
+          </div>
+          <div id="marketAlertsStaffPanel" class="stack intake-form">
+            <p class="eyebrow">Farmer price alerts</p>
+            <div id="marketAlertsStaffSummary" class="hint"></div>
+            <div id="marketAlertsStaffEvents" class="ledger-list"></div>
           </div>
         </div>
         <div id="contractPanel">

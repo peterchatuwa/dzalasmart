@@ -2,6 +2,7 @@ import { APP_NAME } from "./brand.js";
 import { askAdvisor, logPestReport } from "./advisor.js";
 import { findFarmerByPhone, farmerStatus, logStage } from "./farmers.js";
 import { getMarketPriceFromDb } from "./market.js";
+import { listFarmerAlerts, listFarmerAlertEvents } from "./market/alerts.js";
 import { acceptWarehouseLoan, listReceiptsForFarmer, pendingLoanReceipts } from "./warehouse.js";
 import { fetchDistrictWeather, publicWeather, ussdWeatherLine } from "./weather.js";
 
@@ -40,7 +41,7 @@ export async function handleUssd(db, body = {}) {
 
   if (parts.length === 0) {
     return ussdReply(
-      `CON ${APP_NAME} — ${farmer.name}\n1. Log next milestone\n2. My season status\n3. Weather for my district\n4. Report a pest problem\n5. Warehouse & loan\n6. Market price`
+      `CON ${APP_NAME} — ${farmer.name}\n1. Log next milestone\n2. My season status\n3. Weather for my district\n4. Report a pest problem\n5. Warehouse & loan\n6. Market price\n7. Price alerts`
     );
   }
 
@@ -139,6 +140,26 @@ export async function handleUssd(db, body = {}) {
       return ussdReply(`END No live ${crop} price stored for ${farmer.district} yet. Try again after the market feeds refresh.`);
     }
     return ussdReply(`END ${crop} in ${farmer.district}: MWK ${Math.round(price).toLocaleString("en")}/kg`);
+  }
+
+  if (parts[0] === "7") {
+    const alerts = await listFarmerAlerts(db, farmer.id);
+    const events = await listFarmerAlertEvents(db, farmer.id, 3);
+    const active = alerts.filter((row) => row.active);
+    if (!active.length && !events.length) {
+      return ussdReply("END No price alerts yet. Set them in the farmer app under Market prices.");
+    }
+    const lines = [];
+    if (active.length) {
+      lines.push(`${active.length} active alert${active.length === 1 ? "" : "s"}:`);
+      for (const alert of active.slice(0, 3)) {
+        lines.push(`${alert.commoditySlug} ${alert.direction} ${Math.round(alert.thresholdPerKg)}/kg`);
+      }
+    }
+    if (events[0]) {
+      lines.push(`Latest: ${events[0].message}`);
+    }
+    return ussdReply(`END ${lines.join("\n")}`);
   }
 
   return ussdReply("END Invalid choice.");

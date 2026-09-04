@@ -2,8 +2,10 @@ import { MARKET as FALLBACK_MARKET } from "../weather.js";
 import { PLAN_CROP_SOURCES } from "./catalog.js";
 import { fetchLocalBuy, LOCALBUY_URL, parseLocalBuyHtml } from "./collectors/localbuy.js";
 import { fetchUlimi, ULIMI_URL, parseUlimiHtml } from "./collectors/ulimi.js";
+import { fetchAce, ACE_BID_URL, parseAceHtml } from "./collectors/ace.js";
+import { fetchNamis, NAMIS_WFP_URL, parseNamisCsv } from "./collectors/namis.js";
 import { fmtMoney, relativeUpdatedLabel } from "./normalize.js";
-import { nearestWarehouseHub, warehouseHub } from "./locations.js";
+import { nearestWarehouseHub, warehouseHub, ensureTradingCentre, listLocationTree, listTradingCentres } from "./locations.js";
 import {
   insertObservations,
   listCommodities,
@@ -23,6 +25,15 @@ import {
 import { buildMarketExport } from "./export.js";
 import { listLogisticsRoutes, upsertLogisticsRoute } from "./logistics.js";
 import { buildTrendSeries } from "./trends.js";
+import {
+  createFarmerAlert,
+  deleteFarmerAlert,
+  evaluateMarketAlerts,
+  listFarmerAlertEvents,
+  listFarmerAlerts,
+  marketAlertsPayload,
+  staffMarketAlertsPayload,
+} from "./alerts.js";
 
 const CACHE_MS = 30 * 60 * 1000;
 
@@ -119,6 +130,65 @@ async function persistUlimi(db, parsed, fetchedAt) {
   return rows.length;
 }
 
+async function persistAce(db, parsed, fetchedAt) {
+  const rows = [];
+  for (const item of parsed) {
+    if (!item.commoditySlug) continue;
+    const locationSlug = await ensureTradingCentre(db, {
+      name: item.market || `${item.location} (ACE exchange)`,
+      district: warehouseHub(item.location),
+      lat: null,
+      lon: null,
+    });
+    if (!locationSlug) continue;
+    rows.push({
+      commoditySlug: item.commoditySlug,
+      locationSlug,
+      buyPricePerKg: item.buyPricePerKg,
+      sellPricePerKg: item.sellPricePerKg,
+      priceKind: item.priceKind || "market",
+      metadata: item.metadata,
+    });
+  }
+  if (rows.length) {
+    await insertObservations(db, "ace", rows, fetchedAt);
+  }
+  await updateSourceStatus(db, "ace", {
+    ok: true,
+    error: rows.length ? null : "No active ACE bids or offers right now",
+  });
+  return rows.length;
+}
+
+async function persistNamis(db, parsed, fetchedAt) {
+  const rows = [];
+  for (const item of parsed) {
+    if (!item.commoditySlug) continue;
+    const locationSlug = await ensureTradingCentre(db, {
+      name: item.market,
+      district: item.district,
+      region: item.region,
+      lat: item.lat,
+      lon: item.lon,
+    });
+    if (!locationSlug) continue;
+    rows.push({
+      commoditySlug: item.commoditySlug,
+      locationSlug,
+      buyPricePerKg: item.buyPricePerKg,
+      sellPricePerKg: item.sellPricePerKg,
+      priceKind: item.priceKind || "reference",
+      observedAt: item.observedAt,
+      metadata: item.metadata,
+    });
+  }
+  if (rows.length) {
+    await insertObservations(db, "namis", rows, fetchedAt);
+    await updateSourceStatus(db, "namis", { ok: true });
+  }
+  return rows.length;
+}
+
 export async function refreshAllSources(db, force = false) {
   if (!force && cache.catalog.length && Date.now() - cache.at < CACHE_MS) {
     return { cache, sources: await listSources(db) };
@@ -151,10 +221,36 @@ export async function refreshAllSources(db, force = false) {
       if (db) await updateSourceStatus(db, "ulimi", { ok: false, error: error.message });
     }
 
+    try {
+      const aceRows = await fetchAce();
+      if (db) await persistAce(db, aceRows, fetchedAt);
+    } catch (error) {
+      errors.push(`ACE: ${error.message}`);
+      if (db) await updateSourceStatus(db, "ace", { ok: false, error: error.message });
+    }
+
+    if (process.env.MARKET_LIGHT_REFRESH !== "1" && !process.argv.includes("--test")) {
+      try {
+        const namisRows = await fetchNamis(force);
+        if (db) await persistNamis(db, namisRows, fetchedAt);
+      } catch (error) {
+        errors.push(`NAMIS: ${error.message}`);
+        if (db) await updateSourceStatus(db, "namis", { ok: false, error: error.message });
+      }
+    }
+
+    if (db) {
+      try {
+        await evaluateMarketAlerts(db);
+      } catch (error) {
+        errors.push(`Alerts: ${error.message}`);
+      }
+    }
+
     applyCache({
       live,
       source: live
-        ? "Live prices from LocalBuyEx and Ulimi — stored in PostgreSQL"
+        ? "Live prices from LocalBuyEx, Ulimi, ACE, and NAMIS — stored in PostgreSQL"
         : "Reference prices — live feeds unavailable",
       sourceUrl: LOCALBUY_URL,
       catalog,
@@ -413,6 +509,35 @@ export async function marketExportPayload(db, filters = {}) {
   return buildMarketExport(db, filters);
 }
 
+export async function marketLocationsPayload(db, filters = {}) {
+  const tree = await listLocationTree(db, filters);
+  const tradingCentres = await listTradingCentres(db, filters.district || null);
+  return {
+    tree,
+    tradingCentres,
+    count: tradingCentres.length,
+    district: filters.district || null,
+    region: filters.region || null,
+  };
+}
+
+export async function marketAlertsPayloadForFarmer(db, farmer) {
+  return marketAlertsPayload(db, farmer);
+}
+
+export async function saveMarketAlert(db, farmer, input = {}) {
+  const alert = await createFarmerAlert(db, farmer, input);
+  return { alert };
+}
+
+export async function removeMarketAlert(db, farmer, alertId) {
+  return deleteFarmerAlert(db, farmer.id, alertId);
+}
+
+export async function staffMarketAlertsSummary(db) {
+  return staffMarketAlertsPayload(db);
+}
+
 export function resetMarketCacheForTests() {
   cache = {
     at: 0,
@@ -438,8 +563,15 @@ export function setMarketCacheForTests(payload) {
 export {
   parseLocalBuyHtml,
   parseUlimiHtml,
+  parseAceHtml,
+  parseNamisCsv,
   nearestWarehouseHub,
   warehouseHub,
   LOCALBUY_URL,
   ULIMI_URL,
+  ACE_BID_URL,
+  NAMIS_WFP_URL,
+  listFarmerAlerts,
+  listFarmerAlertEvents,
+  evaluateMarketAlerts,
 };

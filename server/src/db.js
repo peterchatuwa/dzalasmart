@@ -180,6 +180,42 @@ CREATE TABLE IF NOT EXISTS market_logistics_routes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_market_routes_from ON market_logistics_routes(from_district);
+
+CREATE TABLE IF NOT EXISTS market_price_alerts (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  commodity_slug TEXT NOT NULL,
+  district TEXT NOT NULL,
+  location_slug TEXT,
+  direction TEXT NOT NULL,
+  threshold_per_kg DOUBLE PRECISION NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  last_triggered_at BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_alerts_farmer ON market_price_alerts(farmer_id, active);
+CREATE INDEX IF NOT EXISTS idx_market_alerts_active ON market_price_alerts(active, commodity_slug, district);
+
+CREATE TABLE IF NOT EXISTS market_price_alert_events (
+  id TEXT PRIMARY KEY,
+  alert_id TEXT NOT NULL REFERENCES market_price_alerts(id),
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  commodity_slug TEXT NOT NULL,
+  district TEXT NOT NULL,
+  location_slug TEXT,
+  direction TEXT NOT NULL,
+  threshold_per_kg DOUBLE PRECISION NOT NULL,
+  observed_price_per_kg DOUBLE PRECISION NOT NULL,
+  source_slug TEXT,
+  message TEXT NOT NULL,
+  triggered_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_alert_events_farmer ON market_price_alert_events(farmer_id, triggered_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_market_locations_type ON market_locations(type);
 `;
 
 function toPgSql(sql) {

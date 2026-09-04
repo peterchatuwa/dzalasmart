@@ -4,8 +4,8 @@ export const MARKET_SOURCES = [
   { slug: "manual", name: "Manual entry", kind: "manual", url: null },
   { slug: "admarc", name: "ADMARC", kind: "manual", url: "https://www.admarc.co.mw/" },
   { slug: "nfra", name: "NFRA", kind: "manual", url: null },
-  { slug: "ace", name: "ACE Africa", kind: "manual", url: null },
-  { slug: "namis", name: "NAMIS", kind: "manual", url: null },
+  { slug: "ace", name: "ACE Africa", kind: "scrape", url: "https://bvo.aceafrica.org/bid-volume-only.aspx" },
+  { slug: "namis", name: "NAMIS", kind: "scrape", url: "https://data.humdata.org/dataset/wfp-food-prices-for-malawi" },
   { slug: "worldbank", name: "World Bank", kind: "import", url: "https://data.worldbank.org/" },
 ];
 

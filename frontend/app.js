@@ -463,14 +463,75 @@ async function loadMarketHistory(commoditySlug, district) {
   await loadMarketTrends(commoditySlug, district, trendRange);
 }
 
+async function loadMarketAlerts() {
+  const panel = document.getElementById("marketAlertsPanel");
+  if (!panel || !token) {
+    if (panel) panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  try {
+    const payload = await api("GET", "/api/market/alerts", { auth: true });
+    const commoditySelect = document.getElementById("marketAlertCommodity");
+    if (commoditySelect && commoditySelect.options.length <= 1) {
+      const compareSelect = document.getElementById("marketCompareCommodity");
+      commoditySelect.innerHTML = compareSelect?.innerHTML || `<option value="maize">Maize</option>`;
+    }
+    document.getElementById("marketAlertsSummary").textContent =
+      `${payload.activeCount || 0} active alert${payload.activeCount === 1 ? "" : "s"} · checked after each market refresh.`;
+    document.getElementById("marketAlertsList").innerHTML = (payload.alerts || []).map((row) => `
+      <div class="ledger-row">
+        <div>
+          <strong>${row.commoditySlug} · ${row.direction} ${row.thresholdLabel || row.thresholdPerKg}</strong>
+          <div class="meta">${row.district}${row.locationSlug ? ` · ${row.locationSlug}` : ""}</div>
+        </div>
+        <button type="button" class="ghost" data-alert-id="${row.id}">Remove</button>
+      </div>`).join("") || `<p class="hint">No alerts yet.</p>`;
+    document.getElementById("marketAlertsList").querySelectorAll("[data-alert-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await api("DELETE", `/api/market/alerts/${btn.dataset.alertId}`, { auth: true });
+        await loadMarketAlerts();
+      });
+    });
+    document.getElementById("marketAlertEvents").innerHTML = (payload.events || []).map((row) => `
+      <div class="ledger-row">
+        <div>
+          <strong>${row.message}</strong>
+          <div class="meta">${new Date(row.triggeredAt).toLocaleString("en-MW")}</div>
+        </div>
+      </div>`).join("") || `<p class="hint">No triggered alerts yet.</p>`;
+  } catch (error) {
+    document.getElementById("marketAlertsSummary").textContent = error.message;
+  }
+}
+
+async function loadMarketLocations(district) {
+  const select = document.getElementById("marketLocationFilter");
+  if (!select) return;
+  try {
+    const qs = district ? `?district=${encodeURIComponent(district)}` : "";
+    const payload = await api("GET", `/api/market/locations${qs}`, token ? { auth: true } : undefined);
+    const current = select.value;
+    select.innerHTML = `<option value="">All locations</option>${(payload.tradingCentres || []).map((row) =>
+      `<option value="${row.slug}">${row.name} · ${row.district}</option>`).join("")}`;
+    if ([...select.options].some((opt) => opt.value === current)) select.value = current;
+  } catch {
+    /* keep existing options */
+  }
+}
+
 async function loadMarket(options = {}) {
   const district = status?.farmer?.district;
   const commodityFilter = document.getElementById("marketCommodityFilter");
+  const locationFilter = document.getElementById("marketLocationFilter");
   const commodity = commodityFilter?.value || "";
+  const locationSlug = locationFilter?.value || "";
+  await loadMarketLocations(district);
   try {
     const qs = new URLSearchParams();
     if (district) qs.set("district", district);
     if (commodity) qs.set("commodity", commodity);
+    if (locationSlug) qs.set("location", locationSlug);
     if (options.refresh) qs.set("refresh", "1");
     const payload = await api("GET", `/api/market/prices?${qs}`);
     const prices = payload.prices || [];
@@ -543,6 +604,7 @@ async function loadMarket(options = {}) {
     const trendCommodity = document.getElementById("marketTrendCommodity")?.value || compareCommodity;
     const trendRange = document.getElementById("marketTrendRange")?.value || "30d";
     await loadMarketTrends(trendCommodity, district, trendRange);
+    if (token) await loadMarketAlerts();
   } catch {
     document.getElementById("marketPriceBody").innerHTML = `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
     document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;
@@ -1077,7 +1139,29 @@ async function boot() {
   fillDistricts();
   loadMarket();
   document.getElementById("marketCommodityFilter")?.addEventListener("change", () => loadMarket());
+  document.getElementById("marketLocationFilter")?.addEventListener("change", () => loadMarket());
   document.getElementById("marketRefreshBtn")?.addEventListener("click", () => loadMarket({ refresh: true }));
+  document.getElementById("marketAlertForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("marketAlertError");
+    errorEl.hidden = true;
+    try {
+      await api("POST", "/api/market/alerts", {
+        auth: true,
+        body: {
+          commoditySlug: document.getElementById("marketAlertCommodity")?.value || "maize",
+          direction: document.getElementById("marketAlertDirection")?.value || "above",
+          thresholdPerKg: Number(document.getElementById("marketAlertThreshold")?.value),
+          district: status?.farmer?.district,
+        },
+      });
+      document.getElementById("marketAlertThreshold").value = "";
+      await loadMarketAlerts();
+    } catch (error) {
+      errorEl.textContent = error.message;
+      errorEl.hidden = false;
+    }
+  });
   document.getElementById("marketCompareBtn")?.addEventListener("click", () => {
     const slug = document.getElementById("marketCompareCommodity")?.value || "maize";
     loadMarketCompare(slug, status?.farmer?.district);

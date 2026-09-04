@@ -301,6 +301,33 @@ async function loadMarketAdmin() {
   } catch {
     await loadStaffTrends();
   }
+  try {
+    const locations = await api("GET", "/api/staff/market/locations", { auth: true });
+    document.getElementById("marketLocationsList").innerHTML = (locations.tradingCentres || []).slice(0, 12).map((row) => `
+      <div class="ledger-row">
+        <div>
+          <strong>${row.name}</strong>
+          <div class="meta">${row.district}${row.region ? ` · ${row.region}` : ""}</div>
+        </div>
+        <span class="badge accepted">trading centre</span>
+      </div>`).join("") || `<p class="hint">No trading centres seeded yet.</p>`;
+  } catch {
+    document.getElementById("marketLocationsList").innerHTML = `<p class="hint">Could not load location hierarchy.</p>`;
+  }
+  try {
+    const alerts = await api("GET", "/api/staff/market/alerts", { auth: true });
+    document.getElementById("marketAlertsStaffSummary").textContent =
+      `${alerts.activeAlerts || 0} active alerts across ${alerts.farmersWithAlerts || 0} farmers.`;
+    document.getElementById("marketAlertsStaffEvents").innerHTML = (alerts.recentEvents || []).map((row) => `
+      <div class="ledger-row">
+        <div>
+          <strong>${row.farmerName || "Farmer"} · ${row.message}</strong>
+          <div class="meta">${row.farmerPhone || ""} · ${new Date(row.triggeredAt).toLocaleString("en-MW")}</div>
+        </div>
+      </div>`).join("") || `<p class="hint">No triggered price alerts yet.</p>`;
+  } catch {
+    document.getElementById("marketAlertsStaffSummary").textContent = "Could not load farmer price alerts.";
+  }
 }
 
 const STAFF_TREND_COLORS = ["#2d6a4f", "#bc6c25", "#1d3557", "#9b2226", "#6a4c93", "#457b9d"];

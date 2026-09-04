@@ -184,6 +184,11 @@
                 <option value="">All commodities</option>
               </select>
             </label>
+            <label>Trading centre
+              <select id="marketLocationFilter">
+                <option value="">All locations</option>
+              </select>
+            </label>
             <button type="button" class="ghost" id="marketRefreshBtn">Refresh feeds</button>
           </div>
           <div class="price-table-wrap">
@@ -244,6 +249,30 @@
             <div id="marketSourceCompare" class="ledger-list"></div>
             <div id="marketOpportunities" class="ledger-list"></div>
             <p class="hint" id="marketTransportNote">Opportunities include warehouse haulage costs where routes are configured.</p>
+          </div>
+          <div id="marketAlertsPanel" class="market-history">
+            <p class="eyebrow">Price alerts</p>
+            <p class="hint" id="marketAlertsSummary">Get notified when a crop price crosses your target in your district.</p>
+            <form id="marketAlertForm" class="stack intake-form">
+              <label>Crop
+                <select id="marketAlertCommodity">
+                  <option value="maize">Maize</option>
+                </select>
+              </label>
+              <label>Alert when price is
+                <select id="marketAlertDirection">
+                  <option value="above">Above threshold</option>
+                  <option value="below">Below threshold</option>
+                </select>
+              </label>
+              <label>Threshold (MWK / kg)
+                <input id="marketAlertThreshold" inputmode="numeric" placeholder="1000">
+              </label>
+              <button type="submit" class="primary">Save alert</button>
+              <p class="form-error" id="marketAlertError" hidden></p>
+            </form>
+            <div id="marketAlertsList" class="ledger-list"></div>
+            <div id="marketAlertEvents" class="ledger-list"></div>
           </div>
           <div id="marketTable" class="market-rows"></div>
           <div id="floorTable" class="floor-list"></div>

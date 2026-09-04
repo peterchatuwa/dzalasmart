@@ -16,7 +16,7 @@ import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
 import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
-import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, marketLogisticsRoutesPayload, saveLogisticsRoute, marketTrendsPayload, marketExportPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
+import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, marketLogisticsRoutesPayload, marketLocationsPayload, saveLogisticsRoute, marketTrendsPayload, marketExportPayload, marketAlertsPayloadForFarmer, saveMarketAlert, removeMarketAlert, staffMarketAlertsSummary, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
@@ -56,6 +56,7 @@ export function createApp(db, options = {}) {
         region: String(req.query.region || "").trim() || undefined,
         commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
         sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+        locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
         refresh: req.query.refresh === "1",
       }));
     } catch (error) {
@@ -152,6 +153,43 @@ export function createApp(db, options = {}) {
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
       res.setHeader("Content-Disposition", `attachment; filename="${payload.filename}"`);
       res.send(payload.csv);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/locations", async (req, res, next) => {
+    try {
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
+      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      res.json(await marketLocationsPayload(db, {
+        district: district || undefined,
+        region: String(req.query.region || "").trim() || undefined,
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/alerts", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await marketAlertsPayloadForFarmer(db, req.farmer));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/market/alerts", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.status(201).json(await saveMarketAlert(db, req.farmer, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/market/alerts/:id", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await removeMarketAlert(db, req.farmer, req.params.id));
     } catch (error) {
       next(error);
     }
@@ -475,6 +513,25 @@ export function createApp(db, options = {}) {
     try {
       const result = await refreshAllSources(db, true);
       res.json({ ok: true, errors: result.errors || [], sources: result.sources || [] });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/market/alerts", requireStaff(db, jwtSecret), async (_req, res, next) => {
+    try {
+      res.json(await staffMarketAlertsSummary(db));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/market/locations", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await marketLocationsPayload(db, {
+        district: String(req.query.district || "").trim() || undefined,
+        region: String(req.query.region || "").trim() || undefined,
+      }));
     } catch (error) {
       next(error);
     }
