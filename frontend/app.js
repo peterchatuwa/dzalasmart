@@ -336,12 +336,18 @@ async function loadMarketCompare(commoditySlug, district) {
     }
 
     const opps = await api("GET", `/api/market/opportunities?commodity=${encodeURIComponent(commoditySlug)}`);
-    opportunitiesPanel.innerHTML = `<p class="eyebrow">Top warehouse spreads</p>${(opps.opportunities || []).slice(0, 3).map((row) => `
+    opportunitiesPanel.innerHTML = `<p class="eyebrow">Profitable haulage (after transport)</p>${(opps.opportunities || []).slice(0, 4).map((row) => `
       <div class="kv-row">
-        <span>${row.commodity}: ${row.buyLow?.district || row.buyLow?.market} → ${row.buyHigh?.district || row.buyHigh?.market}</span>
-        <strong>${row.spreadLabel}</strong>
+        <span>${row.commodity}: ${row.fromDistrict} → ${row.toDistrict}${row.profitable ? "" : " · not profitable"}</span>
+        <strong>${row.netMarginLabel || row.spreadLabel}${row.transportPerKg ? ` · haul ${row.transportLabel}` : ""}</strong>
       </div>
-      <p class="hint">${row.note}</p>`).join("") || `<p class="hint">No spreads detected yet across warehouse hubs.</p>`}`;
+      <p class="hint">${row.note}</p>`).join("") || `<p class="hint">No cross-hub opportunities yet. Need live prices in at least two warehouse hubs.</p>`}`;
+    const transportNote = document.getElementById("marketTransportNote");
+    if (transportNote) {
+      transportNote.textContent = opps.profitableCount
+        ? `${opps.profitableCount} profitable route${opps.profitableCount === 1 ? "" : "s"} after transport. Gross spread shown before haulage is still in the district compare above.`
+        : "Cross-hub spreads exist but none stay profitable after configured haulage costs.";
+    }
   } catch (error) {
     summary.textContent = error.message || "Could not load comparison.";
   }

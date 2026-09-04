@@ -16,7 +16,7 @@ import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
 import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
-import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, marketTrendsPayload, marketExportPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
+import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, marketLogisticsRoutesPayload, saveLogisticsRoute, marketTrendsPayload, marketExportPayload, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
@@ -108,7 +108,16 @@ export function createApp(db, options = {}) {
     try {
       res.json(await marketOpportunitiesPayload(db, {
         commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+        loadKg: Number(req.query.loadKg) || undefined,
       }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/market/logistics/routes", async (_req, res, next) => {
+    try {
+      res.json(await marketLogisticsRoutesPayload(db));
     } catch (error) {
       next(error);
     }
@@ -441,6 +450,22 @@ export function createApp(db, options = {}) {
         sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
         range: String(req.query.range || "90d").trim(),
       }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/market/routes", requireStaff(db, jwtSecret), async (_req, res, next) => {
+    try {
+      res.json(await marketLogisticsRoutesPayload(db));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/staff/market/routes", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.status(201).json(await saveLogisticsRoute(db, req.body || {}));
     } catch (error) {
       next(error);
     }

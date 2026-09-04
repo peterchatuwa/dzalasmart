@@ -240,12 +240,14 @@ async function loadMarketAdmin() {
   const form = document.getElementById("marketManualForm");
   const importForm = document.getElementById("marketImportForm");
   const trendPanel = document.getElementById("marketTrendStaffPanel");
+  const routesPanel = document.getElementById("marketRoutesPanel");
   if (!panel) return;
   const canEdit = staff?.role === "ministry" || staff?.role === "cooperative";
   const canImport = staff?.role === "ministry";
   if (form) form.hidden = !canEdit;
   if (importForm) importForm.hidden = !canImport;
   if (trendPanel) trendPanel.hidden = false;
+  if (routesPanel) routesPanel.hidden = staff?.role !== "ministry";
   try {
     const payload = await api("GET", "/api/staff/market/sources", { auth: true });
     document.getElementById("marketSourceList").innerHTML = (payload.sources || []).map((row) => `
@@ -267,6 +269,26 @@ async function loadMarketAdmin() {
   const staffTrendDistrict = document.getElementById("staffTrendDistrict");
   if (staffTrendDistrict && staffTrendDistrict.options.length <= 1) {
     staffTrendDistrict.innerHTML = `<option value="">All districts</option>${districts.map((name) => `<option value="${name}">${name}</option>`).join("")}`;
+  }
+  const routeFrom = document.getElementById("routeFromDistrict");
+  const routeTo = document.getElementById("routeToDistrict");
+  if (routeFrom && routeFrom.options.length <= 1) {
+    const hubOptions = ["Lilongwe", "Kasungu", "Mchinji"].map((name) => `<option value="${name}">${name}</option>`).join("");
+    routeFrom.innerHTML = hubOptions;
+    routeTo.innerHTML = hubOptions;
+  }
+  try {
+    const routes = await api("GET", "/api/staff/market/routes", { auth: true });
+    document.getElementById("marketRoutesList").innerHTML = (routes.routes || []).map((row) => `
+      <div class="ledger-row">
+        <div>
+          <strong>${row.fromDistrict} → ${row.toDistrict}</strong>
+          <div class="meta">${row.distanceKm != null ? `${row.distanceKm} km · ` : ""}${row.costLabel}${row.notes ? ` · ${row.notes}` : ""}</div>
+        </div>
+        <span class="badge accepted">${row.costPerKg} MWK/kg</span>
+      </div>`).join("") || `<p class="hint">No haulage routes configured yet.</p>`;
+  } catch {
+    document.getElementById("marketRoutesList").innerHTML = `<p class="hint">Could not load haulage routes.</p>`;
   }
   try {
     const prices = await api("GET", "/api/market/prices", { auth: true });
@@ -749,6 +771,31 @@ document.getElementById("staffExportBtn")?.addEventListener("click", async () =>
     await downloadStaffExport();
   } catch (error) {
     showError("marketImportError", error.message);
+  }
+});
+
+document.getElementById("marketRouteForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showError("marketRouteError", "");
+  try {
+    await api("POST", "/api/staff/market/routes", {
+      auth: true,
+      body: {
+        fromDistrict: document.getElementById("routeFromDistrict").value,
+        toDistrict: document.getElementById("routeToDistrict").value,
+        costPerKg: Number(document.getElementById("routeCostPerKg").value),
+        distanceKm: document.getElementById("routeDistanceKm").value
+          ? Number(document.getElementById("routeDistanceKm").value)
+          : undefined,
+        notes: document.getElementById("routeNotes").value,
+      },
+    });
+    document.getElementById("routeCostPerKg").value = "";
+    document.getElementById("routeDistanceKm").value = "";
+    document.getElementById("routeNotes").value = "";
+    await loadMarketAdmin();
+  } catch (error) {
+    showError("marketRouteError", error.message);
   }
 });
 

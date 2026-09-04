@@ -8,7 +8,7 @@ export const WAREHOUSE_COORDS = {
   Mchinji: [-13.80, 32.88],
 };
 
-function haversineKm(a, b) {
+export function haversineKm(a, b) {
   const toRad = (deg) => (deg * Math.PI) / 180;
   const [lat1, lon1] = a;
   const [lat2, lon2] = b;

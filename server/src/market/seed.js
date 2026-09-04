@@ -1,6 +1,7 @@
 import { REGION_DISTRICTS, DISTRICT_COORDS, regionForDistrict } from "../places.js";
 import { MARKET_COMMODITIES, MARKET_SOURCES } from "./catalog.js";
 import { districtSlug } from "./locations.js";
+import { seedLogisticsRoutes } from "./logistics.js";
 
 export async function seedMarketCatalog(db) {
   const now = Date.now();
@@ -122,6 +123,8 @@ export async function seedMarketCatalog(db) {
       lon: DISTRICT_COORDS[hub]?.[1] ?? null,
     });
   }
+
+  await seedLogisticsRoutes(db);
 }
 
 export async function sourceIdBySlug(db, slug) {

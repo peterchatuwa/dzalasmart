@@ -166,6 +166,20 @@ CREATE TABLE IF NOT EXISTS market_price_observations (
 CREATE INDEX IF NOT EXISTS idx_market_obs_commodity ON market_price_observations(commodity_id, fetched_at DESC);
 CREATE INDEX IF NOT EXISTS idx_market_obs_location ON market_price_observations(location_id, fetched_at DESC);
 CREATE INDEX IF NOT EXISTS idx_market_obs_source ON market_price_observations(source_id, fetched_at DESC);
+
+CREATE TABLE IF NOT EXISTS market_logistics_routes (
+  id TEXT PRIMARY KEY,
+  from_district TEXT NOT NULL,
+  to_district TEXT NOT NULL,
+  distance_km DOUBLE PRECISION,
+  cost_per_kg DOUBLE PRECISION NOT NULL,
+  cost_flat_mwk DOUBLE PRECISION,
+  notes TEXT,
+  updated_at BIGINT NOT NULL,
+  UNIQUE(from_district, to_district)
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_routes_from ON market_logistics_routes(from_district);
 `;
 
 function toPgSql(sql) {

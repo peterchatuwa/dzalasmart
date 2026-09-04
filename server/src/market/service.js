@@ -21,6 +21,7 @@ import {
   resolveCompareCommodity,
 } from "./compare.js";
 import { buildMarketExport } from "./export.js";
+import { listLogisticsRoutes, upsertLogisticsRoute } from "./logistics.js";
 import { buildTrendSeries } from "./trends.js";
 
 const CACHE_MS = 30 * 60 * 1000;
@@ -374,12 +375,26 @@ export async function marketOpportunitiesPayload(db, filters = {}) {
   const commodity = filters.commodity || filters.commoditySlug
     ? (await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug))?.slug
     : undefined;
-  const opportunities = await findMarketOpportunities(db, { commoditySlug: commodity });
+  const opportunities = await findMarketOpportunities(db, {
+    commoditySlug: commodity,
+    loadKg: filters.loadKg ? Number(filters.loadKg) : undefined,
+  });
   return {
     commodity: commodity || null,
     count: opportunities.length,
+    profitableCount: opportunities.filter((row) => row.profitable).length,
     opportunities,
   };
+}
+
+export async function marketLogisticsRoutesPayload(db) {
+  const routes = await listLogisticsRoutes(db);
+  return { routes, count: routes.length };
+}
+
+export async function saveLogisticsRoute(db, input = {}) {
+  const route = await upsertLogisticsRoute(db, input);
+  return { route };
 }
 
 export async function marketTrendsPayload(db, filters = {}) {

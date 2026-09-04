@@ -1,6 +1,11 @@
 import { matchCommodityName } from "./catalog.js";
 import { fmtPricePerKg } from "./normalize.js";
 import { WAREHOUSE_HUBS } from "./locations.js";
+import {
+  formatNetMargin,
+  formatTransportSummary,
+  resolveTransportCost,
+} from "./logistics.js";
 import { listCommodities, listLatestPrices, resolveCommodity } from "./store.js";
 
 function buyStats(rows) {
@@ -38,6 +43,10 @@ function pickPrimaryPrice(rows, { marketOnly = false } = {}) {
   return pool.find((row) => row.sourceSlug === "localbuy" && row.buyPricePerKg != null)
     || pool.find((row) => row.buyPricePerKg != null)
     || null;
+}
+
+function sellPriceAt(row) {
+  return row.sellPricePerKg ?? row.buyPricePerKg ?? null;
 }
 
 export async function compareDistrictPrices(db, { commoditySlug, districts = [] }) {
@@ -102,35 +111,74 @@ export async function compareSourcePrices(db, { commoditySlug, district }) {
   };
 }
 
-export async function findMarketOpportunities(db, { commoditySlug } = {}) {
+async function hubPriceMap(db, commoditySlug) {
+  const map = new Map();
+  for (const hub of WAREHOUSE_HUBS) {
+    const prices = await listLatestPrices(db, { commoditySlug, district: hub });
+    const best = pickPrimaryPrice(prices, { marketOnly: true });
+    if (best) map.set(hub, summarizeRow(best, hub));
+  }
+  return map;
+}
+
+export async function findMarketOpportunities(db, { commoditySlug, loadKg } = {}) {
   const commodities = commoditySlug
     ? [await resolveCommodity(db, commoditySlug)].filter(Boolean)
     : (await listCommodities(db)).map((row) => ({ slug: row.slug, name: row.name }));
 
   const opportunities = [];
   for (const commodity of commodities) {
-    const hubRows = [];
-    for (const hub of WAREHOUSE_HUBS) {
-      const prices = await listLatestPrices(db, { commoditySlug: commodity.slug, district: hub });
-      const best = pickPrimaryPrice(prices, { marketOnly: true });
-      if (best) hubRows.push(summarizeRow(best, hub));
+    const hubPrices = await hubPriceMap(db, commodity.slug);
+    if (hubPrices.size < 2) continue;
+
+    for (const fromDistrict of WAREHOUSE_HUBS) {
+      const buyRow = hubPrices.get(fromDistrict);
+        if (buyRow?.buyPricePerKg == null) continue;
+      for (const toDistrict of WAREHOUSE_HUBS) {
+        if (toDistrict === fromDistrict) continue;
+        const sellRow = hubPrices.get(toDistrict);
+        const sellPrice = sellRow ? sellPriceAt(sellRow) : null;
+        if (sellPrice == null || buyRow.buyPricePerKg == null) continue;
+
+        const transport = await resolveTransportCost(db, fromDistrict, toDistrict, loadKg);
+        const transportPerKg = transport?.transportPerKg ?? 0;
+        const grossSpreadPerKg = sellPrice - buyRow.buyPricePerKg;
+        const netMarginPerKg = grossSpreadPerKg - transportPerKg;
+        if (grossSpreadPerKg <= 0) continue;
+
+        opportunities.push({
+          commodity: commodity.name,
+          commoditySlug: commodity.slug,
+          fromDistrict,
+          toDistrict,
+          buyLow: buyRow,
+          buyHigh: sellRow,
+          buyPricePerKg: buyRow.buyPricePerKg,
+          sellPricePerKg: sellPrice,
+          buyPrice: buyRow.buyPrice,
+          sellPrice: sellRow?.sellPrice || fmtPricePerKg(sellPrice),
+          route: transport,
+          transportPerKg,
+          transportLabel: transport?.transportLabel || fmtPricePerKg(transportPerKg),
+          grossSpreadPerKg,
+          grossSpreadLabel: fmtPricePerKg(grossSpreadPerKg),
+          netMarginPerKg,
+          netMarginLabel: formatNetMargin(netMarginPerKg),
+          spreadPerKg: grossSpreadPerKg,
+          spreadLabel: fmtPricePerKg(grossSpreadPerKg),
+          profitable: netMarginPerKg > 0,
+          note: transport
+            ? `${commodity.name}: buy ${buyRow.buyPrice} in ${fromDistrict}, `
+              + `sell ${fmtPricePerKg(sellPrice)} in ${toDistrict}. `
+              + `${formatTransportSummary(transport, transportPerKg)}. `
+              + `Net margin ${formatNetMargin(netMarginPerKg)}${netMarginPerKg > 0 ? "" : " (not profitable after haulage)"}.`
+            : `Buy in ${fromDistrict}, sell in ${toDistrict}. Transport cost not configured.`,
+        });
+      }
     }
-    const stats = buyStats(hubRows);
-    if (!stats || stats.spread <= 0) continue;
-    opportunities.push({
-      commodity: commodity.name,
-      commoditySlug: commodity.slug,
-      buyLow: stats.lowest,
-      buyHigh: stats.highest,
-      spreadPerKg: stats.spread,
-      spreadLabel: fmtPricePerKg(stats.spread),
-      note: `Buy lower at ${stats.lowest.district || stats.lowest.market} (${stats.lowest.buyPrice}), `
-        + `sell higher at ${stats.highest.district || stats.highest.market} (${stats.highest.buyPrice}). `
-        + "Transport and handling not included.",
-    });
   }
 
-  opportunities.sort((a, b) => b.spreadPerKg - a.spreadPerKg);
+  opportunities.sort((a, b) => b.netMarginPerKg - a.netMarginPerKg);
   return opportunities;
 }
 
