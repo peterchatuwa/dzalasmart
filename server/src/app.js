@@ -13,7 +13,7 @@ import { handleUssd } from "./ussd.js";
 import { visitQueue } from "./visits.js";
 import { nationalViewWithWeather } from "./ndvi.js";
 import { getFarmPlan, saveFarmPlan } from "./plan.js";
-import { getFarmerPlot, plotCoverageStats, saveFarmerPlot } from "./plots.js";
+import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
 import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
 import { marketPayload, refreshMarketCache, getMarketRows, getMarketMeta } from "./market.js";
@@ -26,7 +26,7 @@ export function createApp(db, options = {}) {
   app.use(express.urlencoded({ extended: false }));
 
   app.get("/health", (_req, res) => {
-    res.json({ ok: true, service: APP_SLUG, name: APP_NAME });
+    res.json({ ok: true, service: APP_SLUG, name: APP_NAME, database: "postgresql" });
   });
 
   app.get("/api/stages", (_req, res) => {
@@ -37,9 +37,11 @@ export function createApp(db, options = {}) {
     res.json({ districts: listDistricts() });
   });
 
-  app.get("/api/market", async (_req, res, next) => {
+  app.get("/api/market", async (req, res, next) => {
     try {
-      res.json(await marketPayload());
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
+      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      res.json(await marketPayload({ district }));
     } catch (error) {
       next(error);
     }
@@ -67,17 +69,17 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/farmers/register", (req, res, next) => {
+  app.post("/api/farmers/register", async (req, res, next) => {
     try {
-      res.status(201).json(registerFarmer(db, req.body || {}, jwtSecret));
+      res.status(201).json(await registerFarmer(db, req.body || {}, jwtSecret));
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/farmers/login", (req, res, next) => {
+  app.post("/api/farmers/login", async (req, res, next) => {
     try {
-      res.json(loginFarmer(db, req.body || {}, jwtSecret));
+      res.json(await loginFarmer(db, req.body || {}, jwtSecret));
     } catch (error) {
       next(error);
     }
@@ -87,28 +89,28 @@ export function createApp(db, options = {}) {
     res.json({ farmer: req.farmer });
   });
 
-  app.get("/api/farmers/me/status", requireFarmer(db, jwtSecret), (req, res, next) => {
+  app.get("/api/farmers/me/status", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const row = db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.json(withReceipts(db, farmerStatus(db, row)));
+      const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
+      res.json(await withReceipts(db, await farmerStatus(db, row)));
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/farmers/me/events", requireFarmer(db, jwtSecret), (req, res, next) => {
+  app.post("/api/farmers/me/events", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const row = db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.status(201).json(withReceipts(db, logStage(db, row, { ...req.body, channel: req.body?.channel || "mobile" })));
+      const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
+      res.status(201).json(await withReceipts(db, await logStage(db, row, { ...req.body, channel: req.body?.channel || "mobile" })));
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/farmers/me/loans", requireFarmer(db, jwtSecret), (req, res, next) => {
+  app.post("/api/farmers/me/loans", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const row = db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.json(acceptWarehouseLoan(db, row, req.body || {}));
+      const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
+      res.json(await acceptWarehouseLoan(db, row, req.body || {}));
     } catch (error) {
       next(error);
     }
@@ -123,7 +125,7 @@ export function createApp(db, options = {}) {
       } catch {
         weather = null;
       }
-      res.json(getFarmPlan(db, req.farmer, { weather }));
+      res.json(await getFarmPlan(db, req.farmer, { weather }));
     } catch (error) {
       next(error);
     }
@@ -132,34 +134,34 @@ export function createApp(db, options = {}) {
   app.put("/api/farmers/me/plan", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
       await refreshMarketCache();
-      const row = db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.json(saveFarmPlan(db, row, req.body || {}));
+      const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
+      res.json(await saveFarmPlan(db, row, req.body || {}));
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/api/farmers/me/plot", requireFarmer(db, jwtSecret), (req, res, next) => {
+  app.get("/api/farmers/me/plot", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const row = db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.json(getFarmerPlot(db, row));
+      const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
+      res.json(await getFarmerPlot(db, row));
     } catch (error) {
       next(error);
     }
   });
 
-  app.put("/api/farmers/me/plot", requireFarmer(db, jwtSecret), (req, res, next) => {
+  app.put("/api/farmers/me/plot", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const row = db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.json(saveFarmerPlot(db, row, req.body || {}));
+      const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
+      res.json(await saveFarmerPlot(db, row, req.body || {}));
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/staff/login", (req, res, next) => {
+  app.post("/api/staff/login", async (req, res, next) => {
     try {
-      res.json(loginStaff(db, req.body || {}, jwtSecret));
+      res.json(await loginStaff(db, req.body || {}, jwtSecret));
     } catch (error) {
       next(error);
     }
@@ -179,7 +181,7 @@ export function createApp(db, options = {}) {
 
   app.post("/api/advisor/ask", async (req, res, next) => {
     try {
-      const farmer = readOptionalFarmer(db, jwtSecret, req);
+      const farmer = await readOptionalFarmer(db, jwtSecret, req);
       const body = req.body || {};
       const result = askAdvisor({
         ...body,
@@ -198,14 +200,17 @@ export function createApp(db, options = {}) {
       }
       if (result.intent === "market") {
         await refreshMarketCache();
-        const meta = getMarketMeta();
-        const floors = listFloors(db).map((row) => `${row.crop} floor MWK ${row.pricePerKg}/kg`).join("\n");
-        const rows = getMarketRows().slice(0, 4).map((row) => `${row.crop} ${row.price}`).join("\n");
-        const label = meta.live ? "Ulimi live prices" : "Reference prices";
+        const district = farmer?.district || body.district || null;
+        const meta = getMarketMeta(district);
+        const floors = (await listFloors(db)).map((row) => `${row.crop} floor MWK ${row.pricePerKg}/kg`).join("\n");
+        const rows = getMarketRows(district).slice(0, 4).map((row) => `${row.crop} ${row.price}`).join("\n");
+        const label = meta.live
+          ? `LocalBuyEx prices${meta.warehouseHub ? ` · ${meta.warehouseHub} warehouse` : ""}`
+          : "Reference prices";
         result.reply = `Ministry floors:\n${floors}\n\n${label}:\n${rows}`;
       }
       if (result.kind === "pest" && farmer) {
-        logPestReport(db, farmer, {
+        await logPestReport(db, farmer, {
           symptoms: body.text || result.match,
           matchName: result.match,
           channel: body.channel || "mobile",
@@ -217,65 +222,69 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/floors", (_req, res) => {
-    res.json({ floors: listFloors(db) });
+  app.get("/api/floors", async (_req, res, next) => {
+    try {
+      res.json({ floors: await listFloors(db) });
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.get("/api/staff/me", requireStaff(db, jwtSecret), (req, res) => {
     res.json({ staff: req.staff });
   });
 
-  app.get("/api/staff/warehouse", requireStaff(db, jwtSecret), (_req, res, next) => {
+  app.get("/api/staff/warehouse", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
-      res.json(warehouseSummary(db));
+      res.json(await warehouseSummary(db));
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/staff/warehouse/intake", requireStaff(db, jwtSecret), requireCooperative(), (req, res, next) => {
+  app.post("/api/staff/warehouse/intake", requireStaff(db, jwtSecret), requireCooperative(), async (req, res, next) => {
     try {
-      res.status(201).json(recordIntake(db, req.staff, req.body || {}));
+      res.status(201).json(await recordIntake(db, req.staff, req.body || {}));
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/api/staff/contracts", requireStaff(db, jwtSecret), (_req, res, next) => {
+  app.get("/api/staff/contracts", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
-      res.json(contractMonitor(db));
+      res.json(await contractMonitor(db));
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/staff/contracts", requireStaff(db, jwtSecret), requireStaffRole("cooperative"), (req, res, next) => {
+  app.post("/api/staff/contracts", requireStaff(db, jwtSecret), requireStaffRole("cooperative"), async (req, res, next) => {
     try {
-      res.status(201).json(recordOffer(db, req.staff, req.body || {}));
+      res.status(201).json(await recordOffer(db, req.staff, req.body || {}));
     } catch (error) {
       next(error);
     }
   });
 
-  app.put("/api/staff/floors", requireStaff(db, jwtSecret), requireStaffRole("ministry"), (req, res, next) => {
+  app.put("/api/staff/floors", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
     try {
-      res.json(setFloor(db, req.staff, req.body || {}));
+      res.json(await setFloor(db, req.staff, req.body || {}));
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/api/staff/pests", requireStaff(db, jwtSecret), (_req, res, next) => {
+  app.get("/api/staff/pests", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
-      res.json({ reports: listPestReports(db) });
+      res.json({ reports: await listPestReports(db) });
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/api/staff/visits", requireStaff(db, jwtSecret), (req, res, next) => {
+  app.get("/api/staff/visits", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
-      res.json(visitQueue(db, req.staff));
+      res.json(await visitQueue(db, req.staff));
     } catch (error) {
       next(error);
     }
@@ -289,22 +298,25 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/staff/farmers", requireStaff(db, jwtSecret), (_req, res, next) => {
+  app.get("/api/staff/farmers", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
-      res.json({ farmers: listFarmerSummaries(db) });
+      res.json({ farmers: await listFarmerSummaries(db) });
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/api/staff/farmers/:id", requireStaff(db, jwtSecret), (req, res, next) => {
+  app.get("/api/staff/farmers/:id", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
-      const row = getFarmerById(db, req.params.id);
+      const row = await getFarmerById(db, req.params.id);
       if (!row) {
         res.status(404).json({ error: "Farmer not found" });
         return;
       }
-      res.json({ ...withReceipts(db, farmerStatus(db, row)), plot: getFarmerPlot(db, row) });
+      res.json({
+        ...(await withReceipts(db, await farmerStatus(db, row))),
+        plot: await getFarmerPlot(db, row),
+      });
     } catch (error) {
       next(error);
     }

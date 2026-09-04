@@ -29,11 +29,11 @@ async function json(url, options = {}) {
   return { res, body };
 }
 
-function setup() {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
-  seedFloorsIfEmpty(db);
+async function setup() {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
+  await seedFloorsIfEmpty(db);
   return createApp(db, { jwtSecret: "test-secret" });
 }
 
@@ -52,7 +52,7 @@ test("judgeOffer blocks prices below the ministry floor", () => {
 });
 
 test("cooperative offers below the floor are recorded as blocked", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
   const token = await login(url, "+265888000102");
 
@@ -92,7 +92,7 @@ test("cooperative offers below the floor are recorded as blocked", async (t) => 
 });
 
 test("only the ministry can change floors; FUM and extension cannot write contracts", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
   const ministry = await login(url, "+265888000103");
   const fum = await login(url, "+265888000104");
@@ -127,7 +127,7 @@ test("only the ministry can change floors; FUM and extension cannot write contra
 });
 
 test("a cleared farmer sale writes Marketing after warehouse grading", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
   const coop = await login(url, "+265888000102");
   const list = await json(`${url}/api/staff/farmers`, {

@@ -34,8 +34,8 @@ export function ndviLabel(ndvi) {
   return "Likely yield loss";
 }
 
-function countByDistrict(db) {
-  const farmers = db.prepare(`
+async function countByDistrict(db) {
+  const farmers = await db.prepare(`
     SELECT district, epa, COUNT(*) AS count
     FROM farmers
     GROUP BY district, epa
@@ -52,9 +52,9 @@ function countByDistrict(db) {
   return { byDistrict, byEpa };
 }
 
-function pestsByDistrict(db) {
+async function pestsByDistrict(db) {
   const map = new Map();
-  for (const report of listPestReports(db)) {
+  for (const report of await listPestReports(db)) {
     map.set(report.district, (map.get(report.district) || 0) + 1);
   }
   return map;
@@ -131,8 +131,8 @@ function regionCoverage(regionName, districts, context) {
   };
 }
 
-function storedTonnes(db) {
-  const row = db.prepare(`
+async function storedTonnes(db) {
+  const row = await db.prepare(`
     SELECT COALESCE(SUM(weight_kg), 0) AS kg
     FROM warehouse_receipts
     WHERE status = 'accepted'
@@ -140,11 +140,11 @@ function storedTonnes(db) {
   return Number(((row?.kg || 0) / 1000).toFixed(2));
 }
 
-export function nationalView(db, staff, options = {}) {
+export async function nationalView(db, staff, options = {}) {
   const now = options.now ?? Date.now();
   const period = periodIndex(now);
-  const farmers = countByDistrict(db);
-  const pestsByDistrictMap = pestsByDistrict(db);
+  const farmers = await countByDistrict(db);
+  const pestsByDistrictMap = await pestsByDistrict(db);
 
   const epaCount = new Map();
   const epasWithFarmers = new Map();
@@ -185,8 +185,8 @@ export function nationalView(db, staff, options = {}) {
     (sum, district) => sum + (farmers.byDistrict.get(district) || 0),
     0
   );
-  const openPestReports = listPestReports(db).length;
-  const tonnes = storedTonnes(db);
+  const openPestReports = (await listPestReports(db)).length;
+  const tonnes = await storedTonnes(db);
   const healthy = districts.filter((row) => row.status === "healthy").length;
   const watch = districts.filter((row) => row.status === "watch").length;
   const alert = districts.filter((row) => row.status === "alert").length;
@@ -231,7 +231,7 @@ export function nationalView(db, staff, options = {}) {
       productionForecastT: tonnes > 0
         ? Number((3.4 + tonnes / 1000).toFixed(2))
         : 3.62,
-      ...plotCoverageStats(db),
+      ...await plotCoverageStats(db),
     },
     foodSecurityRisk,
   };
@@ -245,5 +245,5 @@ export async function nationalViewWithWeather(db, staff) {
   } catch {
     weatherAlerts = [];
   }
-  return nationalView(db, staff, { weatherAlerts });
+  return await nationalView(db, staff, { weatherAlerts });
 }

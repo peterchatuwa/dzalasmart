@@ -28,15 +28,15 @@ async function json(url, options = {}) {
   return { res, body };
 }
 
-function setup() {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
+async function setup() {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
   return createApp(db, { jwtSecret: "test-secret" });
 }
 
 test("extension visit queue is scoped to the officer EPA and flags pests and harvests", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const mercy = await json(`${url}/api/staff/login`, {

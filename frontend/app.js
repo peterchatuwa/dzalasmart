@@ -252,6 +252,7 @@ function renderFarm() {
   }
   loadPlan();
   loadPlot();
+  loadMarket();
 }
 
 async function loadStatus() {
@@ -317,21 +318,26 @@ async function loadWeather(district) {
 
 async function loadMarket() {
   try {
-    const payload = await api("GET", "/api/market");
+    const district = status?.farmer?.district;
+    const path = district ? `/api/market?district=${encodeURIComponent(district)}` : "/api/market";
+    const payload = await api("GET", path);
     document.getElementById("marketTable").innerHTML = (payload.rows || []).map((row) => `
       <div class="market-row">
         <div>
           <strong>${row.crop}</strong>
-          <div class="hint">${row.price} · ${row.yieldKg}/ha</div>
+          <div class="hint">${row.price}${row.warehouse ? ` · ${row.warehouse}` : ""}${row.yieldKg ? ` · ${row.yieldKg}/ha` : ""}</div>
         </div>
-        <div class="trend ${row.trend}">${row.trendLabel}<div class="hint">${row.net}/ha</div></div>
-      </div>`).join("");
+        <div class="trend ${row.trend}">${row.trendLabel}<div class="hint">${row.net || ""}${row.net ? "/ha" : ""}</div></div>
+      </div>`).join("") || `<p class="hint">No LocalBuyEx prices for your nearest warehouse yet.</p>`;
     const note = document.getElementById("marketNote");
     if (note) {
       const link = payload.sourceUrl
-        ? `<a href="${payload.sourceUrl}" target="_blank" rel="noopener">Ulimi marketplace</a>`
+        ? `<a href="${payload.sourceUrl}" target="_blank" rel="noopener">LocalBuyEx</a>`
         : "market feed";
-      note.innerHTML = `${payload.source || "Market prices"} · sourced from ${link}. A buyer offer below the ministry floor is blocked and cannot pay you.`;
+      const scope = payload.warehouseHub
+        ? `Nearest warehouse: <strong>${payload.warehouseHub}</strong>${district ? ` · ${district}` : ""}.`
+        : payload.note || "Log in to see prices for your district.";
+      note.innerHTML = `${payload.source || "Market prices"} · ${scope} Sourced from ${link}. A buyer offer below the ministry floor is blocked and cannot pay you.`;
     }
   } catch {
     document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;

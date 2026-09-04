@@ -27,11 +27,11 @@ function upsert(map, visit) {
   }
 }
 
-export function visitQueue(db, staff) {
+export async function visitQueue(db, staff) {
   const now = Date.now();
   const weekAgo = now - WEEK_MS;
-  const farmers = listFarmerSummaries(db).filter((row) => inArea(staff, row.farmer));
-  const pests = listPestReports(db).filter((row) => inArea(staff, row));
+  const farmers = (await listFarmerSummaries(db)).filter((row) => inArea(staff, row.farmer));
+  const pests = (await listPestReports(db)).filter((row) => inArea(staff, row));
   const byFarmer = new Map();
 
   for (const report of pests) {
@@ -52,7 +52,7 @@ export function visitQueue(db, staff) {
 
   for (const row of farmers) {
     const farmer = row.farmer;
-    const receipts = listReceiptsForFarmer(db, farmer.id);
+    const receipts = await listReceiptsForFarmer(db, farmer.id);
     const accepted = receipts.filter((item) => item.status === "accepted");
     const pendingLoan = receipts.some((item) => item.loanPending);
     const stageKey = row.currentStage?.key || null;
@@ -117,12 +117,12 @@ export function visitQueue(db, staff) {
   });
 
   const ussdFarmers = new Set(
-    db.prepare(`
+    (await db.prepare(`
       SELECT DISTINCT farmer_id FROM season_events
       WHERE channel = 'ussd' AND created_at >= ?
-    `).all(weekAgo).map((row) => row.farmer_id)
+    `).all(weekAgo)).map((row) => row.farmer_id)
   );
-  for (const row of db.prepare(`
+  for (const row of await db.prepare(`
     SELECT DISTINCT farmer_id FROM pest_reports
     WHERE channel = 'ussd' AND created_at >= ?
   `).all(weekAgo)) {

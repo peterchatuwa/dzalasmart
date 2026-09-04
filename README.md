@@ -6,7 +6,13 @@ The HTML files are the original clickable prototype. The real product starts in 
 
 ## Run locally
 
-Needs Node.js 22 or newer (this repo uses the built-in SQLite driver).
+Needs Node.js 22 or newer. The API stores data in **PostgreSQL** (`DATABASE_URL`). Without that variable it falls back to an in-memory database for quick local runs (data is lost on restart).
+
+Copy `server/.env.example` to `server/.env` and set `DATABASE_URL` before serious local work:
+
+```bash
+DATABASE_URL=postgres://nzeru:secret@localhost:5432/nzeru
+```
 
 ```bash
 npm install
@@ -56,9 +62,15 @@ The Android app logs the same season events as the browser farmer app. USSD stay
 - **Ministry NDVI map** — five-day satellite-style crop health by district, adjusted for live pest reports and weather alerts
 - **Plan My Farm** — saved season budget, bankability score, planting windows, and cash-flow plan using live market prices
 - **GPS plot mapping** — EPA centroid estimate, phone GPS pin, OpenStreetMap embed, plot NDVI, polygon from plan hectares
-- **Live market prices** — pulled from [Ulimi marketplace](https://ulimi.online/) with fallback if the feed is down
+- **Live market prices** — district-scoped buying prices from [LocalBuyEx](https://www.localbuyex.com/) warehouses nearest to where the farmer stays
 
-Both channels write the same SQLite database (`server/data/dzalasmart.db`). The filename is unchanged so existing local data keeps working.
+Both channels write the same PostgreSQL database. Demo farmers and staff are seeded automatically on first run when the database is empty.
+
+To migrate an old SQLite file (`server/data/dzalasmart.db`):
+
+```bash
+DATABASE_URL=postgres://… node scripts/migrate-sqlite-to-pg.js
+```
 
 ### Useful commands
 
@@ -107,7 +119,7 @@ Authorization: Bearer <token>
 
 ## Deploy later
 
-This is a local working project. When the API, mobile app, and USSD flow are solid, the same server process goes on a real host with a stronger `JWT_SECRET` and a persistent disk (or Postgres). Do not deploy the default secret.
+This is a local working project. Production deploy (`scripts/deploy_remote.py`) installs PostgreSQL on the VPS, creates a `nzeru` database, and writes `DATABASE_URL` into `server/.env`. Use a strong `JWT_SECRET` — the deploy script generates one each run (sessions reset). Do not deploy the default secret.
 
 ## Prototype site
 

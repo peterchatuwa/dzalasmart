@@ -19,7 +19,7 @@ export async function handleUssd(db, body = {}) {
   const text = String(body.text || "");
   let farmer;
   try {
-    farmer = findFarmerByPhone(db, phone);
+    farmer = await findFarmerByPhone(db, phone);
   } catch {
     farmer = null;
   }
@@ -37,7 +37,7 @@ export async function handleUssd(db, body = {}) {
   }
 
   if (parts[0] === "1") {
-    const status = farmerStatus(db, farmer);
+    const status = await farmerStatus(db, farmer);
     if (status.seasonComplete) {
       return ussdReply("END This season is complete. Your cooperative can already see the full record.");
     }
@@ -45,14 +45,14 @@ export async function handleUssd(db, body = {}) {
       return ussdReply(`CON Next milestone: ${status.nextStage.name}\n1. Confirm\n0. Cancel`);
     }
     if (parts[1] === "1") {
-      const updated = logStage(db, farmer, { channel: "ussd" });
+      const updated = await logStage(db, farmer, { channel: "ussd" });
       return ussdReply(`END ${updated.currentStage.name} recorded for ${farmer.name}.`);
     }
     return ussdReply("END Cancelled.");
   }
 
   if (parts[0] === "2") {
-    const status = farmerStatus(db, farmer);
+    const status = await farmerStatus(db, farmer);
     const current = status.currentStage ? status.currentStage.name : "Not started";
     const next = status.nextStage ? status.nextStage.name : "Season complete";
     return ussdReply(
@@ -76,7 +76,7 @@ export async function handleUssd(db, body = {}) {
     const symptoms = USSD_PEST[parts[1]];
     if (!symptoms) return ussdReply("END Invalid choice.");
     const result = askAdvisor({ text: symptoms, topic: "pest", lang: "en" });
-    logPestReport(db, farmer, {
+    await logPestReport(db, farmer, {
       symptoms: result.match || symptoms,
       matchName: result.match,
       channel: "ussd",
@@ -86,7 +86,7 @@ export async function handleUssd(db, body = {}) {
   }
 
   if (parts[0] === "5") {
-    const receipts = listReceiptsForFarmer(db, farmer.id);
+    const receipts = await listReceiptsForFarmer(db, farmer.id);
     const latest = receipts[0];
     if (!latest) {
       return ussdReply("END No grain has been taken in yet. Deliver to your cooperative after harvest.");
@@ -113,7 +113,7 @@ export async function handleUssd(db, body = {}) {
     if (parts[1] === "2") return ussdReply("END Loan not accepted. The grain stays on your warehouse receipt.");
     if (parts[1] !== "1") return ussdReply("END Invalid choice.");
     try {
-      const paid = acceptWarehouseLoan(db, farmer, {});
+      const paid = await acceptWarehouseLoan(db, farmer, {});
       return ussdReply(`END MWK ${paid.receipt.loanDisbursed.toLocaleString("en")} will be sent to your registered mobile money wallet.`);
     } catch (error) {
       return ussdReply(`END ${error.message}`);

@@ -29,10 +29,10 @@ async function json(url, options = {}) {
   return { res, body };
 }
 
-function setup() {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
+async function setup() {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
   return createApp(db, { jwtSecret: "test-secret" });
 }
 
@@ -46,7 +46,7 @@ test("gradeMoisture matches the original warehouse meter bands", () => {
 });
 
 test("cooperative intake grades grain, writes a receipt, and advances Harvest to Post-Harvest", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const coopLogin = await json(`${url}/api/staff/login`, {
@@ -93,7 +93,7 @@ test("cooperative intake grades grain, writes a receipt, and advances Harvest to
 });
 
 test("wet grain is logged as drying required and does not advance the season", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const coopLogin = await json(`${url}/api/staff/login`, {
@@ -123,7 +123,7 @@ test("wet grain is logged as drying required and does not advance the season", a
 });
 
 test("extension staff cannot write intake, and unharvested farmers are refused", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const extLogin = await json(`${url}/api/staff/login`, {
@@ -166,7 +166,7 @@ test("extension staff cannot write intake, and unharvested farmers are refused",
 });
 
 test("farmer accepts the warehouse loan from the app after grading", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const coopLogin = await json(`${url}/api/staff/login`, {
@@ -219,7 +219,7 @@ test("farmer accepts the warehouse loan from the app after grading", async (t) =
 });
 
 test("USSD option 5 shows the warehouse advance and pays it on confirm", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const coopLogin = await json(`${url}/api/staff/login`, {

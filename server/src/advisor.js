@@ -284,7 +284,7 @@ export function askAdvisor(input = {}) {
   return { lang, kind: "unknown", reply: topic === "pest" ? copy.noMatch : copy.fallback };
 }
 
-export function logPestReport(db, farmer, input = {}) {
+export async function logPestReport(db, farmer, input = {}) {
   const row = {
     id: crypto.randomUUID(),
     farmer_id: farmer.id,
@@ -293,21 +293,21 @@ export function logPestReport(db, farmer, input = {}) {
     channel: input.channel || "mobile",
     created_at: Date.now(),
   };
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO pest_reports (id, farmer_id, symptoms, match_name, channel, created_at)
     VALUES (@id, @farmer_id, @symptoms, @match_name, @channel, @created_at)
   `).run(row);
   return row;
 }
 
-export function listPestReports(db) {
-  return db.prepare(`
+export async function listPestReports(db) {
+  return (await db.prepare(`
     SELECT r.*, f.name AS farmer_name, f.code AS farmer_code, f.district, f.epa
     FROM pest_reports r
     JOIN farmers f ON f.id = r.farmer_id
     ORDER BY r.created_at DESC
     LIMIT 50
-  `).all().map((row) => ({
+  `).all()).map((row) => ({
     id: row.id,
     farmerId: row.farmer_id,
     farmerName: row.farmer_name,

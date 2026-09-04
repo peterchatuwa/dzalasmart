@@ -30,11 +30,11 @@ async function json(url, options = {}) {
   return { res, body };
 }
 
-function setup() {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
-  seedFloorsIfEmpty(db);
+async function setup() {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
+  await seedFloorsIfEmpty(db);
   return { db, app: createApp(db, { jwtSecret: "test-secret" }) };
 }
 
@@ -59,7 +59,7 @@ test("fertiliser questions hit the general knowledge base", () => {
 });
 
 test("POST /api/advisor/ask logs a pest report for a signed-in farmer", async (t) => {
-  const { app } = setup();
+  const { app } = await setup();
   const { url, close } = await listen(app);
   t.after(close);
 
@@ -89,7 +89,7 @@ test("POST /api/advisor/ask logs a pest report for a signed-in farmer", async (t
 });
 
 test("USSD option 4 reports a pest onto the same farmer record", async (t) => {
-  const { app } = setup();
+  const { app } = await setup();
   const { url, close } = await listen(app);
   t.after(close);
 
@@ -130,7 +130,7 @@ test("USSD option 4 reports a pest onto the same farmer record", async (t) => {
 });
 
 test("crop ask uses the farmer soil record when none is posted", async (t) => {
-  const { app } = setup();
+  const { app } = await setup();
   const { url, close } = await listen(app);
   t.after(close);
 

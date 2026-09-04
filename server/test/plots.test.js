@@ -30,10 +30,10 @@ async function json(url, options = {}) {
   return { res, body };
 }
 
-function setup() {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
+async function setup() {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
   return createApp(db, { jwtSecret: "test-secret" });
 }
 
@@ -45,16 +45,16 @@ test("estimateCentroid offsets each EPA within a district", () => {
 });
 
 test("GPS plot save replaces the estimate and staff can read it back", async (t) => {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
-  const grace = db.prepare("SELECT * FROM farmers WHERE phone = ?").get("+265888000001");
-  saveFarmPlan(db, grace, {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
+  const grace = await db.prepare("SELECT * FROM farmers WHERE phone = ?").get("+265888000001");
+  await saveFarmPlan(db, grace, {
     crops: [{ crop: "Maize", hectares: 1.2, startMonth: "11" }],
     readiness: {},
   });
 
-  const saved = saveFarmerPlot(db, grace, {
+  const saved = await saveFarmerPlot(db, grace, {
     lat: -12.8172,
     lon: 34.2891,
     source: "gps",
@@ -79,7 +79,7 @@ test("GPS plot save replaces the estimate and staff can read it back", async (t)
 });
 
 test("GET /api/farmers/me/plot creates an estimated plot on first load", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const login = await json(`${url}/api/farmers/login`, {

@@ -70,19 +70,19 @@ const RECEIPT_SELECT = `
   JOIN staff s ON s.id = r.staff_id
 `;
 
-export function listReceipts(db) {
-  return db.prepare(`${RECEIPT_SELECT} ORDER BY r.created_at DESC`).all().map(publicReceipt);
+export async function listReceipts(db) {
+  return (await db.prepare(`${RECEIPT_SELECT} ORDER BY r.created_at DESC`).all()).map(publicReceipt);
 }
 
-export function listReceiptsForFarmer(db, farmerId) {
-  return db.prepare(`${RECEIPT_SELECT} WHERE r.farmer_id = ? ORDER BY r.created_at DESC`)
-    .all(farmerId)
+export async function listReceiptsForFarmer(db, farmerId) {
+  return (await db.prepare(`${RECEIPT_SELECT} WHERE r.farmer_id = ? ORDER BY r.created_at DESC`)
+    .all(farmerId))
     .map(publicReceipt);
 }
 
-export function withReceipts(db, status) {
-  const receipts = listReceiptsForFarmer(db, status.farmer.id);
-  const contracts = listContractsForFarmer(db, status.farmer.id);
+export async function withReceipts(db, status) {
+  const receipts = await listReceiptsForFarmer(db, status.farmer.id);
+  const contracts = await listContractsForFarmer(db, status.farmer.id);
   return {
     ...status,
     receipts,
@@ -94,8 +94,8 @@ export function pendingLoanReceipts(receipts) {
   return receipts.filter((row) => row.loanPending).sort((a, b) => a.createdAt - b.createdAt);
 }
 
-export function acceptWarehouseLoan(db, farmer, input = {}) {
-  const receipts = listReceiptsForFarmer(db, farmer.id);
+export async function acceptWarehouseLoan(db, farmer, input = {}) {
+  const receipts = await listReceiptsForFarmer(db, farmer.id);
   const pending = pendingLoanReceipts(receipts);
   const target = input.receiptId
     ? receipts.find((row) => row.id === input.receiptId)
@@ -117,16 +117,16 @@ export function acceptWarehouseLoan(db, farmer, input = {}) {
     throw HttpError(409, "This warehouse loan has already been sent to the registered wallet.");
   }
 
-  db.prepare("UPDATE warehouse_receipts SET loan_disbursed = loan_cap WHERE id = ?").run(target.id);
-  const updated = listReceiptsForFarmer(db, farmer.id).find((row) => row.id === target.id);
+  await db.prepare("UPDATE warehouse_receipts SET loan_disbursed = loan_cap WHERE id = ?").run(target.id);
+  const updated = (await listReceiptsForFarmer(db, farmer.id)).find((row) => row.id === target.id);
   return {
     receipt: updated,
-    farmer: withReceipts(db, farmerStatus(db, farmer)),
+    farmer: await withReceipts(db, await farmerStatus(db, farmer)),
   };
 }
 
-export function warehouseSummary(db) {
-  const receipts = listReceipts(db);
+export async function warehouseSummary(db) {
+  const receipts = await listReceipts(db);
   const accepted = receipts.filter((row) => row.status === "accepted");
   const totalKg = accepted.reduce((sum, row) => sum + row.weightKg, 0);
   const moistureSum = accepted.reduce((sum, row) => sum + row.moisturePct * row.weightKg, 0);
@@ -147,8 +147,8 @@ export function warehouseSummary(db) {
   };
 }
 
-export function recordIntake(db, staff, input = {}) {
-  const farmer = getFarmerById(db, input.farmerId);
+export async function recordIntake(db, staff, input = {}) {
+  const farmer = await getFarmerById(db, input.farmerId);
   if (!farmer) throw HttpError(404, "Farmer not found");
 
   const spec = cropSpec(input.crop);
@@ -164,7 +164,7 @@ export function recordIntake(db, staff, input = {}) {
     throw HttpError(400, "Moisture must be between 0 and 40%");
   }
 
-  const status = farmerStatus(db, farmer);
+  const status = await farmerStatus(db, farmer);
   const currentIndex = status.currentStage?.index ?? -1;
   if (currentIndex < HARVEST_INDEX) {
     throw HttpError(409, "This farmer has not reached Harvest yet. Grain can only be taken in after harvest.");
@@ -176,7 +176,7 @@ export function recordIntake(db, staff, input = {}) {
   const accepted = grade === "accepted";
 
   let code = genReceiptCode(farmer.district);
-  while (db.prepare("SELECT id FROM warehouse_receipts WHERE code = ?").get(code)) {
+  while (await db.prepare("SELECT id FROM warehouse_receipts WHERE code = ?").get(code)) {
     code = genReceiptCode(farmer.district);
   }
 
@@ -196,7 +196,7 @@ export function recordIntake(db, staff, input = {}) {
     created_at: Date.now(),
   };
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO warehouse_receipts
       (id, code, farmer_id, staff_id, crop, weight_kg, moisture_pct, price_per_kg, asset_value, loan_cap, loan_disbursed, status, created_at)
     VALUES
@@ -204,16 +204,16 @@ export function recordIntake(db, staff, input = {}) {
   `).run(row);
 
   let stageAdvanced = false;
-  let nextStatus = farmerStatus(db, farmer);
+  let nextStatus = await farmerStatus(db, farmer);
   if (accepted && currentIndex === HARVEST_INDEX) {
-    nextStatus = logStage(db, farmer, { channel: "warehouse" });
+    nextStatus = await logStage(db, farmer, { channel: "warehouse" });
     stageAdvanced = true;
   }
 
-  const receipt = listReceiptsForFarmer(db, farmer.id).find((item) => item.id === row.id);
+  const receipt = (await listReceiptsForFarmer(db, farmer.id)).find((item) => item.id === row.id);
   return {
     receipt,
     stageAdvanced,
-    farmer: withReceipts(db, nextStatus),
+    farmer: await withReceipts(db, nextStatus),
   };
 }

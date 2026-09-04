@@ -122,12 +122,13 @@ const DAILY_PLAN = {
   ],
 };
 
-function parseMarketPrice(crop) {
-  return getMarketPrice(crop);
+function parseMarketPrice(crop, district) {
+  return getMarketPrice(crop, district);
 }
 
-function floorPrice(db, crop) {
-  const row = listFloors(db).find((item) => item.crop === crop);
+async function floorPrice(db, crop) {
+  const rows = await listFloors(db);
+  const row = rows.find((item) => item.crop === crop);
   return row?.pricePerKg || null;
 }
 
@@ -159,11 +160,11 @@ export function plantingWindowStatus(crop, startMonth, now = new Date()) {
   };
 }
 
-export function computeBudget(crop, hectares, db) {
+export async function computeBudget(crop, hectares, db, district = null) {
   const model = getModel(crop);
   const ha = Math.max(0.1, Number(hectares) || 1);
-  const marketPrice = parseMarketPrice(crop);
-  const floor = floorPrice(db, crop);
+  const marketPrice = parseMarketPrice(crop, district);
+  const floor = await floorPrice(db, crop);
   const priceMwkKg = marketPrice || model.priceMwkKg;
   const totalCost = model.costPerHa * ha;
   const totalRevenue = model.yieldKgHa * priceMwkKg * ha;
@@ -228,8 +229,8 @@ export function computeBankability(readiness = READINESS_DEFAULTS) {
   return { score, grade, status, checks };
 }
 
-function loadStoredPlan(db, farmerId) {
-  const row = db.prepare("SELECT crops_json, readiness_json, updated_at FROM farm_plans WHERE farmer_id = ?").get(farmerId);
+async function loadStoredPlan(db, farmerId) {
+  const row = await db.prepare("SELECT crops_json, readiness_json, updated_at FROM farm_plans WHERE farmer_id = ?").get(farmerId);
   if (!row) return null;
   return {
     crops: JSON.parse(row.crops_json),
@@ -245,7 +246,7 @@ function defaultCrops(farmer) {
   return [{ crop, hectares: 1, startMonth: month }];
 }
 
-export function saveFarmPlan(db, farmer, input) {
+export async function saveFarmPlan(db, farmer, input) {
   const crops = Array.isArray(input.crops) ? input.crops : null;
   if (!crops?.length) throw HttpError(400, "Add at least one crop to the plan");
   const cleaned = crops.map((row) => {
@@ -257,7 +258,7 @@ export function saveFarmPlan(db, farmer, input) {
   });
   const readiness = { ...READINESS_DEFAULTS, ...(input.readiness || {}) };
   const now = Date.now();
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO farm_plans (farmer_id, crops_json, readiness_json, updated_at)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(farmer_id) DO UPDATE SET
@@ -265,21 +266,24 @@ export function saveFarmPlan(db, farmer, input) {
       readiness_json = excluded.readiness_json,
       updated_at = excluded.updated_at
   `).run(farmer.id, JSON.stringify(cleaned), JSON.stringify(readiness), now);
-  return buildFarmPlan(db, farmer, { stored: { crops: cleaned, readiness, updatedAt: now } });
+  return await buildFarmPlan(db, farmer, { stored: { crops: cleaned, readiness, updatedAt: now } });
 }
 
-export function buildFarmPlan(db, farmer, options = {}) {
-  const stored = options.stored || loadStoredPlan(db, farmer.id) || {
+export async function buildFarmPlan(db, farmer, options = {}) {
+  const stored = options.stored || await loadStoredPlan(db, farmer.id) || {
     crops: defaultCrops(farmer),
     readiness: { ...READINESS_DEFAULTS },
     updatedAt: null,
   };
-  const budgets = stored.crops.map((row) => ({
-    ...row,
-    planting: plantingWindowStatus(row.crop, row.startMonth),
-    budget: computeBudget(row.crop, row.hectares, db),
-    cropInfo: CROP_INFO[row.crop] || null,
-  }));
+  const budgets = [];
+  for (const row of stored.crops) {
+    budgets.push({
+      ...row,
+      planting: plantingWindowStatus(row.crop, row.startMonth),
+      budget: await computeBudget(row.crop, row.hectares, db, farmer.district),
+      cropInfo: CROP_INFO[row.crop] || null,
+    });
+  }
   const combined = budgets.reduce((acc, row) => {
     const b = row.budget;
     acc.hectares += b.hectares;
@@ -293,7 +297,7 @@ export function buildFarmPlan(db, farmer, options = {}) {
   combined.roi = combined.totalCost > 0 ? Math.round((combined.totalMargin / combined.totalCost) * 100) : 0;
   combined.profitable = combined.totalMargin > 0;
 
-  const primary = budgets[0]?.budget || computeBudget("Maize", 1, db);
+  const primary = budgets[0]?.budget || await computeBudget("Maize", 1, db, farmer.district);
   const bankability = computeBankability(stored.readiness);
   const weather = options.weather;
 
@@ -386,6 +390,6 @@ function buildDecisions(budgets, combined, bankability) {
   return items;
 }
 
-export function getFarmPlan(db, farmer, options = {}) {
-  return buildFarmPlan(db, farmer, options);
+export async function getFarmPlan(db, farmer, options = {}) {
+  return await buildFarmPlan(db, farmer, options);
 }

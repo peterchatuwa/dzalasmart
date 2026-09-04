@@ -6,7 +6,8 @@ import { openDatabase } from "../src/db.js";
 import { seedIfEmpty } from "../src/farmers.js";
 import {
   getMarketPrice,
-  parseUlimiHtml,
+  nearestWarehouseHub,
+  parseLocalBuyHtml,
   resetMarketCacheForTests,
   setMarketCacheForTests,
 } from "../src/market.js";
@@ -14,13 +15,39 @@ import { computeBudget } from "../src/plan.js";
 import { seedFloorsIfEmpty } from "../src/floors.js";
 
 const SAMPLE_HTML = `
-<div id="ticker">
-  <div><span class="opacity-70">Maize</span><span class="font-medium">MWK 900/kg</span><span class="text-xs text-green-600">▲ 2.4%</span></div>
-  <div><span class="opacity-70">Ground Nuts</span><span class="font-medium">MWK 2300/kg</span><span class="text-xs text-red-600">▼ 0.8%</span></div>
-  <div><span class="opacity-70">Soya</span><span class="font-medium">MWK 800/kg</span><span class="text-xs text-green-600">▲ 1.1%</span></div>
-  <div><span class="opacity-70">Pigeon Peas</span><span class="font-medium">MWK 1500/kg</span><span class="text-xs text-green-600">▲ 0.6%</span></div>
-  <div><span class="opacity-70">Maize</span><span class="font-medium">MWK 900/kg</span><span class="text-xs text-green-600">▲ 2.4%</span></div>
-</div>`;
+<marquee>
+  <span class="mx-3">WH 1,050.00 : <span class="text-muted"> 0.00</span></span> |
+  <span class="mx-3">SB 1,200.00 : <span class="text-success">&#9650; 300.00</span></span> |
+  <span class="mx-3">BN 2,300.00 : <span class="text-success">&#9650; 1,100.00</span></span>
+</marquee>
+<table><tbody>
+<tr>
+  <td>WH</td>
+  <td><a href="#" title="Maize">Maize</a></td>
+  <td>A</td>
+  <td>1,050.00</td>
+  <td>1,050.00</td>
+  <td>Kasungu</td>
+</tr>
+<tr>
+  <td>SB</td>
+  <td><a href="#" title="Soya Beans">Soya Beans</a></td>
+  <td>A</td>
+  <td>1,200.00</td>
+  <td>1,500.00</td>
+  <td>Lilongwe</td>
+</tr>
+<tr>
+  <td>BN</td>
+  <td><a href="#" title="Beans">Beans</a></td>
+  <td>B</td>
+  <td>2,300.00</td>
+  <td>3,400.00</td>
+  <td>Mchinji</td>
+</tr>
+</tbody></table>`;
+
+const SAMPLE_CATALOG = parseLocalBuyHtml(SAMPLE_HTML).catalog;
 
 function listen(app) {
   return new Promise((resolve) => {
@@ -35,49 +62,49 @@ function listen(app) {
   });
 }
 
-test("parseUlimiHtml extracts ticker prices and trends", () => {
-  const parsed = parseUlimiHtml(SAMPLE_HTML);
-  assert.equal(parsed.byCommodity.get("Maize").length, 2);
-  assert.equal(parsed.byCommodity.get("Groundnuts")[0], 2300);
-  assert.equal(parsed.byCommodity.get("Soya beans")[0], 800);
-  assert.equal(parsed.trends.get("Maize").trend, "up");
-  assert.match(parsed.trends.get("Groundnuts").trendLabel, /0\.8/);
+test("parseLocalBuyHtml extracts warehouse buying prices and ticker moves", () => {
+  const parsed = parseLocalBuyHtml(SAMPLE_HTML);
+  assert.equal(parsed.catalog.length, 3);
+  assert.equal(parsed.catalog[0].buyPricePerKg, 1050);
+  assert.equal(parsed.catalog[1].hub, "Lilongwe");
+  assert.equal(parsed.trendByCode.get("SB").trend, "up");
 });
 
-test("getMarketPrice reads from the in-memory Ulimi cache", () => {
-  resetMarketCacheForTests();
-  setMarketCacheForTests({
-    byCommodity: new Map([
-      ["Maize", [900]],
-      ["Groundnuts", [2300]],
-    ]),
-  });
-  assert.equal(getMarketPrice("Maize"), 900);
-  assert.equal(getMarketPrice("Groundnuts"), 2300);
+test("nearestWarehouseHub picks Kasungu for Nkhotakota farmers", () => {
+  assert.equal(nearestWarehouseHub("Nkhotakota"), "Kasungu");
+  assert.equal(nearestWarehouseHub("Lilongwe"), "Lilongwe");
+  assert.equal(nearestWarehouseHub("Mchinji"), "Mchinji");
 });
 
-test("computeBudget uses cached Ulimi prices when available", () => {
+test("getMarketPrice is scoped to the farmer district warehouse", () => {
   resetMarketCacheForTests();
-  const db = openDatabase(":memory:");
-  seedFloorsIfEmpty(db);
-  setMarketCacheForTests({ byCommodity: new Map([["Maize", [880]]]) });
-  const budget = computeBudget("Maize", 1, db);
-  assert.equal(budget.priceMwkKg, 880);
-  assert.equal(budget.marketPrice, 880);
+  setMarketCacheForTests({ catalog: SAMPLE_CATALOG, trendByCode: new Map() });
+  assert.equal(getMarketPrice("Maize", "Nkhotakota"), 1050);
+  assert.equal(getMarketPrice("Soybeans", "Nkhotakota"), null);
+  assert.equal(getMarketPrice("Soybeans", "Lilongwe"), 1200);
 });
 
-test("GET /api/market returns rows and source metadata", async (t) => {
+test("computeBudget uses district-scoped LocalBuyEx prices", async () => {
   resetMarketCacheForTests();
-  setMarketCacheForTests({
-    rows: [{ crop: "Groundnuts", price: "MWK 2,300/kg", trend: "down", trendLabel: "↘ -0.8%", yieldKg: "1,200 kg", net: "MWK 2,760,000/ha" }],
-    byCommodity: new Map([["Groundnuts", [2300]]]),
-  });
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
+  const db = await openDatabase(":memory:");
+  await seedFloorsIfEmpty(db);
+  setMarketCacheForTests({ catalog: SAMPLE_CATALOG, trendByCode: new Map() });
+  const budget = await computeBudget("Maize", 1, db, "Kasungu");
+  assert.equal(budget.priceMwkKg, 1050);
+  assert.equal(budget.marketPrice, 1050);
+});
+
+test("GET /api/market scopes rows to the requested district", async (t) => {
+  resetMarketCacheForTests();
+  setMarketCacheForTests({ catalog: SAMPLE_CATALOG, trendByCode: new Map() });
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
   const { url, close } = await listen(createApp(db, { jwtSecret: "test-secret" }));
   t.after(close);
 
-  const payload = await fetch(`${url}/api/market`).then((res) => res.json());
-  assert.ok(payload.rows.length >= 1);
-  assert.match(payload.source, /Ulimi|NAMIS|Test market feed/);
+  const payload = await fetch(`${url}/api/market?district=Nkhotakota`).then((res) => res.json());
+  assert.equal(payload.warehouseHub, "Kasungu");
+  assert.equal(payload.rows.length, 1);
+  assert.equal(payload.rows[0].crop, "Maize");
+  assert.match(payload.source, /LocalBuyEx|NAMIS|Test market feed/);
 });

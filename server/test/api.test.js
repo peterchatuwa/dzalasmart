@@ -29,7 +29,7 @@ async function json(url, options = {}) {
 }
 
 test("farmer register, login, and ordered season events", async (t) => {
-  const db = openDatabase(":memory:");
+  const db = await openDatabase(":memory:");
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);
   t.after(close);
@@ -81,8 +81,8 @@ test("farmer register, login, and ordered season events", async (t) => {
 });
 
 test("USSD logs the next milestone onto the same farmer record", async (t) => {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);
   t.after(close);
@@ -116,10 +116,10 @@ test("USSD logs the next milestone onto the same farmer record", async (t) => {
 });
 
 test("staff can read a farmer record but cannot write stages", async (t) => {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
   const { seedStaffIfEmpty } = await import("../src/staff.js");
-  seedStaffIfEmpty(db);
+  await seedStaffIfEmpty(db);
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);
   t.after(close);

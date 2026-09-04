@@ -10,18 +10,18 @@ function genFarmerCode(district) {
   return `MW-${letters}-${r1}-${r2}`;
 }
 
-function currentStageIndex(db, farmerId) {
-  const row = db.prepare(
+async function currentStageIndex(db, farmerId) {
+  const row = await db.prepare(
     "SELECT MAX(stage_index) AS max_index FROM season_events WHERE farmer_id = ?"
   ).get(farmerId);
   return row?.max_index == null ? -1 : row.max_index;
 }
 
-function listEvents(db, farmerId) {
-  return db.prepare(
+async function listEvents(db, farmerId) {
+  return (await db.prepare(
     `SELECT id, stage_index, stage_key, stage_name, channel, created_at
      FROM season_events WHERE farmer_id = ? ORDER BY stage_index ASC`
-  ).all(farmerId).map((row) => ({
+  ).all(farmerId)).map((row) => ({
     id: row.id,
     stageIndex: row.stage_index,
     stageKey: row.stage_key,
@@ -31,8 +31,8 @@ function listEvents(db, farmerId) {
   }));
 }
 
-export function farmerStatus(db, farmer) {
-  const currentIndex = currentStageIndex(db, farmer.id);
+export async function farmerStatus(db, farmer) {
+  const currentIndex = await currentStageIndex(db, farmer.id);
   const current = stageByIndex(currentIndex);
   const next = stageByIndex(currentIndex + 1);
   return {
@@ -40,32 +40,35 @@ export function farmerStatus(db, farmer) {
     currentStage: publicStage(current),
     nextStage: publicStage(next),
     seasonComplete: currentIndex >= STAGES.length - 1,
-    events: listEvents(db, farmer.id),
+    events: await listEvents(db, farmer.id),
   };
 }
 
-export function getFarmerById(db, id) {
-  return db.prepare("SELECT * FROM farmers WHERE id = ?").get(id) || null;
+export async function getFarmerById(db, id) {
+  return (await db.prepare("SELECT * FROM farmers WHERE id = ?").get(id)) || null;
 }
 
-export function listFarmerSummaries(db) {
-  return db.prepare("SELECT * FROM farmers ORDER BY name COLLATE NOCASE").all().map((row) => {
-    const status = farmerStatus(db, row);
-    return {
+export async function listFarmerSummaries(db) {
+  const rows = await db.prepare("SELECT * FROM farmers ORDER BY name COLLATE NOCASE").all();
+  const summaries = [];
+  for (const row of rows) {
+    const status = await farmerStatus(db, row);
+    summaries.push({
       farmer: status.farmer,
       currentStage: status.currentStage,
       nextStage: status.nextStage,
       eventCount: status.events.length,
       lastEventAt: status.events.at(-1)?.createdAt || null,
-    };
-  });
+    });
+  }
+  return summaries;
 }
 
-export function findFarmerByPhone(db, phone) {
-  return db.prepare("SELECT * FROM farmers WHERE phone = ?").get(normalizePhone(phone)) || null;
+export async function findFarmerByPhone(db, phone) {
+  return (await db.prepare("SELECT * FROM farmers WHERE phone = ?").get(normalizePhone(phone))) || null;
 }
 
-export function registerFarmer(db, input, jwtSecret) {
+export async function registerFarmer(db, input, jwtSecret) {
   const name = String(input.name || "").trim();
   if (name.length < 2) throw HttpError(400, "Name is required");
   const phone = normalizePhone(input.phone);
@@ -73,7 +76,7 @@ export function registerFarmer(db, input, jwtSecret) {
   const district = String(input.district || "").trim();
   const epa = String(input.epa || "").trim() || null;
   const region = assertPlace(district, epa);
-  const existing = db.prepare("SELECT id FROM farmers WHERE phone = ?").get(phone);
+  const existing = await db.prepare("SELECT id FROM farmers WHERE phone = ?").get(phone);
   if (existing) throw HttpError(409, "This phone is already registered");
 
   const farmer = {
@@ -90,20 +93,20 @@ export function registerFarmer(db, input, jwtSecret) {
     created_at: Date.now(),
   };
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO farmers (id, code, name, phone, pin_hash, district, epa, region, soil_type, nutrient_status, created_at)
     VALUES (@id, @code, @name, @phone, @pin_hash, @district, @epa, @region, @soil_type, @nutrient_status, @created_at)
   `).run(farmer);
 
-  const saved = db.prepare("SELECT * FROM farmers WHERE id = ?").get(farmer.id);
+  const saved = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(farmer.id);
   return {
     token: signFarmerToken(saved, jwtSecret),
     farmer: publicFarmer(saved),
   };
 }
 
-export function loginFarmer(db, input, jwtSecret) {
-  const farmer = findFarmerByPhone(db, input.phone);
+export async function loginFarmer(db, input, jwtSecret) {
+  const farmer = await findFarmerByPhone(db, input.phone);
   if (!farmer || !pinMatches(assertPin(input.pin), farmer.pin_hash)) {
     throw HttpError(401, "Phone or PIN is incorrect");
   }
@@ -113,8 +116,8 @@ export function loginFarmer(db, input, jwtSecret) {
   };
 }
 
-export function logStage(db, farmer, input = {}) {
-  const currentIndex = currentStageIndex(db, farmer.id);
+export async function logStage(db, farmer, input = {}) {
+  const currentIndex = await currentStageIndex(db, farmer.id);
   if (currentIndex >= STAGES.length - 1) {
     throw HttpError(409, "This season is already complete");
   }
@@ -135,16 +138,16 @@ export function logStage(db, farmer, input = {}) {
     created_at: Date.now(),
   };
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO season_events (id, farmer_id, stage_index, stage_key, stage_name, channel, created_at)
     VALUES (@id, @farmer_id, @stage_index, @stage_key, @stage_name, @channel, @created_at)
   `).run(event);
 
-  return farmerStatus(db, farmer);
+  return await farmerStatus(db, farmer);
 }
 
-export function seedIfEmpty(db) {
-  const count = db.prepare("SELECT COUNT(*) AS n FROM farmers").get().n;
+export async function seedIfEmpty(db) {
+  const count = (await db.prepare("SELECT COUNT(*) AS n FROM farmers").get()).n;
   if (count > 0) return false;
 
   const demo = [
@@ -184,10 +187,10 @@ export function seedIfEmpty(db) {
   ];
 
   for (const person of demo) {
-    const created = registerFarmer(db, person, "seed-only");
-    const farmer = db.prepare("SELECT * FROM farmers WHERE id = ?").get(created.farmer.id);
+    const created = await registerFarmer(db, person, "seed-only");
+    const farmer = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(created.farmer.id);
     for (let i = 0; i <= person.eventsThrough; i++) {
-      logStage(db, farmer, { channel: "seed" });
+      await logStage(db, farmer, { channel: "seed" });
     }
   }
   return true;

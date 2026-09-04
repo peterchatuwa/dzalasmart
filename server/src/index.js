@@ -13,38 +13,45 @@ dotenv.config({ path: path.join(here, "..", ".env") });
 
 const port = Number(process.env.PORT || 4000);
 const jwtSecret = process.env.JWT_SECRET || "local-dev-secret";
-const databasePath = process.env.DATABASE_PATH
-  ? path.resolve(here, "..", process.env.DATABASE_PATH)
-  : path.join(here, "..", "data", "dzalasmart.db");
 
-const db = openDatabase(databasePath);
-const seeded = seedIfEmpty(db);
-const staffSeeded = seedStaffIfEmpty(db);
-seedFloorsIfEmpty(db);
-seedContractsIfEmpty(db, staffIdByRole(db, "cooperative"));
-const frontendDir = path.join(here, "..", "..", "frontend");
-const app = createApp(db, { jwtSecret, frontendDir });
+async function main() {
+  const db = await openDatabase(process.env.DATABASE_URL || ":memory:");
+  const seeded = await seedIfEmpty(db);
+  const staffSeeded = await seedStaffIfEmpty(db);
+  await seedFloorsIfEmpty(db);
+  await seedContractsIfEmpty(db, await staffIdByRole(db, "cooperative"));
+  const frontendDir = path.join(here, "..", "..", "frontend");
+  const app = createApp(db, { jwtSecret, frontendDir });
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`${APP_NAME} app: http://localhost:${port}`);
-  console.log(`Staff desk:     http://localhost:${port}/staff`);
-  console.log(`API health:     http://localhost:${port}/health`);
-  console.log("Listening on all interfaces so an Android emulator can use http://10.0.2.2:4000");
-  console.log(`Database: ${databasePath}`);
-  if (staffSeeded) {
-    console.log("Seeded demo staff (PIN 1234):");
-    console.log("  Mercy Chirwa  +265888000101  — Extension, Zidyana EPA");
-    console.log("  Joseph Phiri  +265888000102  — Cooperative, Kasungu warehouse");
-    console.log("  Chikondi Moyo +265888000103  — Ministry of Agriculture");
-    console.log("  Davis Mwale   +265888000104  — Farmers Union of Malawi");
-  }
-  if (seeded) {
-    console.log("Seeded demo farmers (PIN 1234):");
-    console.log("  Grace Banda   +265888000001  — season at Harvest");
-    console.log("  Joseph Kaunda +265888000002  — season at Land Preparation");
-    console.log("  Estere Mvula  +265888000003  — season not started");
-  }
-  if (!process.env.JWT_SECRET) {
-    console.log("JWT_SECRET is using the local default. Set it in server/.env before deploying.");
-  }
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`${APP_NAME} app: http://localhost:${port}`);
+    console.log(`Staff desk:     http://localhost:${port}/staff`);
+    console.log(`API health:     http://localhost:${port}/health`);
+    console.log("Listening on all interfaces so an Android emulator can use http://10.0.2.2:4000");
+    console.log(`Database: PostgreSQL${process.env.DATABASE_URL ? "" : " (in-memory — set DATABASE_URL)"}`);
+    if (staffSeeded) {
+      console.log("Seeded demo staff (PIN 1234):");
+      console.log("  Mercy Chirwa  +265888000101  — Extension, Zidyana EPA");
+      console.log("  Joseph Phiri  +265888000102  — Cooperative, Kasungu warehouse");
+      console.log("  Chikondi Moyo +265888000103  — Ministry of Agriculture");
+      console.log("  Davis Mwale   +265888000104  — Farmers Union of Malawi");
+    }
+    if (seeded) {
+      console.log("Seeded demo farmers (PIN 1234):");
+      console.log("  Grace Banda   +265888000001  — season at Harvest");
+      console.log("  Joseph Kaunda +265888000002  — season at Land Preparation");
+      console.log("  Estere Mvula  +265888000003  — season not started");
+    }
+    if (!process.env.JWT_SECRET) {
+      console.log("JWT_SECRET is using the local default. Set it in server/.env before deploying.");
+    }
+    if (!process.env.DATABASE_URL) {
+      console.log("DATABASE_URL is not set — using ephemeral in-memory PostgreSQL (pg-mem). Data is lost on restart.");
+    }
+  });
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });

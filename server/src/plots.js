@@ -30,8 +30,8 @@ export function estimateCentroid(farmer) {
   };
 }
 
-export function plotHectares(db, farmerId) {
-  const row = db.prepare("SELECT crops_json FROM farm_plans WHERE farmer_id = ?").get(farmerId);
+export async function plotHectares(db, farmerId) {
+  const row = await db.prepare("SELECT crops_json FROM farm_plans WHERE farmer_id = ?").get(farmerId);
   if (row) {
     try {
       const crops = JSON.parse(row.crops_json);
@@ -59,11 +59,11 @@ export function buildPolygon(lat, lon, hectares) {
   }));
 }
 
-export function plotNdvi(db, farmer) {
+export async function plotNdvi(db, farmer) {
   let ndvi = baseNdvi(farmer.district, periodIndex());
   const h = hashSeed(farmer.id);
   ndvi = Number((ndvi + ((h % 11) - 5) / 100).toFixed(2));
-  const pests = listPestReports(db).filter((row) => row.farmerId === farmer.id).length;
+  const pests = (await listPestReports(db)).filter((row) => row.farmerId === farmer.id).length;
   if (pests) ndvi = Number(Math.max(0.32, ndvi - pests * 0.05).toFixed(2));
   return ndvi;
 }
@@ -100,10 +100,10 @@ function rowToPlot(row) {
   };
 }
 
-function persistPlot(db, farmer, data) {
+async function persistPlot(db, farmer, data) {
   const now = Date.now();
-  const ndvi = plotNdvi(db, farmer);
-  db.prepare(`
+  const ndvi = await plotNdvi(db, farmer);
+  await db.prepare(`
     INSERT INTO farm_plots (
       farmer_id, lat, lon, hectares, polygon_json, source, accuracy_m, ndvi, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -129,28 +129,28 @@ function persistPlot(db, farmer, data) {
   );
 }
 
-export function ensureEstimatedPlot(db, farmer) {
-  const existing = db.prepare("SELECT * FROM farm_plots WHERE farmer_id = ?").get(farmer.id);
+export async function ensureEstimatedPlot(db, farmer) {
+  const existing = await db.prepare("SELECT * FROM farm_plots WHERE farmer_id = ?").get(farmer.id);
   if (existing) return rowToPlot(existing);
   const centroid = estimateCentroid(farmer);
-  const hectares = plotHectares(db, farmer.id);
+  const hectares = await plotHectares(db, farmer.id);
   const polygon = buildPolygon(centroid.lat, centroid.lon, hectares);
-  persistPlot(db, farmer, {
+  await persistPlot(db, farmer, {
     ...centroid,
     hectares,
     polygon,
     source: "estimated",
     accuracyM: null,
   });
-  return rowToPlot(db.prepare("SELECT * FROM farm_plots WHERE farmer_id = ?").get(farmer.id));
+  return rowToPlot(await db.prepare("SELECT * FROM farm_plots WHERE farmer_id = ?").get(farmer.id));
 }
 
-export function getFarmerPlot(db, farmer) {
-  let plot = ensureEstimatedPlot(db, farmer);
-  const hectares = plotHectares(db, farmer.id);
+export async function getFarmerPlot(db, farmer) {
+  let plot = await ensureEstimatedPlot(db, farmer);
+  const hectares = await plotHectares(db, farmer.id);
   if (Math.abs(plot.hectares - hectares) > 0.01) {
     const polygon = buildPolygon(plot.lat, plot.lon, hectares);
-    persistPlot(db, farmer, {
+    await persistPlot(db, farmer, {
       lat: plot.lat,
       lon: plot.lon,
       hectares,
@@ -158,7 +158,7 @@ export function getFarmerPlot(db, farmer) {
       source: plot.source,
       accuracyM: plot.accuracyM,
     });
-    plot = rowToPlot(db.prepare("SELECT * FROM farm_plots WHERE farmer_id = ?").get(farmer.id));
+    plot = rowToPlot(await db.prepare("SELECT * FROM farm_plots WHERE farmer_id = ?").get(farmer.id));
   }
   const map = mapLinks(plot.lat, plot.lon);
   return {
@@ -171,7 +171,7 @@ export function getFarmerPlot(db, farmer) {
   };
 }
 
-export function saveFarmerPlot(db, farmer, input = {}) {
+export async function saveFarmerPlot(db, farmer, input = {}) {
   const lat = Number(input.lat);
   const lon = Number(input.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
@@ -179,10 +179,10 @@ export function saveFarmerPlot(db, farmer, input = {}) {
   }
   assertMalawiCoords(lat, lon);
   const hectares = input.hectares != null
-    ? Math.max(0.1, Number(input.hectares) || plotHectares(db, farmer.id))
-    : plotHectares(db, farmer.id);
+    ? Math.max(0.1, Number(input.hectares) || await plotHectares(db, farmer.id))
+    : await plotHectares(db, farmer.id);
   const polygon = buildPolygon(lat, lon, hectares);
-  persistPlot(db, farmer, {
+  await persistPlot(db, farmer, {
     lat: Number(lat.toFixed(6)),
     lon: Number(lon.toFixed(6)),
     hectares,
@@ -193,8 +193,8 @@ export function saveFarmerPlot(db, farmer, input = {}) {
   return getFarmerPlot(db, farmer);
 }
 
-export function plotCoverageStats(db) {
-  const rows = db.prepare("SELECT source FROM farm_plots").all();
+export async function plotCoverageStats(db) {
+  const rows = await db.prepare("SELECT source FROM farm_plots").all();
   const verified = rows.filter((row) => row.source === "gps").length;
   return {
     farmersWithPlots: rows.length,

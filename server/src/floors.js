@@ -22,8 +22,8 @@ export function judgeOffer(pricePerKg, floorPerKg) {
   return pricePerKg >= floorPerKg ? "cleared" : "blocked";
 }
 
-export function listFloors(db) {
-  return db.prepare("SELECT crop, price_per_kg, updated_at FROM price_floors ORDER BY crop").all()
+export async function listFloors(db) {
+  return (await db.prepare("SELECT crop, price_per_kg, updated_at FROM price_floors ORDER BY crop").all())
     .map((row) => ({
       crop: row.crop,
       pricePerKg: row.price_per_kg,
@@ -31,9 +31,9 @@ export function listFloors(db) {
     }));
 }
 
-export function floorFor(db, crop) {
+export async function floorFor(db, crop) {
   const name = String(crop || "").trim();
-  const row = db.prepare("SELECT * FROM price_floors WHERE crop = ? COLLATE NOCASE").get(name);
+  const row = await db.prepare("SELECT * FROM price_floors WHERE crop = ? COLLATE NOCASE").get(name);
   return row ? { crop: row.crop, pricePerKg: row.price_per_kg } : null;
 }
 
@@ -62,28 +62,28 @@ const CONTRACT_SELECT = `
   JOIN staff s ON s.id = c.staff_id
 `;
 
-export function listContracts(db) {
-  return db.prepare(`${CONTRACT_SELECT} ORDER BY c.created_at DESC`).all().map(publicContract);
+export async function listContracts(db) {
+  return (await db.prepare(`${CONTRACT_SELECT} ORDER BY c.created_at DESC`).all()).map(publicContract);
 }
 
-export function listContractsForFarmer(db, farmerId) {
-  return listContracts(db).filter((row) => row.farmerId === farmerId);
+export async function listContractsForFarmer(db, farmerId) {
+  return (await listContracts(db)).filter((row) => row.farmerId === farmerId);
 }
 
-export function contractMonitor(db) {
-  const contracts = listContracts(db);
+export async function contractMonitor(db) {
+  const contracts = await listContracts(db);
   const violations = contracts.filter((row) => row.status === "blocked");
   return {
-    floors: listFloors(db),
+    floors: await listFloors(db),
     contracts,
     violationCount: violations.length,
     clearedCount: contracts.filter((row) => row.status === "cleared").length,
   };
 }
 
-export function setFloor(db, staff, input = {}) {
+export async function setFloor(db, staff, input = {}) {
   const crop = String(input.crop || "").trim();
-  const existing = floorFor(db, crop);
+  const existing = await floorFor(db, crop);
   if (!existing && !DEFAULT_FLOORS.some((row) => row.crop.toLowerCase() === crop.toLowerCase())) {
     throw HttpError(400, "Unknown crop");
   }
@@ -92,18 +92,18 @@ export function setFloor(db, staff, input = {}) {
     throw HttpError(400, "Floor price must be a whole number of MWK per kg");
   }
   const name = existing?.crop || DEFAULT_FLOORS.find((row) => row.crop.toLowerCase() === crop.toLowerCase()).crop;
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO price_floors (crop, price_per_kg, updated_at, updated_by)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(crop) DO UPDATE SET price_per_kg = excluded.price_per_kg, updated_at = excluded.updated_at, updated_by = excluded.updated_by
   `).run(name, pricePerKg, Date.now(), staff.id);
-  return { floors: listFloors(db) };
+  return { floors: await listFloors(db) };
 }
 
-export function recordOffer(db, staff, input = {}) {
+export async function recordOffer(db, staff, input = {}) {
   const buyer = String(input.buyer || "").trim();
   if (buyer.length < 2) throw HttpError(400, "Buyer name is required");
-  const floor = floorFor(db, input.crop);
+  const floor = await floorFor(db, input.crop);
   if (!floor) throw HttpError(400, "No ministry floor for that crop");
   const district = String(input.district || "").trim();
   assertPlace(district);
@@ -115,9 +115,9 @@ export function recordOffer(db, staff, input = {}) {
 
   let farmer = null;
   if (input.farmerId) {
-    farmer = getFarmerById(db, input.farmerId);
+    farmer = await getFarmerById(db, input.farmerId);
     if (!farmer) throw HttpError(404, "Farmer not found");
-    const status = farmerStatus(db, farmer);
+    const status = await farmerStatus(db, farmer);
     const currentIndex = status.currentStage?.index ?? -1;
     if (currentIndex < POST_HARVEST_INDEX) {
       throw HttpError(409, "This farmer has not reached Post-Harvest Handling yet. Grain must be graded before it can be sold.");
@@ -138,7 +138,7 @@ export function recordOffer(db, staff, input = {}) {
     created_at: Date.now(),
   };
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO offtake_contracts
       (id, buyer, crop, district, price_per_kg, floor_per_kg, status, farmer_id, staff_id, created_at)
     VALUES
@@ -146,35 +146,35 @@ export function recordOffer(db, staff, input = {}) {
   `).run(row);
 
   let stageAdvanced = false;
-  let farmerRecord = farmer ? farmerStatus(db, farmer) : null;
+  let farmerRecord = farmer ? await farmerStatus(db, farmer) : null;
   if (farmer && status === "cleared" && (farmerRecord.currentStage?.index ?? -1) === POST_HARVEST_INDEX) {
-    farmerRecord = logStage(db, farmer, { channel: "sale" });
+    farmerRecord = await logStage(db, farmer, { channel: "sale" });
     stageAdvanced = true;
   }
 
-  const contract = listContracts(db).find((item) => item.id === row.id);
+  const contract = (await listContracts(db)).find((item) => item.id === row.id);
   return {
     contract,
     stageAdvanced,
     farmer: farmerRecord,
-    monitor: contractMonitor(db),
+    monitor: await contractMonitor(db),
   };
 }
 
-export function seedFloorsIfEmpty(db) {
-  const count = db.prepare("SELECT COUNT(*) AS n FROM price_floors").get().n;
+export async function seedFloorsIfEmpty(db) {
+  const count = (await db.prepare("SELECT COUNT(*) AS n FROM price_floors").get()).n;
   if (count > 0) return false;
   const insert = db.prepare(`
     INSERT INTO price_floors (crop, price_per_kg, updated_at, updated_by)
     VALUES (?, ?, ?, NULL)
   `);
   const now = Date.now();
-  for (const row of DEFAULT_FLOORS) insert.run(row.crop, row.pricePerKg, now);
+  for (const row of DEFAULT_FLOORS) await insert.run(row.crop, row.pricePerKg, now);
   return true;
 }
 
-export function seedContractsIfEmpty(db, staffId) {
-  const count = db.prepare("SELECT COUNT(*) AS n FROM offtake_contracts").get().n;
+export async function seedContractsIfEmpty(db, staffId) {
+  const count = (await db.prepare("SELECT COUNT(*) AS n FROM offtake_contracts").get()).n;
   if (count > 0 || !staffId) return false;
   const demo = [
     { buyer: "AgroBuy Traders", crop: "Maize", district: "Nkhotakota", pricePerKg: 610 },
@@ -182,7 +182,7 @@ export function seedContractsIfEmpty(db, staffId) {
     { buyer: "Chikweo Millers", crop: "Maize", district: "Dedza", pricePerKg: 595 },
   ];
   for (const offer of demo) {
-    recordOffer(db, { id: staffId }, offer);
+    await recordOffer(db, { id: staffId }, offer);
   }
   return true;
 }

@@ -29,10 +29,10 @@ async function json(url, options = {}) {
   return { res, body };
 }
 
-function setup() {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
+async function setup() {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
   return createApp(db, { jwtSecret: "test-secret" });
 }
 
@@ -47,16 +47,16 @@ test("base NDVI is deterministic and classifies into healthy, watch, and alert b
 });
 
 test("national view flags Grace's district after a pest report and scopes extension to one district", async (t) => {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedStaffIfEmpty(db);
-  const grace = db.prepare("SELECT * FROM farmers WHERE phone = ?").get("+265888000001");
-  db.prepare(`
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedStaffIfEmpty(db);
+  const grace = await db.prepare("SELECT * FROM farmers WHERE phone = ?").get("+265888000001");
+  await db.prepare(`
     INSERT INTO pest_reports (id, farmer_id, symptoms, match_name, channel, created_at)
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(crypto.randomUUID(), grace.id, "holes in the leaves", "Fall Armyworm (on maize)", "mobile", Date.now());
 
-  const ministry = nationalView(db, { role: "ministry" }, {
+  const ministry = await nationalView(db, { role: "ministry" }, {
     now: Date.parse("2026-09-04T08:00:00Z"),
     weatherAlerts: [{ district: "Chikwawa", alert: "severe" }],
   });
@@ -68,7 +68,7 @@ test("national view flags Grace's district after a pest report and scopes extens
   assert.notEqual(nkhotakota.status, "healthy");
   assert.ok(ministry.foodSecurityRisk.some((row) => row.district === "Chikwawa"));
 
-  const mercy = nationalView(db, { role: "extension", district: "Nkhotakota", epa: "Zidyana" }, {
+  const mercy = await nationalView(db, { role: "extension", district: "Nkhotakota", epa: "Zidyana" }, {
     now: Date.parse("2026-09-04T08:00:00Z"),
   });
   assert.equal(mercy.scope, "Nkhotakota");
@@ -77,7 +77,7 @@ test("national view flags Grace's district after a pest report and scopes extens
 });
 
 test("GET /api/staff/national returns the ministry crop-health map", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const ministry = await json(`${url}/api/staff/login`, {

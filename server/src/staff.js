@@ -47,9 +47,9 @@ export function roleLabel(role) {
   return STAFF_ROLES[role] || role;
 }
 
-export function loginStaff(db, input, jwtSecret) {
+export async function loginStaff(db, input, jwtSecret) {
   const phone = normalizePhone(input.phone);
-  const staff = db.prepare("SELECT * FROM staff WHERE phone = ?").get(phone);
+  const staff = await db.prepare("SELECT * FROM staff WHERE phone = ?").get(phone);
   if (!staff || !pinMatches(assertPin(input.pin), staff.pin_hash)) {
     throw HttpError(401, "Phone or PIN is incorrect");
   }
@@ -59,16 +59,16 @@ export function loginStaff(db, input, jwtSecret) {
   };
 }
 
-export function seedStaffIfEmpty(db) {
+export async function seedStaffIfEmpty(db) {
   const insert = db.prepare(`
     INSERT INTO staff (id, name, phone, pin_hash, role, org, district, epa, created_at)
     VALUES (@id, @name, @phone, @pin_hash, @role, @org, @district, @epa, @created_at)
   `);
   let added = 0;
   for (const person of DEMO_STAFF) {
-    const exists = db.prepare("SELECT id FROM staff WHERE phone = ?").get(person.phone);
+    const exists = await db.prepare("SELECT id FROM staff WHERE phone = ?").get(person.phone);
     if (exists) continue;
-    insert.run({
+    await insert.run({
       id: crypto.randomUUID(),
       name: person.name,
       phone: person.phone,
@@ -84,6 +84,6 @@ export function seedStaffIfEmpty(db) {
   return added > 0;
 }
 
-export function staffIdByRole(db, role) {
-  return db.prepare("SELECT id FROM staff WHERE role = ?").get(role)?.id || null;
+export async function staffIdByRole(db, role) {
+  return (await db.prepare("SELECT id FROM staff WHERE role = ?").get(role))?.id || null;
 }

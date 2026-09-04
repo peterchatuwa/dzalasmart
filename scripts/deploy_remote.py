@@ -115,10 +115,38 @@ def main():
     print(f"Uploaded {len(payload) / 1024 / 1024:.1f} MB")
 
     jwt = secrets.token_hex(32)
+    pg_pass = secrets.token_urlsafe(24)
+
+    run(client, "mkdir -p /etc/nzeru-za-alimi")
+    _, stdout, _ = client.exec_command("cat /etc/nzeru-za-alimi/pg.env 2>/dev/null || true")
+    pg_env = stdout.read().decode().strip()
+    if pg_env.startswith("POSTGRES_PASSWORD="):
+        pg_pass = pg_env.split("=", 1)[1]
+
+    run(
+        client,
+        "export DEBIAN_FRONTEND=noninteractive && "
+        "(command -v psql >/dev/null 2>&1 || apt-get install -y postgresql postgresql-contrib)",
+        check=False,
+    )
+    run(client, "systemctl enable postgresql", check=False)
+    run(client, "systemctl start postgresql", check=False)
+
+    pg_setup = (
+        f"echo 'POSTGRES_PASSWORD={pg_pass}' > /etc/nzeru-za-alimi/pg.env && "
+        f"sudo -u postgres psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='nzeru'\" | grep -q 1 "
+        f"|| sudo -u postgres psql -c \"CREATE USER nzeru WITH PASSWORD '{pg_pass}';\" && "
+        f"sudo -u postgres psql -tc \"SELECT 1 FROM pg_database WHERE datname='nzeru'\" | grep -q 1 "
+        f"|| sudo -u postgres psql -c \"CREATE DATABASE nzeru OWNER nzeru;\" && "
+        f"sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE nzeru TO nzeru;\""
+    )
+    run(client, pg_setup, check=False)
+
+    database_url = f"postgres://nzeru:{pg_pass}@localhost:5432/nzeru"
     env_body = (
         f"PORT=4000\n"
         f"JWT_SECRET={jwt}\n"
-        f"DATABASE_PATH=./data/dzalasmart.db\n"
+        f"DATABASE_URL={database_url}\n"
     )
 
     run(client, f"mkdir -p {REMOTE_DIR}/server/data")

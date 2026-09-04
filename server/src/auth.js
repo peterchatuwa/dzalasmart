@@ -26,14 +26,14 @@ export function signStaffToken(staff, secret) {
   );
 }
 
-export function readOptionalFarmer(db, secret, req) {
+export async function readOptionalFarmer(db, secret, req) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) return null;
   try {
     const payload = jwt.verify(token, secret);
     if (payload.role && payload.role !== "farmer") return null;
-    const farmer = db.prepare("SELECT * FROM farmers WHERE id = ?").get(payload.sub);
+    const farmer = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(payload.sub);
     return farmer ? publicFarmer(farmer) : null;
   } catch {
     return null;
@@ -41,7 +41,7 @@ export function readOptionalFarmer(db, secret, req) {
 }
 
 export function requireFarmer(db, secret) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : "";
     if (!token) {
@@ -54,7 +54,7 @@ export function requireFarmer(db, secret) {
         res.status(403).json({ error: "Farmer sign-in required" });
         return;
       }
-      const farmer = db.prepare("SELECT * FROM farmers WHERE id = ?").get(payload.sub);
+      const farmer = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(payload.sub);
       if (!farmer) {
         res.status(401).json({ error: "Account not found" });
         return;
@@ -68,7 +68,7 @@ export function requireFarmer(db, secret) {
 }
 
 export function requireStaff(db, secret) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : "";
     if (!token) {
@@ -81,7 +81,7 @@ export function requireStaff(db, secret) {
         res.status(403).json({ error: "Staff sign-in required" });
         return;
       }
-      const staff = db.prepare("SELECT * FROM staff WHERE id = ?").get(payload.sub);
+      const staff = await db.prepare("SELECT * FROM staff WHERE id = ?").get(payload.sub);
       if (!staff) {
         res.status(401).json({ error: "Account not found" });
         return;

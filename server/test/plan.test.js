@@ -30,19 +30,30 @@ async function json(url, options = {}) {
   return { res, body };
 }
 
-function setup() {
-  const db = openDatabase(":memory:");
-  seedIfEmpty(db);
-  seedFloorsIfEmpty(db);
+async function setup() {
+  const db = await openDatabase(":memory:");
+  await seedIfEmpty(db);
+  await seedFloorsIfEmpty(db);
   return createApp(db, { jwtSecret: "test-secret" });
 }
 
-test("computeBudget uses live market prices and flags prices below the ministry floor", () => {
+test("computeBudget uses live market prices and flags prices below the ministry floor", async () => {
   resetMarketCacheForTests();
-  const db = openDatabase(":memory:");
-  seedFloorsIfEmpty(db);
-  setMarketCacheForTests({ byCommodity: new Map([["Maize", [1050]]]) });
-  const budget = computeBudget("Maize", 1, db);
+  const db = await openDatabase(":memory:");
+  await seedFloorsIfEmpty(db);
+  setMarketCacheForTests({
+    catalog: [{
+      code: "WH",
+      product: "Maize",
+      crop: "Maize",
+      grade: "A",
+      buyPricePerKg: 1050,
+      sellPricePerKg: 1050,
+      warehouse: "Kasungu",
+      hub: "Kasungu",
+    }],
+  });
+  const budget = await computeBudget("Maize", 1, db, "Kasungu");
   assert.equal(budget.priceMwkKg, 1050);
   assert.equal(budget.profitable, true);
   assert.equal(budget.belowFloor, false);
@@ -59,7 +70,7 @@ test("planting window flags a summer vegetable planted in December as late for o
 });
 
 test("farmer plan persists and returns bankability plus cashflow tabs", async (t) => {
-  const { url, close } = await listen(setup());
+  const { url, close } = await listen(await setup());
   t.after(close);
 
   const login = await json(`${url}/api/farmers/login`, {
