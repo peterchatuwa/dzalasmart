@@ -101,7 +101,7 @@ export function sanitizeInput(req, res, next) {
         sanitized[key] = value; // Don't sanitize passwords
       } else if (typeof value === "string") {
         // Remove null bytes and other control characters
-        sanitized[key] = value.replace(/\x00/g, "");
+        sanitized[key] = value.replace(/\x00/g, ""); // eslint-disable-line no-control-regex
       } else if (typeof value === "object") {
         sanitized[key] = sanitize(value);
       } else {
