@@ -28,29 +28,34 @@ export function observationsToCsv(rows) {
     "grade",
     "notes",
   ].join(",");
-  const lines = rows.map((row) => [
-    safeIso(row.fetchedAt || row.observedAt),
-    row.commodity,
-    row.commoditySlug,
-    row.district || "",
-    row.market,
-    row.source,
-    row.sourceSlug,
-    row.priceKind,
-    row.buyPricePerKg ?? "",
-    row.sellPricePerKg ?? "",
-    row.grade || "",
-    row.notes || "",
-  ].map(csvCell).join(","));
+  const lines = rows.map((row) =>
+    [
+      safeIso(row.fetchedAt || row.observedAt),
+      row.commodity,
+      row.commoditySlug,
+      row.district || "",
+      row.market,
+      row.source,
+      row.sourceSlug,
+      row.priceKind,
+      row.buyPricePerKg ?? "",
+      row.sellPricePerKg ?? "",
+      row.grade || "",
+      row.notes || "",
+    ]
+      .map(csvCell)
+      .join(",")
+  );
   return [header, ...lines].join("\n");
 }
 
 export async function buildMarketExport(db, filters = {}) {
   const rangeInfo = parseTrendRange(filters.range || `${filters.days || 30}d`);
   const days = filters.days ? Math.min(365, Math.max(1, Number(filters.days))) : rangeInfo.days;
-  const commodity = filters.commodity || filters.commoditySlug
-    ? await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug)
-    : null;
+  const commodity =
+    filters.commodity || filters.commoditySlug
+      ? await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug)
+      : null;
 
   const rows = await priceHistory(db, {
     commoditySlug: commodity?.slug,
@@ -76,7 +81,12 @@ export async function buildMarketExport(db, filters = {}) {
 function buildExportFilename({ commodity, district, days }) {
   const parts = ["market-prices"];
   if (commodity) parts.push(commodity);
-  if (district) parts.push(String(district).toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+  if (district)
+    parts.push(
+      String(district)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+    );
   parts.push(`${days}d`);
   return `${parts.join("-")}.csv`;
 }

@@ -15,7 +15,9 @@ function apiBase() {
 }
 
 function setApiBase(url) {
-  const cleaned = String(url || "").trim().replace(/\/$/, "");
+  const cleaned = String(url || "")
+    .trim()
+    .replace(/\/$/, "");
   if (cleaned) localStorage.setItem(API_BASE_KEY, cleaned);
   else localStorage.removeItem(API_BASE_KEY);
 }
@@ -45,7 +47,8 @@ let planTab = "budget";
 const CHAT_UI = {
   en: {
     title: "Ask in English, Chichewa, or Tumbuka",
-    disclaimer: "This assistant gives simplified demo advice. Confirm chemical products and rates with your extension officer before use. Photo diagnosis is not live yet.",
+    disclaimer:
+      "This assistant gives simplified demo advice. Confirm chemical products and rates with your extension officer before use. Photo diagnosis is not live yet.",
     weather: "Today's weather",
     market: "What's my crop worth?",
     crop: "Best crop for my soil",
@@ -60,7 +63,8 @@ const CHAT_UI = {
   },
   ny: {
     title: "Funsani mu Chingerezi, Chichewa, kapena Chitumbuka",
-    disclaimer: "Wothandizirayu akupereka malangizo osavuta a chitsanzo. Onetsetsani ndi wa Ulimi musanagwiritse ntchito mankhwala. Chithunzi sichikuwunikidwa pano.",
+    disclaimer:
+      "Wothandizirayu akupereka malangizo osavuta a chitsanzo. Onetsetsani ndi wa Ulimi musanagwiritse ntchito mankhwala. Chithunzi sichikuwunikidwa pano.",
     weather: "Nyengo lero",
     market: "Mitengo ya msika",
     crop: "Mbewu yabwino pa nthaka yanga",
@@ -75,7 +79,8 @@ const CHAT_UI = {
   },
   tum: {
     title: "Fumbani mu Chizungu, Chichewa, panji Chitumbuka",
-    disclaimer: "Wovwira uyu wakupeleka ulongozgi wapadera wa chiyelezgero. Fumbani wa vilimo pambere mundagwiliskire ntchito mankhwala. Chithuzithuzi chikulutila yayi pano.",
+    disclaimer:
+      "Wovwira uyu wakupeleka ulongozgi wapadera wa chiyelezgero. Fumbani wa vilimo pambere mundagwiliskire ntchito mankhwala. Chithuzithuzi chikulutila yayi pano.",
     weather: "Nyengo yasono",
     market: "Mitengo ya msika",
     crop: "Mbeu yiwemi pa charu chane",
@@ -125,7 +130,11 @@ async function api(method, path, { body, auth = false, plain = false } = {}) {
   const raw = await res.text();
   let parsed = raw;
   if (!plain) {
-    try { parsed = raw ? JSON.parse(raw) : {}; } catch { parsed = { error: raw }; }
+    try {
+      parsed = raw ? JSON.parse(raw) : {};
+    } catch {
+      parsed = { error: raw };
+    }
   }
   addWire(method, path, body ?? null, parsed, res.status);
   if (!res.ok) {
@@ -173,10 +182,12 @@ function fillEpas() {
 function renderStepper() {
   const stages = status?.farmer ? window.__stages || [] : [];
   const current = status?.currentStage?.index ?? -1;
-  document.getElementById("stepper").innerHTML = stages.map((stage) => {
-    const cls = stage.index < current ? "done" : stage.index === current ? "current" : "";
-    return `<li class="${cls}"><span class="dot"></span>${stage.name}</li>`;
-  }).join("");
+  document.getElementById("stepper").innerHTML = stages
+    .map((stage) => {
+      const cls = stage.index < current ? "done" : stage.index === current ? "current" : "";
+      return `<li class="${cls}"><span class="dot"></span>${stage.name}</li>`;
+    })
+    .join("");
 }
 
 function renderFarm() {
@@ -190,31 +201,37 @@ function renderFarm() {
   const farmer = status.farmer;
   document.getElementById("farmerCode").textContent = farmer.code;
   document.getElementById("farmerName").textContent = farmer.name;
-  document.getElementById("farmerPlace").textContent = [farmer.district, farmer.epa, farmer.region].filter(Boolean).join(" · ");
+  document.getElementById("farmerPlace").textContent = [farmer.district, farmer.epa, farmer.region]
+    .filter(Boolean)
+    .join(" · ");
   renderPassport(status.passport);
   document.getElementById("currentStage").textContent = status.currentStage?.name || "Not started";
   document.getElementById("nextStage").textContent = status.nextStage?.name || "Season complete";
   const btn = document.getElementById("advanceBtn");
   btn.disabled = status.seasonComplete;
-  btn.textContent = status.seasonComplete
-    ? "Season complete"
-    : `Log ${status.nextStage.name} from this app`;
+  btn.textContent = status.seasonComplete ? "Season complete" : `Log ${status.nextStage.name} from this app`;
   renderStepper();
   const events = status.events || [];
   document.getElementById("eventLog").innerHTML = events.length
-    ? events.map((event) => `
+    ? events
+        .map(
+          (event) => `
         <div class="event-row">
           <div>
             <strong>${event.stageName}</strong>
             <div class="hint">${fmtTime(event.createdAt)}</div>
           </div>
           <span class="channel ${event.channel}">${event.channel}</span>
-        </div>`).join("")
+        </div>`
+        )
+        .join("")
     : `<p class="hint">No stages logged yet. Use the button above or dial *413#.</p>`;
   const receipts = status.receipts || [];
   const receiptCard = document.getElementById("receiptCard");
   receiptCard.hidden = receipts.length === 0;
-  document.getElementById("receiptList").innerHTML = receipts.map((row) => `
+  document.getElementById("receiptList").innerHTML = receipts
+    .map(
+      (row) => `
     <div class="ledger-row">
       <div>
         <strong>${row.code}</strong>
@@ -225,7 +242,9 @@ function renderFarm() {
         <div class="hint">${row.loanDisbursed ? `Loan ${fmtMoney(row.loanDisbursed)} sent` : row.loanPending ? `Advance ${fmtMoney(row.loanCap)}` : "No loan"}</div>
         ${row.loanPending ? `<button type="button" class="primary" data-accept-loan="${row.id}" style="margin-top:8px;">Accept ${fmtMoney(row.loanCap)}</button>` : ""}
       </div>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
   document.querySelectorAll("[data-accept-loan]").forEach((btn) => {
     btn.addEventListener("click", () => acceptLoan(btn.dataset.acceptLoan));
   });
@@ -248,7 +267,9 @@ async function loadStatus() {
 function renderPassport(passport) {
   if (!passport) return;
   document.getElementById("passportId").textContent = `Farmer Passport · ${passport.code}`;
-  document.getElementById("passportPlace").textContent = [passport.district, passport.epa, passport.phone].filter(Boolean).join(" · ");
+  document.getElementById("passportPlace").textContent = [passport.district, passport.epa, passport.phone]
+    .filter(Boolean)
+    .join(" · ");
   document.getElementById("passportGrade").textContent = passport.grade;
   document.getElementById("passportLabel").textContent = passport.label;
   document.getElementById("passportIncome").textContent = fmtMoney(passport.netIncome);
@@ -257,11 +278,15 @@ function renderPassport(passport) {
     ? `${fmtMoney(passport.loanPending)} waiting`
     : fmtMoney(passport.loanDisbursed);
   document.getElementById("passportStatus").textContent = passport.status;
-  document.getElementById("passportChecks").innerHTML = (passport.checks || []).map((row) => `
+  document.getElementById("passportChecks").innerHTML = (passport.checks || [])
+    .map(
+      (row) => `
     <div class="passport-check">
       <span class="mark">${row.done ? "✓" : "·"}</span>
       <span>${row.label}</span>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 }
 
 async function acceptLoan(receiptId) {
@@ -287,12 +312,16 @@ async function loadWeather(district) {
     document.getElementById("wxHumidity").textContent = wx.humidity + "%";
     document.getElementById("wxRain3").textContent = wx.rain3dayMm + " mm";
     document.getElementById("wxWind").textContent = wx.windKmh + " km/h";
-    document.getElementById("wxForecast").innerHTML = (wx.forecast || []).map((day) => `
+    document.getElementById("wxForecast").innerHTML = (wx.forecast || [])
+      .map(
+        (day) => `
       <div class="wx-day">
         <div class="wx-lbl">${day.day}</div>
         <div class="wx-val">${Math.round(day.max)}°/${Math.round(day.min)}°</div>
         <div class="hint">${Number(day.rain || 0).toFixed(0)}mm</div>
-      </div>`).join("");
+      </div>`
+      )
+      .join("");
     document.getElementById("wxSeason").textContent = `${wx.season.label} — ${wx.season.text}`;
     document.getElementById("wxField").textContent = wx.fieldAdvice;
     note.textContent = `Live from Open-Meteo · ${wx.district}`;
@@ -320,28 +349,50 @@ async function loadMarketCompare(commoditySlug, district) {
     } else {
       summary.textContent = `No district comparison yet for ${compare.commodity}.`;
     }
-    table.innerHTML = (compare.districts || []).map((row) => `
+    table.innerHTML =
+      (compare.districts || [])
+        .map(
+          (row) => `
       <div class="kv-row${row.buyPricePerKg === compare.stats?.lowestBuy ? " price-low" : row.buyPricePerKg === compare.stats?.highestBuy ? " price-high" : ""}">
         <span>${row.district} · ${row.source}${row.priceKind === "procurement" ? " · gov" : ""}</span>
         <strong>${row.buyPrice || "—"}${row.sellPrice ? ` / ${row.sellPrice}` : ""}</strong>
-      </div>`).join("") || `<p class="hint">Need warehouse quotes in at least two hubs.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">Need warehouse quotes in at least two hubs.</p>`;
 
     if (district) {
-      const sources = await api("GET", `/api/market/sources/compare?commodity=${encodeURIComponent(commoditySlug)}&district=${encodeURIComponent(district)}`);
-      sourcePanel.innerHTML = `<p class="eyebrow">Sources in ${district}</p>${(sources.sources || []).map((row) => `
+      const sources = await api(
+        "GET",
+        `/api/market/sources/compare?commodity=${encodeURIComponent(commoditySlug)}&district=${encodeURIComponent(district)}`
+      );
+      sourcePanel.innerHTML = `<p class="eyebrow">Sources in ${district}</p>${
+        (sources.sources || [])
+          .map(
+            (row) => `
         <div class="kv-row${row.buyPricePerKg === sources.stats?.lowestBuy ? " price-low" : row.buyPricePerKg === sources.stats?.highestBuy ? " price-high" : ""}">
           <span>${row.source}${row.priceKind === "procurement" ? " · procurement" : ""}</span>
           <strong>${row.buyPrice || "—"}</strong>
-        </div>`).join("") || `<p class="hint">No source quotes for your district yet.</p>`}`;
+        </div>`
+          )
+          .join("") || `<p class="hint">No source quotes for your district yet.</p>`
+      }`;
     }
 
     const opps = await api("GET", `/api/market/opportunities?commodity=${encodeURIComponent(commoditySlug)}`);
-    opportunitiesPanel.innerHTML = `<p class="eyebrow">Profitable haulage (after transport)</p>${(opps.opportunities || []).slice(0, 4).map((row) => `
+    opportunitiesPanel.innerHTML = `<p class="eyebrow">Profitable haulage (after transport)</p>${
+      (opps.opportunities || [])
+        .slice(0, 4)
+        .map(
+          (row) => `
       <div class="kv-row">
         <span>${row.commodity}: ${row.fromDistrict} → ${row.toDistrict}${row.profitable ? "" : " · not profitable"}</span>
         <strong>${row.netMarginLabel || row.spreadLabel}${row.transportPerKg ? ` · haul ${row.transportLabel}` : ""}</strong>
       </div>
-      <p class="hint">${row.note}</p>`).join("") || `<p class="hint">No cross-hub opportunities yet. Need live prices in at least two warehouse hubs.</p>`}`;
+      <p class="hint">${row.note}</p>`
+        )
+        .join("") ||
+      `<p class="hint">No cross-hub opportunities yet. Need live prices in at least two warehouse hubs.</p>`
+    }`;
     const transportNote = document.getElementById("marketTransportNote");
     if (transportNote) {
       transportNote.textContent = opps.profitableCount
@@ -400,9 +451,10 @@ async function loadMarketTrends(commoditySlug, district, range) {
     const payload = await api("GET", `/api/market/trends?${qs}`);
     if (payload.stats) {
       const change = payload.stats.change >= 0 ? `+${payload.stats.change}` : payload.stats.change;
-      summary.textContent = `${payload.commodity} · ${payload.rangeLabel}${district ? ` · ${district}` : ""} · `
-        + `${payload.stats.count} observations · last buy MWK ${payload.stats.lastBuy?.toLocaleString("en")}/kg `
-        + `(${change} MWK${payload.stats.changePct != null ? `, ${payload.stats.changePct}%` : ""})`;
+      summary.textContent =
+        `${payload.commodity} · ${payload.rangeLabel}${district ? ` · ${district}` : ""} · ` +
+        `${payload.stats.count} observations · last buy MWK ${payload.stats.lastBuy?.toLocaleString("en")}/kg ` +
+        `(${change} MWK${payload.stats.changePct != null ? `, ${payload.stats.changePct}%` : ""})`;
     } else {
       summary.textContent = `No trend data yet for ${payload.commodity}. Refresh feeds or import historical prices.`;
     }
@@ -449,11 +501,19 @@ async function loadMarketHistory(commoditySlug, district) {
     const qs = new URLSearchParams({ commodity: commoditySlug, days: "30" });
     if (district) qs.set("district", district);
     const payload = await api("GET", `/api/market/history?${qs}`);
-    list.innerHTML = (payload.points || []).slice(-20).reverse().map((row) => `
+    list.innerHTML =
+      (payload.points || [])
+        .slice(-20)
+        .reverse()
+        .map(
+          (row) => `
       <div class="kv-row">
         <span>${new Date(row.fetchedAt).toLocaleDateString()} · ${row.source} · ${row.market}</span>
         <strong>${row.buyPrice || "—"}${row.sellPrice ? ` / ${row.sellPrice}` : ""}</strong>
-      </div>`).join("") || `<p class="hint">No history yet for this commodity. Prices are stored each time feeds refresh.</p>`;
+      </div>`
+        )
+        .join("") ||
+      `<p class="hint">No history yet for this commodity. Prices are stored each time feeds refresh.</p>`;
   } catch (error) {
     list.innerHTML = `<p class="hint">${error.message || "Could not load history."}</p>`;
   }
@@ -479,27 +539,40 @@ async function loadMarketAlerts() {
     }
     document.getElementById("marketAlertsSummary").textContent =
       `${payload.activeCount || 0} active alert${payload.activeCount === 1 ? "" : "s"} · checked after each market refresh.`;
-    document.getElementById("marketAlertsList").innerHTML = (payload.alerts || []).map((row) => `
+    document.getElementById("marketAlertsList").innerHTML =
+      (payload.alerts || [])
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.commoditySlug} · ${row.direction} ${row.thresholdLabel || row.thresholdPerKg}</strong>
           <div class="meta">${row.district}${row.locationSlug ? ` · ${row.locationSlug}` : ""}</div>
         </div>
         <button type="button" class="ghost" data-alert-id="${row.id}">Remove</button>
-      </div>`).join("") || `<p class="hint">No alerts yet.</p>`;
-    document.getElementById("marketAlertsList").querySelectorAll("[data-alert-id]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        await api("DELETE", `/api/market/alerts/${btn.dataset.alertId}`, { auth: true });
-        await loadMarketAlerts();
+      </div>`
+        )
+        .join("") || `<p class="hint">No alerts yet.</p>`;
+    document
+      .getElementById("marketAlertsList")
+      .querySelectorAll("[data-alert-id]")
+      .forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await api("DELETE", `/api/market/alerts/${btn.dataset.alertId}`, { auth: true });
+          await loadMarketAlerts();
+        });
       });
-    });
-    document.getElementById("marketAlertEvents").innerHTML = (payload.events || []).map((row) => `
+    document.getElementById("marketAlertEvents").innerHTML =
+      (payload.events || [])
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.message}</strong>
           <div class="meta">${new Date(row.triggeredAt).toLocaleString("en-MW")}</div>
         </div>
-      </div>`).join("") || `<p class="hint">No triggered alerts yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No triggered alerts yet.</p>`;
   } catch (error) {
     document.getElementById("marketAlertsSummary").textContent = error.message;
   }
@@ -512,8 +585,9 @@ async function loadMarketLocations(district) {
     const qs = district ? `?district=${encodeURIComponent(district)}` : "";
     const payload = await api("GET", `/api/market/locations${qs}`, token ? { auth: true } : undefined);
     const current = select.value;
-    select.innerHTML = `<option value="">All locations</option>${(payload.tradingCentres || []).map((row) =>
-      `<option value="${row.slug}">${row.name} · ${row.district}</option>`).join("")}`;
+    select.innerHTML = `<option value="">All locations</option>${(payload.tradingCentres || [])
+      .map((row) => `<option value="${row.slug}">${row.name} · ${row.district}</option>`)
+      .join("")}`;
     if ([...select.options].some((opt) => opt.value === current)) select.value = current;
   } catch {
     /* keep existing options */
@@ -537,17 +611,20 @@ async function loadMarket(options = {}) {
     const prices = payload.prices || [];
 
     if (commodityFilter && commodityFilter.options.length <= 1) {
-      commodityFilter.innerHTML = `<option value="">All commodities</option>${(payload.commodities || []).map((row) =>
-        `<option value="${row.slug}">${row.name}</option>`).join("")}`;
+      commodityFilter.innerHTML = `<option value="">All commodities</option>${(payload.commodities || [])
+        .map((row) => `<option value="${row.slug}">${row.name}</option>`)
+        .join("")}`;
       const compareSelect = document.getElementById("marketCompareCommodity");
       if (compareSelect && compareSelect.options.length <= 1) {
-        compareSelect.innerHTML = (payload.commodities || []).map((row) =>
-          `<option value="${row.slug}">${row.name}</option>`).join("");
+        compareSelect.innerHTML = (payload.commodities || [])
+          .map((row) => `<option value="${row.slug}">${row.name}</option>`)
+          .join("");
       }
       const trendSelect = document.getElementById("marketTrendCommodity");
       if (trendSelect && trendSelect.options.length <= 1) {
-        trendSelect.innerHTML = (payload.commodities || []).map((row) =>
-          `<option value="${row.slug}">${row.name}</option>`).join("");
+        trendSelect.innerHTML = (payload.commodities || [])
+          .map((row) => `<option value="${row.slug}">${row.name}</option>`)
+          .join("");
       }
     }
 
@@ -564,7 +641,10 @@ async function loadMarket(options = {}) {
 
     const tbody = document.getElementById("marketPriceBody");
     if (tbody) {
-      tbody.innerHTML = prices.map((row) => `
+      tbody.innerHTML =
+        prices
+          .map(
+            (row) => `
         <tr data-slug="${row.commoditySlug || ""}">
           <td><strong>${row.crop}</strong>${row.priceKind === "procurement" ? ' <span class="hint procurement">gov</span>' : row.priceKind === "reference" ? ' <span class="hint procurement">ref</span>' : ""}</td>
           <td>${row.market}${row.district ? `<div class="hint">${row.district}</div>` : ""}</td>
@@ -572,33 +652,41 @@ async function loadMarket(options = {}) {
           <td>${row.sellPrice || "—"}</td>
           <td>${row.source}</td>
           <td>${row.updatedLabel || "—"}</td>
-        </tr>`).join("") || `<tr><td colspan="6"><p class="hint">No prices yet. The server refreshes LocalBuyEx and Ulimi automatically.</p></td></tr>`;
+        </tr>`
+          )
+          .join("") ||
+        `<tr><td colspan="6"><p class="hint">No prices yet. The server refreshes LocalBuyEx and Ulimi automatically.</p></td></tr>`;
       tbody.querySelectorAll("tr[data-slug]").forEach((tr) => {
         tr.addEventListener("click", () => loadMarketHistory(tr.dataset.slug, district));
       });
     }
 
-    document.getElementById("marketTable").innerHTML = prices.filter((r) => r.sourceSlug === "localbuy").map((row) => `
+    document.getElementById("marketTable").innerHTML =
+      prices
+        .filter((r) => r.sourceSlug === "localbuy")
+        .map(
+          (row) => `
       <div class="market-row">
         <div>
           <strong>${row.crop}</strong>
           <div class="hint">${row.buyPrice || "—"}${row.market ? ` · ${row.market}` : ""}</div>
         </div>
         <div class="trend flat">${row.source}<div class="hint">${row.updatedLabel || ""}</div></div>
-      </div>`).join("") || `<p class="hint">No warehouse quotes for your nearest hub yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No warehouse quotes for your nearest hub yet.</p>`;
 
     const note = document.getElementById("marketNote");
     if (note) {
-      const sources = (payload.sources || []).map((s) =>
-        `${s.name} (${s.status === "ok" ? s.updatedLabel : s.status})`).join(" · ");
+      const sources = (payload.sources || [])
+        .map((s) => `${s.name} (${s.status === "ok" ? s.updatedLabel : s.status})`)
+        .join(" · ");
       note.textContent = sources
         ? `Sources: ${sources}. Tap a row for 30-day history. Lowest/highest buy prices are highlighted. Ministry floor prices below still govern off-take contracts.`
         : "Market prices are stored in PostgreSQL each time feeds refresh.";
     }
 
-    const compareCommodity = document.getElementById("marketCompareCommodity")?.value
-      || commodity
-      || "maize";
+    const compareCommodity = document.getElementById("marketCompareCommodity")?.value || commodity || "maize";
     await loadMarketCompare(compareCommodity, district);
 
     const trendCommodity = document.getElementById("marketTrendCommodity")?.value || compareCommodity;
@@ -606,16 +694,21 @@ async function loadMarket(options = {}) {
     await loadMarketTrends(trendCommodity, district, trendRange);
     if (token) await loadMarketAlerts();
   } catch {
-    document.getElementById("marketPriceBody").innerHTML = `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
+    document.getElementById("marketPriceBody").innerHTML =
+      `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
     document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;
   }
   try {
     const floors = await api("GET", "/api/floors");
-    document.getElementById("floorTable").innerHTML = (floors.floors || []).map((row) => `
+    document.getElementById("floorTable").innerHTML = (floors.floors || [])
+      .map(
+        (row) => `
       <div class="kv-row">
         <span>${row.crop} floor</span>
         <strong>MWK ${Number(row.pricePerKg).toLocaleString("en")}/kg</strong>
-      </div>`).join("");
+      </div>`
+      )
+      .join("");
   } catch {
     document.getElementById("floorTable").innerHTML = "";
   }
@@ -862,11 +955,13 @@ function renderPlotPolygon(svgEl, polygon) {
   const pad = 8;
   const width = 200 - pad * 2;
   const height = 120 - pad * 2;
-  const points = polygon.map((point) => {
-    const x = pad + ((point.lon - minLon) / (maxLon - minLon || 1)) * width;
-    const y = pad + ((maxLat - point.lat) / (maxLat - minLat || 1)) * height;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
+  const points = polygon
+    .map((point) => {
+      const x = pad + ((point.lon - minLon) / (maxLon - minLon || 1)) * width;
+      const y = pad + ((maxLat - point.lat) / (maxLat - minLat || 1)) * height;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
   svgEl.innerHTML = `<polygon points="${points}" fill="rgba(214,154,34,0.15)" stroke="#D69A22" stroke-width="1.6" stroke-dasharray="4 3"/>`;
 }
 
@@ -918,29 +1013,33 @@ async function saveGpsPlot() {
   }
   btn.disabled = true;
   btn.textContent = "Getting location…";
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    try {
-      const payload = await api("PUT", "/api/farmers/me/plot", {
-        auth: true,
-        body: {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-          accuracyM: pos.coords.accuracy,
-          source: "gps",
-        },
-      });
-      renderPlot(payload);
-    } catch (error) {
-      showError("plotError", error.message);
-    } finally {
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const payload = await api("PUT", "/api/farmers/me/plot", {
+          auth: true,
+          body: {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            accuracyM: pos.coords.accuracy,
+            source: "gps",
+          },
+        });
+        renderPlot(payload);
+      } catch (error) {
+        showError("plotError", error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Use my location";
+      }
+    },
+    (err) => {
+      showError("plotError", err.message || "Could not read GPS.");
       btn.disabled = false;
       btn.textContent = "Use my location";
-    }
-  }, (err) => {
-    showError("plotError", err.message || "Could not read GPS.");
-    btn.disabled = false;
-    btn.textContent = "Use my location";
-  }, { enableHighAccuracy: true, timeout: 15000 });
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
 }
 
 document.getElementById("plotGpsBtn").addEventListener("click", saveGpsPlot);
@@ -979,15 +1078,17 @@ function collectPlanDraft() {
 }
 
 function renderPlanCropRows() {
-  const options = (farmPlan?.cropOptions || ["Maize"]).map((crop) =>
-    `<option value="${crop}">${crop}</option>`
-  ).join("");
+  const options = (farmPlan?.cropOptions || ["Maize"])
+    .map((crop) => `<option value="${crop}">${crop}</option>`)
+    .join("");
   const monthOptions = Array.from({ length: 12 }, (_, i) => {
     const m = String(i + 1);
     const label = new Date(2026, i, 1).toLocaleString("en", { month: "short" });
     return `<option value="${m}">${label}</option>`;
   }).join("");
-  document.getElementById("planCropRows").innerHTML = planDraft.crops.map((row, index) => `
+  document.getElementById("planCropRows").innerHTML = planDraft.crops
+    .map(
+      (row, index) => `
     <div class="plan-crop-row">
       <label>Crop
         <select data-plan-crop data-index="${index}">${options}</select>
@@ -999,7 +1100,9 @@ function renderPlanCropRows() {
         <select data-plan-month data-index="${index}">${monthOptions}</select>
       </label>
       <button type="button" data-plan-remove="${index}" aria-label="Remove crop">✕</button>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
   planDraft.crops.forEach((row, index) => {
     document.querySelector(`[data-plan-crop][data-index="${index}"]`).value = row.crop;
     document.querySelector(`[data-plan-month][data-index="${index}"]`).value = row.startMonth;
@@ -1007,7 +1110,8 @@ function renderPlanCropRows() {
   document.querySelectorAll("[data-plan-remove]").forEach((btn) => {
     btn.addEventListener("click", () => {
       planDraft.crops.splice(Number(btn.dataset.planRemove), 1);
-      if (!planDraft.crops.length) planDraft.crops.push({ crop: "Maize", hectares: 1, startMonth: String(new Date().getMonth() + 1) });
+      if (!planDraft.crops.length)
+        planDraft.crops.push({ crop: "Maize", hectares: 1, startMonth: String(new Date().getMonth() + 1) });
       renderPlanCropRows();
     });
   });
@@ -1047,7 +1151,9 @@ function renderPlan() {
     <div class="plan-metric"><div class="lbl">Net margin</div><div class="val">${fmtMoney(c.totalMargin)}</div></div>`;
 
   const primary = farmPlan.crops[0]?.budget;
-  document.getElementById("planTabBudget").innerHTML = farmPlan.crops.map((row) => `
+  document.getElementById("planTabBudget").innerHTML = farmPlan.crops
+    .map(
+      (row) => `
     <div class="market-row" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <strong>${row.crop} · ${row.hectares} ha</strong>
@@ -1055,31 +1161,47 @@ function renderPlan() {
       </div>
       <div class="hint">${row.cropInfo?.reason || "Crop fit notes from your soil record."}</div>
       <div class="hint">Price ${fmtMoney(row.budget.priceMwkKg)}/kg${row.budget.marketPrice ? " · live market" : ""}${row.budget.belowFloor ? " · below ministry floor" : ""}</div>
-      ${row.budget.costBreakdown.map((part) => `
+      ${row.budget.costBreakdown
+        .map(
+          (part) => `
         <div class="plan-costbar">
           <span style="width:72px;color:var(--ink-soft);">${part.label}</span>
-          <span class="plan-costbar-track"><span class="plan-costbar-fill" style="width:${Math.round(part.amount / row.budget.totalCost * 100)}%;"></span></span>
+          <span class="plan-costbar-track"><span class="plan-costbar-fill" style="width:${Math.round((part.amount / row.budget.totalCost) * 100)}%;"></span></span>
           <span class="mono">${fmtMoney(part.amount)}</span>
-        </div>`).join("")}
-    </div>`).join("");
+        </div>`
+        )
+        .join("")}
+    </div>`
+    )
+    .join("");
 
-  document.getElementById("planTabDaily").innerHTML = (farmPlan.tabs.dailyPlan || []).map((row) => `
+  document.getElementById("planTabDaily").innerHTML = (farmPlan.tabs.dailyPlan || [])
+    .map(
+      (row) => `
     <div class="daily-plan-row ${row.tone || ""}">
       <span class="daily-plan-day">${row.day}</span>
       <div><strong>${row.title}</strong><div class="hint">${row.desc}</div></div>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 
   let running = 0;
   document.getElementById("planTabCashflow").innerHTML = `
     <table class="market-row" style="display:block;padding:0;background:transparent;">
-      ${(farmPlan.tabs.cashflow || []).map((row) => {
-        running += row.amount;
-        return `<div class="market-row"><span>${row.label}</span><strong>${fmtMoney(row.amount)} · running ${fmtMoney(running)}</strong></div>`;
-      }).join("")}
+      ${(farmPlan.tabs.cashflow || [])
+        .map((row) => {
+          running += row.amount;
+          return `<div class="market-row"><span>${row.label}</span><strong>${fmtMoney(row.amount)} · running ${fmtMoney(running)}</strong></div>`;
+        })
+        .join("")}
     </table>`;
 
-  document.getElementById("planTabDecisions").innerHTML = (farmPlan.decisions || []).map((row) => `
-    <div class="plan-decision"><span>${row.icon}</span><div><strong>${row.title}</strong><div class="hint">${row.detail}</div></div></div>`).join("");
+  document.getElementById("planTabDecisions").innerHTML = (farmPlan.decisions || [])
+    .map(
+      (row) => `
+    <div class="plan-decision"><span>${row.icon}</span><div><strong>${row.title}</strong><div class="hint">${row.detail}</div></div></div>`
+    )
+    .join("");
 
   document.querySelectorAll("[data-plan-tab]").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.planTab === planTab);

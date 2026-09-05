@@ -1,391 +1,443 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nzeru za Alimi — Farmer app</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=22">
-</head>
-<body>
-  <header class="topbar">
-    <div class="brand"><span class="seed"></span>Nzeru za Alimi</div>
-    <p class="topbar-note">Season record, market prices, and farm planning for Malawian farmers.</p>
-    <a class="nav-link web-only" href="/staff">Staff desk</a>
-    <div class="server-pill" id="serverPill">Checking server…</div>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nzeru za Alimi — Farmer app</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css?v=22" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span class="seed"></span>Nzeru za Alimi</div>
+      <p class="topbar-note">Season record, market prices, and farm planning for Malawian farmers.</p>
+      <a class="nav-link web-only" href="/staff">Staff desk</a>
+      <div class="server-pill" id="serverPill">Checking server…</div>
+    </header>
 
-  <main class="layout">
-    <section class="panel app-panel" aria-label="Farmer mobile app">
-      <div class="panel-label web-only">Mobile app · HTTP JSON</div>
+    <main class="layout">
+      <section class="panel app-panel" aria-label="Farmer mobile app">
+        <div class="panel-label web-only">Mobile app · HTTP JSON</div>
 
-      <form id="nativeServerForm" class="native-only stack native-server">
-        <label>Server address
-          <input id="apiBaseInput" name="apiBase" spellcheck="false" placeholder="http://10.0.2.2:4000">
-        </label>
-        <button type="submit" class="ghost">Use this server</button>
-      </form>
-
-      <div id="authView">
-        <h1>Sign in to your farm record</h1>
-        <p class="lede">This is a real client. It sends your phone and PIN to <code>/api/farmers/login</code> and keeps the token the server returns.</p>
-
-        <div class="tabs">
-          <button type="button" class="tab active" data-auth-tab="login">Log in</button>
-          <button type="button" class="tab" data-auth-tab="register">Register</button>
-        </div>
-
-        <form id="loginForm" class="stack">
-          <label>Phone
-            <input id="loginPhone" name="phone" inputmode="tel" autocomplete="username" value="+265888000003">
+        <form id="nativeServerForm" class="native-only stack native-server">
+          <label
+            >Server address
+            <input id="apiBaseInput" name="apiBase" spellcheck="false" placeholder="http://10.0.2.2:4000" />
           </label>
-          <label>PIN
-            <input id="loginPin" name="pin" inputmode="numeric" maxlength="4" autocomplete="off" value="1234">
-          </label>
-          <button type="submit" class="primary">Log in</button>
-          <p class="form-error" id="loginError" hidden></p>
+          <button type="submit" class="ghost">Use this server</button>
         </form>
 
-        <form id="registerForm" class="stack" hidden>
-          <label>Full name
-            <input id="regName" name="name" autocomplete="name">
-          </label>
-          <label>Phone
-            <input id="regPhone" name="phone" inputmode="tel" placeholder="0881 234 567">
-          </label>
-          <label>PIN (4 digits)
-            <input id="regPin" name="pin" inputmode="numeric" maxlength="4">
-          </label>
-          <label>District
-            <select id="regDistrict" name="district"></select>
-          </label>
-          <label>EPA
-            <select id="regEpa" name="epa"></select>
-          </label>
-          <button type="submit" class="primary">Create farmer record</button>
-          <p class="form-error" id="registerError" hidden></p>
-        </form>
+        <div id="authView">
+          <h1>Sign in to your farm record</h1>
+          <p class="lede">
+            This is a real client. It sends your phone and PIN to <code>/api/farmers/login</code> and keeps the token
+            the server returns.
+          </p>
 
-        <div class="demo-row">
-          <span>Demo PIN 1234:</span>
-          <button type="button" class="chip" data-demo="+265888000001">Grace</button>
-          <button type="button" class="chip" data-demo="+265888000002">Joseph</button>
-          <button type="button" class="chip" data-demo="+265888000003">Estere</button>
-        </div>
-      </div>
+          <div class="tabs">
+            <button type="button" class="tab active" data-auth-tab="login">Log in</button>
+            <button type="button" class="tab" data-auth-tab="register">Register</button>
+          </div>
 
-      <div id="farmView" hidden>
-        <div class="farm-head">
-          <div>
-            <p class="eyebrow" id="farmerCode">—</p>
-            <h1 id="farmerName">—</h1>
-            <p class="lede" id="farmerPlace">—</p>
-          </div>
-          <button type="button" class="ghost" id="logoutBtn">Log out</button>
-        </div>
-
-        <div class="passport-card" id="passportCard">
-          <div class="passport-top">
-            <div>
-              <p class="eyebrow">Farmer Passport</p>
-              <p class="passport-id" id="passportId">—</p>
-              <p class="hint" id="passportPlace"></p>
-            </div>
-            <div class="passport-grade-wrap">
-              <span class="passport-grade" id="passportGrade">—</span>
-              <span class="hint" id="passportLabel">Unrated</span>
-            </div>
-          </div>
-          <div class="status-card passport-stats">
-            <div>
-              <p class="eyebrow">Net income</p>
-              <p class="stat" id="passportIncome">MWK 0</p>
-            </div>
-            <div>
-              <p class="eyebrow">Credit score</p>
-              <p class="stat" id="passportScore">—</p>
-            </div>
-            <div>
-              <p class="eyebrow">Warehouse loan</p>
-              <p class="stat" id="passportLoan">MWK 0</p>
-            </div>
-          </div>
-          <p class="hint" id="passportStatus"></p>
-          <div class="passport-checks" id="passportChecks"></div>
-        </div>
-
-        <div class="market-card" id="plotCard">
-          <p class="eyebrow">GPS plot</p>
-          <h2 style="margin-top:0;">Your field on the map</h2>
-          <p class="hint" id="plotNote">Loading plot from the server…</p>
-          <div class="plot-head">
-            <div>
-              <p class="eyebrow">Coordinates</p>
-              <p class="stat" id="plotCoords">—</p>
-            </div>
-            <div>
-              <p class="eyebrow">Area</p>
-              <p class="stat" id="plotArea">—</p>
-            </div>
-            <div>
-              <p class="eyebrow">Plot NDVI</p>
-              <p class="stat" id="plotNdvi">—</p>
-            </div>
-            <span class="badge accepted" id="plotBadge">Estimated</span>
-          </div>
-          <div id="plotMap" class="plot-map"></div>
-          <svg id="plotPolygon" class="plot-polygon" viewBox="0 0 200 120" aria-hidden="true"></svg>
-          <div class="demo-row">
-            <button type="button" class="primary" id="plotGpsBtn">Use my location</button>
-            <a class="ghost nav-link" id="plotOpenMap" href="#" target="_blank" rel="noopener">Open in OpenStreetMap</a>
-          </div>
-          <p class="form-error" id="plotError" hidden></p>
-        </div>
-
-        <div class="status-card">
-          <div>
-            <p class="eyebrow">Current stage</p>
-            <p class="stat" id="currentStage">Not started</p>
-          </div>
-          <div>
-            <p class="eyebrow">Next</p>
-            <p class="stat" id="nextStage">—</p>
-          </div>
-        </div>
-
-        <div class="weather-card" id="weatherCard">
-          <div class="weather-head">
-            <div>
-              <p class="eyebrow">Weather watch — live</p>
-              <h2 id="weatherTitle" style="margin:0;">Your district</h2>
-            </div>
-            <span class="alert-pill" id="weatherAlert">—</span>
-          </div>
-          <div class="wx-now-grid">
-            <div class="wx-now-stat"><span class="wx-lbl">Now</span><span class="wx-val" id="wxNow">—</span></div>
-            <div class="wx-now-stat"><span class="wx-lbl">Humidity</span><span class="wx-val" id="wxHumidity">—</span></div>
-            <div class="wx-now-stat"><span class="wx-lbl">Rain (3 days)</span><span class="wx-val" id="wxRain3">—</span></div>
-            <div class="wx-now-stat"><span class="wx-lbl">Wind</span><span class="wx-val" id="wxWind">—</span></div>
-          </div>
-          <div class="wx-forecast" id="wxForecast"></div>
-          <p class="wx-advice" id="wxSeason"></p>
-          <p class="wx-advice" id="wxField"></p>
-          <p class="hint" id="wxNote">Loading live weather…</p>
-        </div>
-
-        <div class="market-card" id="marketIntelCard">
-          <p class="eyebrow">Agricultural market prices</p>
-          <h2 style="margin-top:0;">Live prices from multiple sources</h2>
-          <p class="hint" id="marketScopeNote">Loading prices near your district…</p>
-          <div class="market-filters">
-            <label>Commodity
-              <select id="marketCommodityFilter">
-                <option value="">All commodities</option>
-              </select>
+          <form id="loginForm" class="stack">
+            <label
+              >Phone
+              <input id="loginPhone" name="phone" inputmode="tel" autocomplete="username" value="+265888000003" />
             </label>
-            <label>Trading centre
-              <select id="marketLocationFilter">
-                <option value="">All locations</option>
-              </select>
+            <label
+              >PIN
+              <input id="loginPin" name="pin" inputmode="numeric" maxlength="4" autocomplete="off" value="1234" />
             </label>
-            <button type="button" class="ghost" id="marketRefreshBtn">Refresh feeds</button>
-          </div>
-          <div class="price-table-wrap">
-            <table class="price-table" id="marketPriceTable">
-              <thead>
-                <tr>
-                  <th>Commodity</th>
-                  <th>Market</th>
-                  <th>Buy</th>
-                  <th>Sell</th>
-                  <th>Source</th>
-                  <th>Updated</th>
-                </tr>
-              </thead>
-              <tbody id="marketPriceBody"></tbody>
-            </table>
-          </div>
-          <div id="marketHistoryPanel" class="market-history" hidden>
-            <p class="eyebrow">30-day history</p>
-            <h3 id="marketHistoryTitle">—</h3>
-            <div id="marketHistoryList" class="ledger-list"></div>
-          </div>
-          <div id="marketTrendPanel" class="market-history">
-            <p class="eyebrow">Price trends</p>
-            <div class="market-filters">
-              <label>Trend commodity
-                <select id="marketTrendCommodity">
-                  <option value="maize">Maize</option>
-                </select>
-              </label>
-              <label>Range
-                <select id="marketTrendRange">
-                  <option value="30d">30 days</option>
-                  <option value="3m">3 months</option>
-                  <option value="1y">1 year</option>
-                </select>
-              </label>
-              <button type="button" class="ghost" id="marketTrendBtn">Update chart</button>
-              <button type="button" class="ghost" id="marketExportBtn">Download CSV</button>
-            </div>
-            <p class="hint" id="marketTrendSummary"></p>
-            <div class="market-chart-wrap">
-              <canvas id="marketTrendChart" height="220"></canvas>
-            </div>
-          </div>
-          <div id="marketComparePanel" class="market-history">
-            <p class="eyebrow">Compare & opportunities</p>
-            <div class="market-filters">
-              <label>Compare commodity
-                <select id="marketCompareCommodity">
-                  <option value="maize">Maize</option>
-                </select>
-              </label>
-              <button type="button" class="ghost" id="marketCompareBtn">Compare districts</button>
-            </div>
-            <div id="marketCompareSummary" class="hint"></div>
-            <div id="marketCompareTable" class="ledger-list"></div>
-            <div id="marketSourceCompare" class="ledger-list"></div>
-            <div id="marketOpportunities" class="ledger-list"></div>
-            <p class="hint" id="marketTransportNote">Opportunities include warehouse haulage costs where routes are configured.</p>
-          </div>
-          <div id="marketAlertsPanel" class="market-history">
-            <p class="eyebrow">Price alerts</p>
-            <p class="hint" id="marketAlertsSummary">Get notified when a crop price crosses your target in your district.</p>
-            <form id="marketAlertForm" class="stack intake-form">
-              <label>Crop
-                <select id="marketAlertCommodity">
-                  <option value="maize">Maize</option>
-                </select>
-              </label>
-              <label>Alert when price is
-                <select id="marketAlertDirection">
-                  <option value="above">Above threshold</option>
-                  <option value="below">Below threshold</option>
-                </select>
-              </label>
-              <label>Threshold (MWK / kg)
-                <input id="marketAlertThreshold" inputmode="numeric" placeholder="1000">
-              </label>
-              <button type="submit" class="primary">Save alert</button>
-              <p class="form-error" id="marketAlertError" hidden></p>
-            </form>
-            <div id="marketAlertsList" class="ledger-list"></div>
-            <div id="marketAlertEvents" class="ledger-list"></div>
-          </div>
-          <div id="marketTable" class="market-rows"></div>
-          <div id="floorTable" class="floor-list"></div>
-          <p class="hint" id="marketNote">Loading live market prices…</p>
-        </div>
-
-        <div class="market-card" id="chatCard">
-          <p class="eyebrow">Crop & pest assistant</p>
-          <h2 style="margin-top:0;" id="chatTitle">Ask in English, Chichewa, or Tumbuka</h2>
-          <p class="hint" id="chatDisclaimer">This assistant gives simplified demo advice. Confirm chemical products and rates with your extension officer before use. Photo diagnosis is not live yet.</p>
-          <div class="tabs" id="chatLangTabs">
-            <button type="button" class="tab active" data-chat-lang="en">English</button>
-            <button type="button" class="tab" data-chat-lang="ny">Chichewa</button>
-            <button type="button" class="tab" data-chat-lang="tum">Tumbuka</button>
-          </div>
-          <div class="chat-topics" id="chatTopics">
-            <button type="button" class="chip" data-chat-topic="weather">Today's weather</button>
-            <button type="button" class="chip" data-chat-topic="market">What's my crop worth?</button>
-            <button type="button" class="chip" data-chat-topic="crop">Best crop for my soil</button>
-            <button type="button" class="chip" data-chat-topic="pest">My plant looks sick</button>
-          </div>
-          <div id="chatWindow" class="chat-window"></div>
-          <form id="chatForm" class="stack chat-form">
-            <label id="chatSoilLabel">Soil type
-              <select id="chatSoil"></select>
-            </label>
-            <label id="chatNutrientLabel">Nutrient status
-              <select id="chatNutrient"></select>
-            </label>
-            <label id="chatAskLabel">Ask a farming question
-              <textarea id="chatInput" rows="3" placeholder="e.g. holes in the leaves, yellow streaks, or what fertiliser to use"></textarea>
-            </label>
-            <div class="demo-row">
-              <button type="submit" class="primary" id="chatSend">Send</button>
-              <button type="button" class="ghost" id="chatCropBtn">Recommend a crop</button>
-            </div>
-            <p class="form-error" id="chatError" hidden></p>
+            <button type="submit" class="primary">Log in</button>
+            <p class="form-error" id="loginError" hidden></p>
           </form>
-        </div>
 
-        <div class="market-card" id="planCard">
-          <p class="eyebrow">Plan My Farm</p>
-          <h2 style="margin-top:0;">Design your season before you plant</h2>
-          <p class="hint" id="planIntro">Saved on the server — uses live market prices, ministry floors, your soil record, and today's weather.</p>
-          <div id="planBankability" class="plan-bankability"></div>
-          <p class="hint" id="planWeatherNote"></p>
-          <div id="planCropRows" class="plan-crop-rows"></div>
+          <form id="registerForm" class="stack" hidden>
+            <label
+              >Full name
+              <input id="regName" name="name" autocomplete="name" />
+            </label>
+            <label
+              >Phone
+              <input id="regPhone" name="phone" inputmode="tel" placeholder="0881 234 567" />
+            </label>
+            <label
+              >PIN (4 digits)
+              <input id="regPin" name="pin" inputmode="numeric" maxlength="4" />
+            </label>
+            <label
+              >District
+              <select id="regDistrict" name="district"></select>
+            </label>
+            <label
+              >EPA
+              <select id="regEpa" name="epa"></select>
+            </label>
+            <button type="submit" class="primary">Create farmer record</button>
+            <p class="form-error" id="registerError" hidden></p>
+          </form>
+
           <div class="demo-row">
-            <button type="button" class="chip" id="planAddCrop">+ Add crop</button>
-            <button type="button" class="chip" id="planSuggestCrop">Suggest from my soil</button>
+            <span>Demo PIN 1234:</span>
+            <button type="button" class="chip" data-demo="+265888000001">Grace</button>
+            <button type="button" class="chip" data-demo="+265888000002">Joseph</button>
+            <button type="button" class="chip" data-demo="+265888000003">Estere</button>
           </div>
-          <div class="plan-readiness stack">
-            <p class="eyebrow">Farm readiness</p>
-            <label>Water source
-              <select id="planWaterSource">
-                <option>Rainfed only</option>
-                <option>Borehole</option>
-                <option>Irrigation scheme</option>
-                <option>River / dambo</option>
-              </select>
-            </label>
-            <label>Farming experience
-              <select id="planExperience">
-                <option>Beginner (some knowledge)</option>
-                <option>1–3 seasons</option>
-                <option selected>4–10 seasons</option>
-                <option>10+ seasons</option>
-              </select>
-            </label>
-            <div class="plan-toggle-row">
-              <span>Storage facility</span><button type="button" class="plan-toggle" data-plan-toggle="storage"></button>
-            </div>
-            <div class="plan-toggle-row">
-              <span>Own equipment</span><button type="button" class="plan-toggle" data-plan-toggle="equipment"></button>
-            </div>
-            <div class="plan-toggle-row">
-              <span>Linked to Agritex</span><button type="button" class="plan-toggle on" data-plan-toggle="agritex"></button>
-            </div>
-          </div>
-          <button type="button" class="primary" id="planSaveBtn">Save plan to my record</button>
-          <p class="form-error" id="planError" hidden></p>
-          <div id="planSummary" class="plan-summary"></div>
-          <div class="pmf-tabbar" id="planTabbar">
-            <button type="button" class="pmf-tab active" data-plan-tab="budget">Budget</button>
-            <button type="button" class="pmf-tab" data-plan-tab="daily">Daily plan</button>
-            <button type="button" class="pmf-tab" data-plan-tab="cashflow">Cash flow</button>
-            <button type="button" class="pmf-tab" data-plan-tab="decisions">Decisions</button>
-          </div>
-          <div id="planTabBudget" class="pmf-panel active"></div>
-          <div id="planTabDaily" class="pmf-panel" hidden></div>
-          <div id="planTabCashflow" class="pmf-panel" hidden></div>
-          <div id="planTabDecisions" class="pmf-panel" hidden></div>
         </div>
 
-        <div class="market-card" id="receiptCard" hidden>
-          <p class="eyebrow">Warehouse receipts</p>
-          <h2 style="margin-top:0;">Grain taken in at the cooperative</h2>
-          <div id="receiptList" class="ledger-list"></div>
+        <div id="farmView" hidden>
+          <div class="farm-head">
+            <div>
+              <p class="eyebrow" id="farmerCode">—</p>
+              <h1 id="farmerName">—</h1>
+              <p class="lede" id="farmerPlace">—</p>
+            </div>
+            <button type="button" class="ghost" id="logoutBtn">Log out</button>
+          </div>
+
+          <div class="passport-card" id="passportCard">
+            <div class="passport-top">
+              <div>
+                <p class="eyebrow">Farmer Passport</p>
+                <p class="passport-id" id="passportId">—</p>
+                <p class="hint" id="passportPlace"></p>
+              </div>
+              <div class="passport-grade-wrap">
+                <span class="passport-grade" id="passportGrade">—</span>
+                <span class="hint" id="passportLabel">Unrated</span>
+              </div>
+            </div>
+            <div class="status-card passport-stats">
+              <div>
+                <p class="eyebrow">Net income</p>
+                <p class="stat" id="passportIncome">MWK 0</p>
+              </div>
+              <div>
+                <p class="eyebrow">Credit score</p>
+                <p class="stat" id="passportScore">—</p>
+              </div>
+              <div>
+                <p class="eyebrow">Warehouse loan</p>
+                <p class="stat" id="passportLoan">MWK 0</p>
+              </div>
+            </div>
+            <p class="hint" id="passportStatus"></p>
+            <div class="passport-checks" id="passportChecks"></div>
+          </div>
+
+          <div class="market-card" id="plotCard">
+            <p class="eyebrow">GPS plot</p>
+            <h2 style="margin-top: 0">Your field on the map</h2>
+            <p class="hint" id="plotNote">Loading plot from the server…</p>
+            <div class="plot-head">
+              <div>
+                <p class="eyebrow">Coordinates</p>
+                <p class="stat" id="plotCoords">—</p>
+              </div>
+              <div>
+                <p class="eyebrow">Area</p>
+                <p class="stat" id="plotArea">—</p>
+              </div>
+              <div>
+                <p class="eyebrow">Plot NDVI</p>
+                <p class="stat" id="plotNdvi">—</p>
+              </div>
+              <span class="badge accepted" id="plotBadge">Estimated</span>
+            </div>
+            <div id="plotMap" class="plot-map"></div>
+            <svg id="plotPolygon" class="plot-polygon" viewBox="0 0 200 120" aria-hidden="true"></svg>
+            <div class="demo-row">
+              <button type="button" class="primary" id="plotGpsBtn">Use my location</button>
+              <a class="ghost nav-link" id="plotOpenMap" href="#" target="_blank" rel="noopener"
+                >Open in OpenStreetMap</a
+              >
+            </div>
+            <p class="form-error" id="plotError" hidden></p>
+          </div>
+
+          <div class="status-card">
+            <div>
+              <p class="eyebrow">Current stage</p>
+              <p class="stat" id="currentStage">Not started</p>
+            </div>
+            <div>
+              <p class="eyebrow">Next</p>
+              <p class="stat" id="nextStage">—</p>
+            </div>
+          </div>
+
+          <div class="weather-card" id="weatherCard">
+            <div class="weather-head">
+              <div>
+                <p class="eyebrow">Weather watch — live</p>
+                <h2 id="weatherTitle" style="margin: 0">Your district</h2>
+              </div>
+              <span class="alert-pill" id="weatherAlert">—</span>
+            </div>
+            <div class="wx-now-grid">
+              <div class="wx-now-stat"><span class="wx-lbl">Now</span><span class="wx-val" id="wxNow">—</span></div>
+              <div class="wx-now-stat">
+                <span class="wx-lbl">Humidity</span><span class="wx-val" id="wxHumidity">—</span>
+              </div>
+              <div class="wx-now-stat">
+                <span class="wx-lbl">Rain (3 days)</span><span class="wx-val" id="wxRain3">—</span>
+              </div>
+              <div class="wx-now-stat"><span class="wx-lbl">Wind</span><span class="wx-val" id="wxWind">—</span></div>
+            </div>
+            <div class="wx-forecast" id="wxForecast"></div>
+            <p class="wx-advice" id="wxSeason"></p>
+            <p class="wx-advice" id="wxField"></p>
+            <p class="hint" id="wxNote">Loading live weather…</p>
+          </div>
+
+          <div class="market-card" id="marketIntelCard">
+            <p class="eyebrow">Agricultural market prices</p>
+            <h2 style="margin-top: 0">Live prices from multiple sources</h2>
+            <p class="hint" id="marketScopeNote">Loading prices near your district…</p>
+            <div class="market-filters">
+              <label
+                >Commodity
+                <select id="marketCommodityFilter">
+                  <option value="">All commodities</option>
+                </select>
+              </label>
+              <label
+                >Trading centre
+                <select id="marketLocationFilter">
+                  <option value="">All locations</option>
+                </select>
+              </label>
+              <button type="button" class="ghost" id="marketRefreshBtn">Refresh feeds</button>
+            </div>
+            <div class="price-table-wrap">
+              <table class="price-table" id="marketPriceTable">
+                <thead>
+                  <tr>
+                    <th>Commodity</th>
+                    <th>Market</th>
+                    <th>Buy</th>
+                    <th>Sell</th>
+                    <th>Source</th>
+                    <th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody id="marketPriceBody"></tbody>
+              </table>
+            </div>
+            <div id="marketHistoryPanel" class="market-history" hidden>
+              <p class="eyebrow">30-day history</p>
+              <h3 id="marketHistoryTitle">—</h3>
+              <div id="marketHistoryList" class="ledger-list"></div>
+            </div>
+            <div id="marketTrendPanel" class="market-history">
+              <p class="eyebrow">Price trends</p>
+              <div class="market-filters">
+                <label
+                  >Trend commodity
+                  <select id="marketTrendCommodity">
+                    <option value="maize">Maize</option>
+                  </select>
+                </label>
+                <label
+                  >Range
+                  <select id="marketTrendRange">
+                    <option value="30d">30 days</option>
+                    <option value="3m">3 months</option>
+                    <option value="1y">1 year</option>
+                  </select>
+                </label>
+                <button type="button" class="ghost" id="marketTrendBtn">Update chart</button>
+                <button type="button" class="ghost" id="marketExportBtn">Download CSV</button>
+              </div>
+              <p class="hint" id="marketTrendSummary"></p>
+              <div class="market-chart-wrap">
+                <canvas id="marketTrendChart" height="220"></canvas>
+              </div>
+            </div>
+            <div id="marketComparePanel" class="market-history">
+              <p class="eyebrow">Compare & opportunities</p>
+              <div class="market-filters">
+                <label
+                  >Compare commodity
+                  <select id="marketCompareCommodity">
+                    <option value="maize">Maize</option>
+                  </select>
+                </label>
+                <button type="button" class="ghost" id="marketCompareBtn">Compare districts</button>
+              </div>
+              <div id="marketCompareSummary" class="hint"></div>
+              <div id="marketCompareTable" class="ledger-list"></div>
+              <div id="marketSourceCompare" class="ledger-list"></div>
+              <div id="marketOpportunities" class="ledger-list"></div>
+              <p class="hint" id="marketTransportNote">
+                Opportunities include warehouse haulage costs where routes are configured.
+              </p>
+            </div>
+            <div id="marketAlertsPanel" class="market-history">
+              <p class="eyebrow">Price alerts</p>
+              <p class="hint" id="marketAlertsSummary">
+                Get notified when a crop price crosses your target in your district.
+              </p>
+              <form id="marketAlertForm" class="stack intake-form">
+                <label
+                  >Crop
+                  <select id="marketAlertCommodity">
+                    <option value="maize">Maize</option>
+                  </select>
+                </label>
+                <label
+                  >Alert when price is
+                  <select id="marketAlertDirection">
+                    <option value="above">Above threshold</option>
+                    <option value="below">Below threshold</option>
+                  </select>
+                </label>
+                <label
+                  >Threshold (MWK / kg)
+                  <input id="marketAlertThreshold" inputmode="numeric" placeholder="1000" />
+                </label>
+                <button type="submit" class="primary">Save alert</button>
+                <p class="form-error" id="marketAlertError" hidden></p>
+              </form>
+              <div id="marketAlertsList" class="ledger-list"></div>
+              <div id="marketAlertEvents" class="ledger-list"></div>
+            </div>
+            <div id="marketTable" class="market-rows"></div>
+            <div id="floorTable" class="floor-list"></div>
+            <p class="hint" id="marketNote">Loading live market prices…</p>
+          </div>
+
+          <div class="market-card" id="chatCard">
+            <p class="eyebrow">Crop & pest assistant</p>
+            <h2 style="margin-top: 0" id="chatTitle">Ask in English, Chichewa, or Tumbuka</h2>
+            <p class="hint" id="chatDisclaimer">
+              This assistant gives simplified demo advice. Confirm chemical products and rates with your extension
+              officer before use. Photo diagnosis is not live yet.
+            </p>
+            <div class="tabs" id="chatLangTabs">
+              <button type="button" class="tab active" data-chat-lang="en">English</button>
+              <button type="button" class="tab" data-chat-lang="ny">Chichewa</button>
+              <button type="button" class="tab" data-chat-lang="tum">Tumbuka</button>
+            </div>
+            <div class="chat-topics" id="chatTopics">
+              <button type="button" class="chip" data-chat-topic="weather">Today's weather</button>
+              <button type="button" class="chip" data-chat-topic="market">What's my crop worth?</button>
+              <button type="button" class="chip" data-chat-topic="crop">Best crop for my soil</button>
+              <button type="button" class="chip" data-chat-topic="pest">My plant looks sick</button>
+            </div>
+            <div id="chatWindow" class="chat-window"></div>
+            <form id="chatForm" class="stack chat-form">
+              <label id="chatSoilLabel"
+                >Soil type
+                <select id="chatSoil"></select>
+              </label>
+              <label id="chatNutrientLabel"
+                >Nutrient status
+                <select id="chatNutrient"></select>
+              </label>
+              <label id="chatAskLabel"
+                >Ask a farming question
+                <textarea
+                  id="chatInput"
+                  rows="3"
+                  placeholder="e.g. holes in the leaves, yellow streaks, or what fertiliser to use"
+                ></textarea>
+              </label>
+              <div class="demo-row">
+                <button type="submit" class="primary" id="chatSend">Send</button>
+                <button type="button" class="ghost" id="chatCropBtn">Recommend a crop</button>
+              </div>
+              <p class="form-error" id="chatError" hidden></p>
+            </form>
+          </div>
+
+          <div class="market-card" id="planCard">
+            <p class="eyebrow">Plan My Farm</p>
+            <h2 style="margin-top: 0">Design your season before you plant</h2>
+            <p class="hint" id="planIntro">
+              Saved on the server — uses live market prices, ministry floors, your soil record, and today's weather.
+            </p>
+            <div id="planBankability" class="plan-bankability"></div>
+            <p class="hint" id="planWeatherNote"></p>
+            <div id="planCropRows" class="plan-crop-rows"></div>
+            <div class="demo-row">
+              <button type="button" class="chip" id="planAddCrop">+ Add crop</button>
+              <button type="button" class="chip" id="planSuggestCrop">Suggest from my soil</button>
+            </div>
+            <div class="plan-readiness stack">
+              <p class="eyebrow">Farm readiness</p>
+              <label
+                >Water source
+                <select id="planWaterSource">
+                  <option>Rainfed only</option>
+                  <option>Borehole</option>
+                  <option>Irrigation scheme</option>
+                  <option>River / dambo</option>
+                </select>
+              </label>
+              <label
+                >Farming experience
+                <select id="planExperience">
+                  <option>Beginner (some knowledge)</option>
+                  <option>1–3 seasons</option>
+                  <option selected>4–10 seasons</option>
+                  <option>10+ seasons</option>
+                </select>
+              </label>
+              <div class="plan-toggle-row">
+                <span>Storage facility</span
+                ><button type="button" class="plan-toggle" data-plan-toggle="storage"></button>
+              </div>
+              <div class="plan-toggle-row">
+                <span>Own equipment</span
+                ><button type="button" class="plan-toggle" data-plan-toggle="equipment"></button>
+              </div>
+              <div class="plan-toggle-row">
+                <span>Linked to Agritex</span
+                ><button type="button" class="plan-toggle on" data-plan-toggle="agritex"></button>
+              </div>
+            </div>
+            <button type="button" class="primary" id="planSaveBtn">Save plan to my record</button>
+            <p class="form-error" id="planError" hidden></p>
+            <div id="planSummary" class="plan-summary"></div>
+            <div class="pmf-tabbar" id="planTabbar">
+              <button type="button" class="pmf-tab active" data-plan-tab="budget">Budget</button>
+              <button type="button" class="pmf-tab" data-plan-tab="daily">Daily plan</button>
+              <button type="button" class="pmf-tab" data-plan-tab="cashflow">Cash flow</button>
+              <button type="button" class="pmf-tab" data-plan-tab="decisions">Decisions</button>
+            </div>
+            <div id="planTabBudget" class="pmf-panel active"></div>
+            <div id="planTabDaily" class="pmf-panel" hidden></div>
+            <div id="planTabCashflow" class="pmf-panel" hidden></div>
+            <div id="planTabDecisions" class="pmf-panel" hidden></div>
+          </div>
+
+          <div class="market-card" id="receiptCard" hidden>
+            <p class="eyebrow">Warehouse receipts</p>
+            <h2 style="margin-top: 0">Grain taken in at the cooperative</h2>
+            <div id="receiptList" class="ledger-list"></div>
+          </div>
+
+          <ol class="stepper" id="stepper"></ol>
+
+          <button type="button" class="primary" id="advanceBtn">Log next milestone</button>
+          <p class="form-error" id="advanceError" hidden></p>
+
+          <h2>Season log</h2>
+          <p class="hint">
+            Each row is a <code>season_events</code> record. Channel shows whether the phone app, USSD, the warehouse,
+            or a cleared sale wrote it.
+          </p>
+          <div id="eventLog" class="event-log"></div>
         </div>
+      </section>
+    </main>
 
-        <ol class="stepper" id="stepper"></ol>
-
-        <button type="button" class="primary" id="advanceBtn">Log next milestone</button>
-        <p class="form-error" id="advanceError" hidden></p>
-
-        <h2>Season log</h2>
-        <p class="hint">Each row is a <code>season_events</code> record. Channel shows whether the phone app, USSD, the warehouse, or a cleared sale wrote it.</p>
-        <div id="eventLog" class="event-log"></div>
-      </div>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="/app.js?v=20"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="/app.js?v=20"></script>
+  </body>
 </html>

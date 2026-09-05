@@ -60,11 +60,11 @@ export function requestSizeLimiter(maxSize = "10mb") {
   return (req, res, next) => {
     const contentLength = parseInt(req.get("content-length") || "0");
     const maxBytes = parseSize(maxSize);
-    
+
     if (contentLength > maxBytes) {
       return res.status(413).json({ error: "Request entity too large" });
     }
-    
+
     next();
   };
 }
@@ -76,12 +76,14 @@ function parseSize(size) {
     mb: 1024 * 1024,
     gb: 1024 * 1024 * 1024,
   };
-  
-  const match = String(size).toLowerCase().match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/);
+
+  const match = String(size)
+    .toLowerCase()
+    .match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/);
   if (!match) {
     return 10 * 1024 * 1024; // Default 10MB
   }
-  
+
   const value = parseFloat(match[1]);
   const unit = match[2] || "b";
   return value * units[unit];
@@ -94,7 +96,7 @@ export function sanitizeInput(req, res, next) {
     if (typeof obj !== "object" || obj === null) {
       return obj;
     }
-    
+
     const sanitized = Array.isArray(obj) ? [] : {};
     for (const [key, value] of Object.entries(obj)) {
       if (key === "password" || key === "pin" || key === "pin_hash") {
@@ -119,6 +121,6 @@ export function sanitizeInput(req, res, next) {
       // If body is frozen or read-only, skip sanitization
     }
   }
-  
+
   next();
 }

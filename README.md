@@ -45,6 +45,7 @@ npm start
 ```
 
 The API will be available at:
+
 - **Farmer App**: http://localhost:4000
 - **Staff Desk**: http://localhost:4000/staff
 - **API Docs**: http://localhost:4000/api-docs
@@ -82,39 +83,42 @@ npm run format
 ## Demo Accounts
 
 ### Farmers (PIN: 1234)
-| Name | Phone | Season |
-|---|---|---|
-| Grace Banda | +265888000001 | at Harvest |
+
+| Name          | Phone         | Season              |
+| ------------- | ------------- | ------------------- |
+| Grace Banda   | +265888000001 | at Harvest          |
 | Joseph Kaunda | +265888000002 | at Land Preparation |
-| Estere Mvula | +265888000003 | not started |
+| Estere Mvula  | +265888000003 | not started         |
 
 ### Staff (PIN: 1234)
-| Name | Phone | Role |
-|---|---|---|
-| Mercy Chirwa | +265888000101 | Extension Officer |
-| Joseph Phiri | +265888000102 | Cooperative Manager |
+
+| Name          | Phone         | Role                    |
+| ------------- | ------------- | ----------------------- |
+| Mercy Chirwa  | +265888000101 | Extension Officer       |
+| Joseph Phiri  | +265888000102 | Cooperative Manager     |
 | Chikondi Moyo | +265888000103 | Ministry of Agriculture |
-| Davis Mwale | +265888000104 | Farmers Union |
+| Davis Mwale   | +265888000104 | Farmers Union           |
 
 ## API Documentation
 
 Full API documentation is available via Swagger UI:
+
 - **Interactive Docs**: http://localhost:4000/api-docs
 - **OpenAPI JSON**: http://localhost:4000/api-docs.json
 
 ### Key Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/farmers/register` | Register a new farmer |
-| `POST` | `/api/farmers/login` | Farmer authentication |
-| `GET` | `/api/farmers/me/status` | Get farmer season status |
-| `POST` | `/api/farmers/me/events` | Log a season event |
-| `GET` | `/api/market/prices` | Live market prices |
-| `GET` | `/api/market/trends` | Price trends & charts |
-| `POST` | `/ussd` | USSD channel endpoint |
-| `GET` | `/health` | Health check |
-| `GET` | `/metrics` | System metrics |
+| Method | Path                     | Description              |
+| ------ | ------------------------ | ------------------------ |
+| `POST` | `/api/farmers/register`  | Register a new farmer    |
+| `POST` | `/api/farmers/login`     | Farmer authentication    |
+| `GET`  | `/api/farmers/me/status` | Get farmer season status |
+| `POST` | `/api/farmers/me/events` | Log a season event       |
+| `GET`  | `/api/market/prices`     | Live market prices       |
+| `GET`  | `/api/market/trends`     | Price trends & charts    |
+| `POST` | `/ussd`                  | USSD channel endpoint    |
+| `GET`  | `/health`                | Health check             |
+| `GET`  | `/metrics`               | System metrics           |
 
 ## Android App
 
@@ -184,6 +188,7 @@ docker-compose -f docker-compose.prod.yml logs -f
 See `scripts/deploy_remote.py` for VPS deployment or refer to [CONTRIBUTING.md](CONTRIBUTING.md) for detailed deployment instructions.
 
 **Security Checklist:**
+
 - ✅ Change `JWT_SECRET` to a strong random string (32+ chars)
 - ✅ Use strong PostgreSQL password
 - ✅ Enable HTTPS with nginx/Caddy reverse proxy
@@ -215,6 +220,7 @@ dzalasmart/
 ## Technology Stack
 
 **Backend:**
+
 - Node.js 22 + Express 5
 - PostgreSQL 16
 - JWT authentication
@@ -223,11 +229,13 @@ dzalasmart/
 - Rate limiting
 
 **Frontend:**
+
 - Vanilla JavaScript
 - OpenStreetMap integration
 - Capacitor for mobile
 
 **DevOps:**
+
 - Docker & Docker Compose
 - GitHub Actions CI/CD
 - ESLint + Prettier
@@ -236,6 +244,7 @@ dzalasmart/
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
 - Development workflow
 - Code style guidelines
 - Testing requirements

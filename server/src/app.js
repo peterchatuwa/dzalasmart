@@ -3,7 +3,14 @@ import express from "express";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { logger, createRequestLogger } from "./logger.js";
-import { securityHeaders, apiLimiter, authLimiter, ussdLimiter, requestSizeLimiter, sanitizeInput } from "./middleware/security.js";
+import {
+  securityHeaders,
+  apiLimiter,
+  authLimiter,
+  ussdLimiter,
+  requestSizeLimiter,
+  sanitizeInput,
+} from "./middleware/security.js";
 import { metricsCollector, healthCheckMiddleware, getMetrics } from "./middleware/monitoring.js";
 import { swaggerSpec } from "./swagger.js";
 import { advisorMeta, askAdvisor, listPestReports, logPestReport } from "./advisor.js";
@@ -21,33 +28,55 @@ import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
 import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
-import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, marketLogisticsRoutesPayload, marketLocationsPayload, saveLogisticsRoute, marketTrendsPayload, marketExportPayload, marketAlertsPayloadForFarmer, saveMarketAlert, removeMarketAlert, staffMarketAlertsSummary, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
+import {
+  marketPayload,
+  marketPricesPayload,
+  marketHistoryPayload,
+  marketComparePayload,
+  marketSourcesComparePayload,
+  marketOpportunitiesPayload,
+  marketLogisticsRoutesPayload,
+  marketLocationsPayload,
+  saveLogisticsRoute,
+  marketTrendsPayload,
+  marketExportPayload,
+  marketAlertsPayloadForFarmer,
+  saveMarketAlert,
+  removeMarketAlert,
+  staffMarketAlertsSummary,
+  refreshMarketCache,
+  getMarketRows,
+  getMarketMeta,
+  recordManualObservation,
+  importMarketCsv,
+  refreshAllSources,
+} from "./market.js";
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
   const app = express();
-  
+
   // Security middleware
   app.use(securityHeaders());
   app.use(requestSizeLimiter("10mb"));
-  
+
   // Metrics collection
   app.use(metricsCollector());
-  
+
   // Logging
   app.use(createRequestLogger());
-  
+
   // Health checks
   app.use(healthCheckMiddleware(db));
-  
+
   // CORS and body parsing
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
-  
+
   // Input sanitization
   app.use(sanitizeInput);
-  
+
   // Trust proxy for rate limiting behind reverse proxy
   app.set("trust proxy", 1);
 
@@ -55,17 +84,17 @@ export function createApp(db, options = {}) {
     try {
       // Check database connectivity
       await db.query("SELECT 1");
-      res.json({ 
-        ok: true, 
-        service: APP_SLUG, 
-        name: APP_NAME, 
+      res.json({
+        ok: true,
+        service: APP_SLUG,
+        name: APP_NAME,
         database: "postgresql",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
       logger.error({ err: error }, "Health check failed");
-      res.status(503).json({ 
-        ok: false, 
+      res.status(503).json({
+        ok: false,
         service: APP_SLUG,
         error: "Service unavailable",
       });
@@ -78,10 +107,13 @@ export function createApp(db, options = {}) {
 
   // API Documentation
   app.use("/api-docs", swaggerUi.serve);
-  app.get("/api-docs", swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: `${APP_NAME} API Documentation`,
-    customfavIcon: "/favicon.ico",
-  }));
+  app.get(
+    "/api-docs",
+    swaggerUi.setup(swaggerSpec, {
+      customSiteTitle: `${APP_NAME} API Documentation`,
+      customfavIcon: "/favicon.ico",
+    })
+  );
   app.get("/api-docs.json", (_req, res) => {
     res.json(swaggerSpec);
   });
@@ -108,14 +140,16 @@ export function createApp(db, options = {}) {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
       const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketPricesPayload(db, {
-        district: district || undefined,
-        region: String(req.query.region || "").trim() || undefined,
-        commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
-        refresh: req.query.refresh === "1",
-      }));
+      res.json(
+        await marketPricesPayload(db, {
+          district: district || undefined,
+          region: String(req.query.region || "").trim() || undefined,
+          commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
+          refresh: req.query.refresh === "1",
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -125,13 +159,15 @@ export function createApp(db, options = {}) {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
       const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketHistoryPayload(db, {
-        district: district || undefined,
-        commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
-        days: Number(req.query.days) || 30,
-      }));
+      res.json(
+        await marketHistoryPayload(db, {
+          district: district || undefined,
+          commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
+          days: Number(req.query.days) || 30,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -140,10 +176,12 @@ export function createApp(db, options = {}) {
   app.get("/api/market/compare", async (req, res, next) => {
     try {
       const commodity = String(req.query.commodity || req.query.commoditySlug || "maize").trim();
-      res.json(await marketComparePayload(db, {
-        commodity,
-        districts: String(req.query.districts || "").trim() || undefined,
-      }));
+      res.json(
+        await marketComparePayload(db, {
+          commodity,
+          districts: String(req.query.districts || "").trim() || undefined,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -153,10 +191,12 @@ export function createApp(db, options = {}) {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
       const district = String(req.query.district || farmer?.district || "").trim();
-      res.json(await marketSourcesComparePayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
-        district,
-      }));
+      res.json(
+        await marketSourcesComparePayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+          district,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -164,10 +204,12 @@ export function createApp(db, options = {}) {
 
   app.get("/api/market/opportunities", async (req, res, next) => {
     try {
-      res.json(await marketOpportunitiesPayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
-        loadKg: Number(req.query.loadKg) || undefined,
-      }));
+      res.json(
+        await marketOpportunitiesPayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+          loadKg: Number(req.query.loadKg) || undefined,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -185,12 +227,14 @@ export function createApp(db, options = {}) {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
       const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketTrendsPayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
-        district: district || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        range: String(req.query.range || "30d").trim(),
-      }));
+      res.json(
+        await marketTrendsPayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+          district: district || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          range: String(req.query.range || "30d").trim(),
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -219,10 +263,12 @@ export function createApp(db, options = {}) {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
       const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketLocationsPayload(db, {
-        district: district || undefined,
-        region: String(req.query.region || "").trim() || undefined,
-      }));
+      res.json(
+        await marketLocationsPayload(db, {
+          district: district || undefined,
+          region: String(req.query.region || "").trim() || undefined,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -306,7 +352,9 @@ export function createApp(db, options = {}) {
   app.post("/api/farmers/me/events", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
       const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.status(201).json(await withReceipts(db, await logStage(db, row, { ...req.body, channel: req.body?.channel || "mobile" })));
+      res
+        .status(201)
+        .json(await withReceipts(db, await logStage(db, row, { ...req.body, channel: req.body?.channel || "mobile" })));
     } catch (error) {
       next(error);
     }
@@ -408,7 +456,10 @@ export function createApp(db, options = {}) {
         const district = farmer?.district || body.district || null;
         const meta = getMarketMeta(district);
         const floors = (await listFloors(db)).map((row) => `${row.crop} floor MWK ${row.pricePerKg}/kg`).join("\n");
-        const rows = getMarketRows(district).slice(0, 4).map((row) => `${row.crop} ${row.price}`).join("\n");
+        const rows = getMarketRows(district)
+          .slice(0, 4)
+          .map((row) => `${row.crop} ${row.price}`)
+          .join("\n");
         const label = meta.live
           ? `LocalBuyEx prices${meta.warehouseHub ? ` · ${meta.warehouseHub} warehouse` : ""}`
           : "Reference prices";
@@ -463,13 +514,18 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/contracts", requireStaff(db, jwtSecret), requireStaffRole("cooperative"), async (req, res, next) => {
-    try {
-      res.status(201).json(await recordOffer(db, req.staff, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/contracts",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("cooperative"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await recordOffer(db, req.staff, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   app.put("/api/staff/floors", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
     try {
@@ -503,21 +559,31 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/market/observations", requireStaff(db, jwtSecret), requireStaffRole("ministry", "cooperative"), async (req, res, next) => {
-    try {
-      res.status(201).json(await recordManualObservation(db, req.staff, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/observations",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry", "cooperative"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await recordManualObservation(db, req.staff, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
-  app.post("/api/staff/market/import", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
-    try {
-      res.status(201).json(await importMarketCsv(db, req.staff, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/import",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await importMarketCsv(db, req.staff, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   app.get("/api/staff/market/export", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
@@ -539,12 +605,14 @@ export function createApp(db, options = {}) {
 
   app.get("/api/staff/market/trends", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
-      res.json(await marketTrendsPayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
-        district: String(req.query.district || "").trim() || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        range: String(req.query.range || "90d").trim(),
-      }));
+      res.json(
+        await marketTrendsPayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+          district: String(req.query.district || "").trim() || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          range: String(req.query.range || "90d").trim(),
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -558,22 +626,32 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/market/routes", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
-    try {
-      res.status(201).json(await saveLogisticsRoute(db, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/routes",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await saveLogisticsRoute(db, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
-  app.post("/api/staff/market/refresh", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (_req, res, next) => {
-    try {
-      const result = await refreshAllSources(db, true);
-      res.json({ ok: true, errors: result.errors || [], sources: result.sources || [] });
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/refresh",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry"),
+    async (_req, res, next) => {
+      try {
+        const result = await refreshAllSources(db, true);
+        res.json({ ok: true, errors: result.errors || [], sources: result.sources || [] });
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   app.get("/api/staff/market/alerts", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
@@ -585,10 +663,12 @@ export function createApp(db, options = {}) {
 
   app.get("/api/staff/market/locations", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
-      res.json(await marketLocationsPayload(db, {
-        district: String(req.query.district || "").trim() || undefined,
-        region: String(req.query.region || "").trim() || undefined,
-      }));
+      res.json(
+        await marketLocationsPayload(db, {
+          district: String(req.query.district || "").trim() || undefined,
+          region: String(req.query.region || "").trim() || undefined,
+        })
+      );
     } catch (error) {
       next(error);
     }

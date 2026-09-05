@@ -32,7 +32,7 @@ async function main() {
     logger.info("Listening on all interfaces (Android emulator: http://10.0.2.2:4000)");
     logger.info(`Environment: ${config.nodeEnv}`);
     logger.info(`Database: ${config.databaseUrl === ":memory:" ? "in-memory (pg-mem)" : "PostgreSQL"}`);
-    
+
     if (staffSeeded) {
       logger.info("Seeded demo staff (PIN 1234):");
       logger.info("  Mercy Chirwa  +265888000101  — Extension, Zidyana EPA");

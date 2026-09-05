@@ -35,11 +35,15 @@ export function ndviLabel(ndvi) {
 }
 
 async function countByDistrict(db) {
-  const farmers = await db.prepare(`
+  const farmers = await db
+    .prepare(
+      `
     SELECT district, epa, COUNT(*) AS count
     FROM farmers
     GROUP BY district, epa
-  `).all();
+  `
+    )
+    .all();
   const byDistrict = new Map();
   const byEpa = new Map();
   for (const row of farmers) {
@@ -67,14 +71,7 @@ function inScope(staff, district) {
 }
 
 function districtRow(district, context) {
-  const {
-    period,
-    farmersByDistrict,
-    pestsByDistrictMap,
-    weatherByDistrict,
-    epaCount,
-    epasWithFarmers,
-  } = context;
+  const { period, farmersByDistrict, pestsByDistrictMap, weatherByDistrict, epaCount, epasWithFarmers } = context;
 
   let ndvi = baseNdvi(district, period);
   const pestReports = pestsByDistrictMap.get(district) || 0;
@@ -116,11 +113,12 @@ function regionCoverage(regionName, districts, context) {
     const row = districtRow(name, context);
     return row.status === "alert";
   }).length;
-  const risk = alertDistricts >= 2 || (regionName === "Southern Region" && alertDistricts >= 1)
-    ? "elevated"
-    : registeredPct < 50
-      ? "watch"
-      : "low";
+  const risk =
+    alertDistricts >= 2 || (regionName === "Southern Region" && alertDistricts >= 1)
+      ? "elevated"
+      : registeredPct < 50
+        ? "watch"
+        : "low";
   return {
     name: regionName,
     epasTotal,
@@ -132,11 +130,15 @@ function regionCoverage(regionName, districts, context) {
 }
 
 async function storedTonnes(db) {
-  const row = await db.prepare(`
+  const row = await db
+    .prepare(
+      `
     SELECT COALESCE(SUM(weight_kg), 0) AS kg
     FROM warehouse_receipts
     WHERE status = 'accepted'
-  `).get();
+  `
+    )
+    .get();
   return Number(((row?.kg || 0) / 1000).toFixed(2));
 }
 
@@ -176,15 +178,16 @@ export async function nationalView(db, staff, options = {}) {
   const districts = scopedDistricts.map((name) => districtRow(name, context));
 
   const regions = Object.entries(REGION_DISTRICTS).map(([name, list]) =>
-    regionCoverage(name, list.filter((district) => inScope(staff, district)), context)
+    regionCoverage(
+      name,
+      list.filter((district) => inScope(staff, district)),
+      context
+    )
   );
 
   const totalEpas = Object.values(DISTRICT_EPAS).reduce((sum, epas) => sum + epas.length, 0);
   const scopedEpas = scopedDistricts.reduce((sum, district) => sum + (epaCount.get(district) || 0), 0);
-  const farmersRegistered = scopedDistricts.reduce(
-    (sum, district) => sum + (farmers.byDistrict.get(district) || 0),
-    0
-  );
+  const farmersRegistered = scopedDistricts.reduce((sum, district) => sum + (farmers.byDistrict.get(district) || 0), 0);
   const openPestReports = (await listPestReports(db)).length;
   const tonnes = await storedTonnes(db);
   const healthy = districts.filter((row) => row.status === "healthy").length;
@@ -208,9 +211,7 @@ export async function nationalView(db, staff, options = {}) {
     }
   }
 
-  const scope = staff?.role === "extension" && staff.district
-    ? staff.district
-    : "national";
+  const scope = staff?.role === "extension" && staff.district ? staff.district : "national";
 
   return {
     scope,
@@ -228,10 +229,8 @@ export async function nationalView(db, staff, options = {}) {
       farmersRegistered,
       openPestReports,
       storedTonnes: tonnes,
-      productionForecastT: tonnes > 0
-        ? Number((3.4 + tonnes / 1000).toFixed(2))
-        : 3.62,
-      ...await plotCoverageStats(db),
+      productionForecastT: tonnes > 0 ? Number((3.4 + tonnes / 1000).toFixed(2)) : 3.62,
+      ...(await plotCoverageStats(db)),
     },
     foodSecurityRisk,
   };

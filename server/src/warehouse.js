@@ -22,7 +22,15 @@ const STATUS_LABEL = {
 };
 
 export function cropSpec(name) {
-  return GRAIN_CROPS.find((row) => row.crop.toLowerCase() === String(name || "").trim().toLowerCase()) || null;
+  return (
+    GRAIN_CROPS.find(
+      (row) =>
+        row.crop.toLowerCase() ===
+        String(name || "")
+          .trim()
+          .toLowerCase()
+    ) || null
+  );
 }
 
 export function gradeMoisture(crop, moisturePct) {
@@ -34,7 +42,11 @@ export function gradeMoisture(crop, moisturePct) {
 }
 
 function genReceiptCode(district) {
-  const letters = (district || "MW").replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
+  const letters = (district || "MW")
+    .replace(/[^A-Za-z]/g, "")
+    .slice(0, 3)
+    .toUpperCase()
+    .padEnd(3, "X");
   const n = String(Math.floor(1000 + Math.random() * 9000));
   return `WR-${letters}-${n}`;
 }
@@ -75,9 +87,9 @@ export async function listReceipts(db) {
 }
 
 export async function listReceiptsForFarmer(db, farmerId) {
-  return (await db.prepare(`${RECEIPT_SELECT} WHERE r.farmer_id = ? ORDER BY r.created_at DESC`)
-    .all(farmerId))
-    .map(publicReceipt);
+  return (await db.prepare(`${RECEIPT_SELECT} WHERE r.farmer_id = ? ORDER BY r.created_at DESC`).all(farmerId)).map(
+    publicReceipt
+  );
 }
 
 export async function withReceipts(db, status) {
@@ -97,9 +109,7 @@ export function pendingLoanReceipts(receipts) {
 export async function acceptWarehouseLoan(db, farmer, input = {}) {
   const receipts = await listReceiptsForFarmer(db, farmer.id);
   const pending = pendingLoanReceipts(receipts);
-  const target = input.receiptId
-    ? receipts.find((row) => row.id === input.receiptId)
-    : pending[0] || null;
+  const target = input.receiptId ? receipts.find((row) => row.id === input.receiptId) : pending[0] || null;
 
   if (!target) {
     if (receipts.some((row) => row.status === "accepted" && row.loanDisbursed > 0)) {
@@ -196,12 +206,16 @@ export async function recordIntake(db, staff, input = {}) {
     created_at: Date.now(),
   };
 
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO warehouse_receipts
       (id, code, farmer_id, staff_id, crop, weight_kg, moisture_pct, price_per_kg, asset_value, loan_cap, loan_disbursed, status, created_at)
     VALUES
       (@id, @code, @farmer_id, @staff_id, @crop, @weight_kg, @moisture_pct, @price_per_kg, @asset_value, @loan_cap, @loan_disbursed, @status, @created_at)
-  `).run(row);
+  `
+    )
+    .run(row);
 
   let stageAdvanced = false;
   let nextStatus = await farmerStatus(db, farmer);

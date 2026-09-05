@@ -51,6 +51,7 @@ nano .env.production
 ```
 
 **Important**: Set these in `.env.production`:
+
 ```env
 POSTGRES_USER=nzeru
 POSTGRES_PASSWORD=YOUR_STRONG_PASSWORD_HERE
@@ -86,6 +87,7 @@ sudo nano /etc/nginx/sites-available/nzeru
 ```
 
 Add this configuration:
+
 ```nginx
 server {
     listen 80;
@@ -101,7 +103,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
+
         # Rate limiting
         limit_req zone=api_limit burst=20 nodelay;
     }
@@ -112,13 +114,14 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        
+
         limit_req zone=auth_limit burst=2 nodelay;
     }
 }
 ```
 
 Enable the site:
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/nzeru /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -188,6 +191,7 @@ nano server/.env
 ```
 
 Set these values in `server/.env`:
+
 ```env
 PORT=4000
 JWT_SECRET=your-strong-secret-min-32-chars
@@ -209,6 +213,7 @@ sudo nano /etc/systemd/system/nzeru.service
 ```
 
 Add:
+
 ```ini
 [Unit]
 Description=Nzeru za Alimi API
@@ -228,6 +233,7 @@ WantedBy=multi-user.target
 ```
 
 Enable and start:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable nzeru
@@ -244,6 +250,7 @@ If you have VPS credentials in the required format:
 ### 1. Create Credentials File
 
 Create `~/Documents/zammunda.txt` with:
+
 ```
 Ip Address: YOUR_VPS_IP
 username: YOUR_SSH_USERNAME
@@ -264,6 +271,7 @@ python3 scripts/deploy_remote.py
 ```
 
 This script will:
+
 - Upload the entire project
 - Install Node.js if needed
 - Set up PostgreSQL
@@ -288,11 +296,13 @@ This script will:
 ### View Logs
 
 **Docker:**
+
 ```bash
 docker-compose -f docker-compose.prod.yml logs -f app
 ```
 
 **Systemd:**
+
 ```bash
 sudo journalctl -u nzeru -f
 ```
@@ -323,6 +333,7 @@ sudo nano /usr/local/bin/backup-nzeru.sh
 ```
 
 Add:
+
 ```bash
 #!/bin/bash
 BACKUP_DIR="/backups/nzeru"
@@ -339,11 +350,13 @@ echo "Backup completed: $DATE"
 ```
 
 Make executable:
+
 ```bash
 sudo chmod +x /usr/local/bin/backup-nzeru.sh
 ```
 
 Add cron job:
+
 ```bash
 sudo crontab -e
 # Add: 0 2 * * * /usr/local/bin/backup-nzeru.sh
@@ -426,6 +439,7 @@ sudo netstat -tulpn | grep 4000
 ## Support
 
 For issues:
+
 - Check logs first
 - Review [SECURITY.md](../SECURITY.md)
 - Open an issue on GitHub
@@ -436,6 +450,7 @@ For issues:
 **Deployment Complete!** 🚀
 
 Access your application at:
+
 - HTTP: http://your-domain.com
 - HTTPS: https://your-domain.com (after Let's Encrypt setup)
 - API Docs: https://your-domain.com/api-docs

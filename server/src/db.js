@@ -239,11 +239,7 @@ function compileSql(sql, params) {
     return { text: pgSql, values };
   }
 
-  const values = Array.isArray(params)
-    ? [...params]
-    : params === undefined
-      ? []
-      : [params];
+  const values = Array.isArray(params) ? [...params] : params === undefined ? [] : [params];
   let index = 0;
   pgSql = pgSql.replace(/\?/g, () => {
     index += 1;
@@ -343,7 +339,7 @@ export async function openDatabase(target) {
   const connectionString = process.env.DATABASE_URL || target;
   if (!connectionString || !String(connectionString).startsWith("postgres")) {
     throw new Error(
-      "Set DATABASE_URL to a PostgreSQL connection string (postgres://…). Tests may use openDatabase(\":memory:\")."
+      'Set DATABASE_URL to a PostgreSQL connection string (postgres://…). Tests may use openDatabase(":memory:").'
     );
   }
   return openPostgresDatabase(connectionString);

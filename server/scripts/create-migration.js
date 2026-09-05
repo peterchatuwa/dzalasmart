@@ -26,17 +26,17 @@ function slugify(text) {
 
 async function main() {
   const name = process.argv.slice(2).join(" ").trim();
-  
+
   if (!name) {
     console.error("Usage: npm run migrate:create -- migration_name");
     process.exit(1);
   }
-  
+
   const slug = slugify(name);
   const version = `${timestamp()}_${slug}`;
   const filename = `${version}.js`;
   const filepath = join(migrationsDir, filename);
-  
+
   const template = `/**
  * Migration: ${name}
  * Created: ${new Date().toISOString()}
@@ -56,7 +56,7 @@ export async function down(db) {
   \`);
 }
 `;
-  
+
   await writeFile(filepath, template, "utf-8");
   console.log(`Created migration: ${filename}`);
   console.log(`Edit: server/migrations/${filename}`);

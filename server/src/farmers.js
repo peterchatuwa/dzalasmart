@@ -4,24 +4,32 @@ import { STAGES, publicStage, stageByIndex, stageByKey } from "./stages.js";
 import { HttpError, assertPin, normalizePhone, publicFarmer } from "./util.js";
 
 function genFarmerCode(district) {
-  const letters = (district || "MW").replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
+  const letters = (district || "MW")
+    .replace(/[^A-Za-z]/g, "")
+    .slice(0, 3)
+    .toUpperCase()
+    .padEnd(3, "X");
   const r1 = String(Math.floor(1000 + Math.random() * 9000));
   const r2 = String(Math.floor(1000 + Math.random() * 9000));
   return `MW-${letters}-${r1}-${r2}`;
 }
 
 async function currentStageIndex(db, farmerId) {
-  const row = await db.prepare(
-    "SELECT MAX(stage_index) AS max_index FROM season_events WHERE farmer_id = ?"
-  ).get(farmerId);
+  const row = await db
+    .prepare("SELECT MAX(stage_index) AS max_index FROM season_events WHERE farmer_id = ?")
+    .get(farmerId);
   return row?.max_index == null ? -1 : row.max_index;
 }
 
 async function listEvents(db, farmerId) {
-  return (await db.prepare(
-    `SELECT id, stage_index, stage_key, stage_name, channel, created_at
+  return (
+    await db
+      .prepare(
+        `SELECT id, stage_index, stage_key, stage_name, channel, created_at
      FROM season_events WHERE farmer_id = ? ORDER BY stage_index ASC`
-  ).all(farmerId)).map((row) => ({
+      )
+      .all(farmerId)
+  ).map((row) => ({
     id: row.id,
     stageIndex: row.stage_index,
     stageKey: row.stage_key,
@@ -93,10 +101,14 @@ export async function registerFarmer(db, input, jwtSecret) {
     created_at: Date.now(),
   };
 
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO farmers (id, code, name, phone, pin_hash, district, epa, region, soil_type, nutrient_status, created_at)
     VALUES (@id, @code, @name, @phone, @pin_hash, @district, @epa, @region, @soil_type, @nutrient_status, @created_at)
-  `).run(farmer);
+  `
+    )
+    .run(farmer);
 
   const saved = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(farmer.id);
   return {
@@ -138,10 +150,14 @@ export async function logStage(db, farmer, input = {}) {
     created_at: Date.now(),
   };
 
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO season_events (id, farmer_id, stage_index, stage_key, stage_name, channel, created_at)
     VALUES (@id, @farmer_id, @stage_index, @stage_key, @stage_name, @channel, @created_at)
-  `).run(event);
+  `
+    )
+    .run(event);
 
   return await farmerStatus(db, farmer);
 }

@@ -48,8 +48,8 @@ export default [
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_", vars: "all", args: "after-used" }],
       "prefer-const": "warn",
       "no-var": "error",
-      "eqeqeq": "off", // Disable for existing code
-      "curly": "off", // Disable for existing code
+      eqeqeq: "off", // Disable for existing code
+      curly: "off", // Disable for existing code
       "no-throw-literal": "warn",
       "no-undef": "error",
     },
@@ -74,7 +74,7 @@ export default [
       "*.aab",
       "index.html",
       "prototype.html",
-      "frontend/**",  // Skip frontend for now
+      "frontend/**", // Skip frontend for now
       "server/test/**", // Skip tests for now
       "server/src/market/collectors/**", // Skip collectors with regex patterns
     ],

@@ -39,7 +39,7 @@ export const logger = pino({
 export function createRequestLogger() {
   return (req, res, next) => {
     const start = Date.now();
-    
+
     res.on("finish", () => {
       const duration = Date.now() - start;
       const logData = {

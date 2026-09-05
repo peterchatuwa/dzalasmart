@@ -34,10 +34,15 @@ export async function handleUssd(db, body = {}) {
   }
 
   if (!farmer) {
-    return ussdReply(`END This phone is not registered on ${APP_NAME}. Register in the app or with your extension officer.`);
+    return ussdReply(
+      `END This phone is not registered on ${APP_NAME}. Register in the app or with your extension officer.`
+    );
   }
 
-  const parts = text.split("*").map((p) => p.trim()).filter((p) => p.length > 0);
+  const parts = text
+    .split("*")
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
 
   if (parts.length === 0) {
     return ussdReply(
@@ -64,9 +69,7 @@ export async function handleUssd(db, body = {}) {
     const status = await farmerStatus(db, farmer);
     const current = status.currentStage ? status.currentStage.name : "Not started";
     const next = status.nextStage ? status.nextStage.name : "Season complete";
-    return ussdReply(
-      `END ${farmer.code}\nCurrent: ${current}\nNext: ${next}\nEvents logged: ${status.events.length}`
-    );
+    return ussdReply(`END ${farmer.code}\nCurrent: ${current}\nNext: ${next}\nEvents logged: ${status.events.length}`);
   }
 
   if (parts[0] === "3") {
@@ -109,13 +112,17 @@ export async function handleUssd(db, body = {}) {
         );
       }
       if (latest.status === "drying_required") {
-        return ussdReply(`END ${latest.code}\n${latest.crop} ${latest.weightKg}kg · ${latest.moisturePct}% · Drying required.\nNo loan until moisture is in the accept band.`);
+        return ussdReply(
+          `END ${latest.code}\n${latest.crop} ${latest.weightKg}kg · ${latest.moisturePct}% · Drying required.\nNo loan until moisture is in the accept band.`
+        );
       }
       if (latest.status === "rejected") {
         return ussdReply(`END ${latest.code} was rejected for moisture. Bring drier grain.`);
       }
       if (latest.loanDisbursed > 0) {
-        return ussdReply(`END Grade approved. MWK ${latest.loanDisbursed.toLocaleString("en")} already sent to your registered wallet.`);
+        return ussdReply(
+          `END Grade approved. MWK ${latest.loanDisbursed.toLocaleString("en")} already sent to your registered wallet.`
+        );
       }
       return ussdReply(`END ${latest.code} · ${latest.statusLabel}. No loan waiting.`);
     }
@@ -123,7 +130,9 @@ export async function handleUssd(db, body = {}) {
     if (parts[1] !== "1") return ussdReply("END Invalid choice.");
     try {
       const paid = await acceptWarehouseLoan(db, farmer, {});
-      return ussdReply(`END MWK ${paid.receipt.loanDisbursed.toLocaleString("en")} will be sent to your registered mobile money wallet.`);
+      return ussdReply(
+        `END MWK ${paid.receipt.loanDisbursed.toLocaleString("en")} will be sent to your registered mobile money wallet.`
+      );
     } catch (error) {
       return ussdReply(`END ${error.message}`);
     }
@@ -137,7 +146,9 @@ export async function handleUssd(db, body = {}) {
     if (!crop) return ussdReply("END Invalid choice.");
     const price = await getMarketPriceFromDb(db, crop, farmer.district);
     if (price == null) {
-      return ussdReply(`END No live ${crop} price stored for ${farmer.district} yet. Try again after the market feeds refresh.`);
+      return ussdReply(
+        `END No live ${crop} price stored for ${farmer.district} yet. Try again after the market feeds refresh.`
+      );
     }
     return ussdReply(`END ${crop} in ${farmer.district}: MWK ${Math.round(price).toLocaleString("en")}/kg`);
   }

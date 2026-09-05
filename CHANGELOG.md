@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - ESLint and Prettier for code quality and formatting
 - Pre-commit hooks using Husky and lint-staged
 - GitHub Actions CI/CD pipeline
@@ -29,17 +30,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VS Code recommended extensions
 
 ### Changed
+
 - Improved error handling across all endpoints
 - Enhanced security with helmet middleware
 - Updated deployment documentation
 
 ### Fixed
+
 - Missing dependencies installation step
 - Security vulnerabilities in authentication flow
 
 ## [0.1.0] - 2026-09-04
 
 ### Added
+
 - Phase 6 market collectors, price alerts, and location hierarchy
 - Phase 5 transport costs and net margin opportunities
 - Phase 4 market trends charts and CSV export

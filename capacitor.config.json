@@ -5,11 +5,7 @@
   "server": {
     "androidScheme": "https",
     "cleartext": true,
-    "allowNavigation": [
-      "10.0.2.2",
-      "localhost",
-      "127.0.0.1"
-    ]
+    "allowNavigation": ["10.0.2.2", "localhost", "127.0.0.1"]
   },
   "android": {
     "allowMixedContent": true

@@ -46,8 +46,8 @@ export async function plotHectares(db, farmerId) {
 
 export function buildPolygon(lat, lon, hectares) {
   const sideM = Math.sqrt(Math.max(hectares, 0.1) * 10000);
-  const halfLat = (sideM / 2) / 111000;
-  const halfLon = (sideM / 2) / (111000 * Math.cos((lat * Math.PI) / 180));
+  const halfLat = sideM / 2 / 111000;
+  const halfLon = sideM / 2 / (111000 * Math.cos((lat * Math.PI) / 180));
   return [
     { lat: lat - halfLat, lon: lon - halfLon },
     { lat: lat - halfLat, lon: lon + halfLon },
@@ -103,7 +103,9 @@ function rowToPlot(row) {
 async function persistPlot(db, farmer, data) {
   const now = Date.now();
   const ndvi = await plotNdvi(db, farmer);
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO farm_plots (
       farmer_id, lat, lon, hectares, polygon_json, source, accuracy_m, ndvi, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -116,17 +118,19 @@ async function persistPlot(db, farmer, data) {
       accuracy_m = excluded.accuracy_m,
       ndvi = excluded.ndvi,
       updated_at = excluded.updated_at
-  `).run(
-    farmer.id,
-    data.lat,
-    data.lon,
-    data.hectares,
-    JSON.stringify(data.polygon),
-    data.source,
-    data.accuracyM ?? null,
-    ndvi,
-    now,
-  );
+  `
+    )
+    .run(
+      farmer.id,
+      data.lat,
+      data.lon,
+      data.hectares,
+      JSON.stringify(data.polygon),
+      data.source,
+      data.accuracyM ?? null,
+      ndvi,
+      now
+    );
 }
 
 export async function ensureEstimatedPlot(db, farmer) {
@@ -178,9 +182,10 @@ export async function saveFarmerPlot(db, farmer, input = {}) {
     throw HttpError(400, "lat and lon are required");
   }
   assertMalawiCoords(lat, lon);
-  const hectares = input.hectares != null
-    ? Math.max(0.1, Number(input.hectares) || await plotHectares(db, farmer.id))
-    : await plotHectares(db, farmer.id);
+  const hectares =
+    input.hectares != null
+      ? Math.max(0.1, Number(input.hectares) || (await plotHectares(db, farmer.id)))
+      : await plotHectares(db, farmer.id);
   const polygon = buildPolygon(lat, lon, hectares);
   await persistPlot(db, farmer, {
     lat: Number(lat.toFixed(6)),

@@ -33,13 +33,17 @@ test("market prices API returns persisted multi-source rows", async (t) => {
   const db = await openDatabase(":memory:");
   await seedMarketCatalog(db);
   const catalog = parseLocalBuyHtml(SAMPLE_HTML).catalog;
-  await insertObservations(db, "localbuy", catalog.map((row) => ({
-    commoditySlug: row.commoditySlug,
-    locationSlug: `warehouse-kasungu`,
-    buyPricePerKg: row.buyPricePerKg,
-    sellPricePerKg: row.sellPricePerKg,
-    grade: row.grade,
-  })));
+  await insertObservations(
+    db,
+    "localbuy",
+    catalog.map((row) => ({
+      commoditySlug: row.commoditySlug,
+      locationSlug: `warehouse-kasungu`,
+      buyPricePerKg: row.buyPricePerKg,
+      sellPricePerKg: row.sellPricePerKg,
+      grade: row.grade,
+    }))
+  );
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);
   t.after(close);
@@ -56,28 +60,33 @@ test("market history API returns stored observations", async (t) => {
   const db = await openDatabase(":memory:");
   await seedMarketCatalog(db);
   const now = Date.now();
-  await insertObservations(db, "manual", [{
-    commoditySlug: "maize",
-    locationSlug: "kasungu",
-    buyPricePerKg: 900,
-    sellPricePerKg: 1000,
-    priceKind: "market",
-    observedAt: now - 86_400_000,
-  }]);
-  await insertObservations(db, "manual", [{
-    commoditySlug: "maize",
-    locationSlug: "kasungu",
-    buyPricePerKg: 950,
-    sellPricePerKg: 1050,
-    priceKind: "market",
-    observedAt: now,
-  }]);
+  await insertObservations(db, "manual", [
+    {
+      commoditySlug: "maize",
+      locationSlug: "kasungu",
+      buyPricePerKg: 900,
+      sellPricePerKg: 1000,
+      priceKind: "market",
+      observedAt: now - 86_400_000,
+    },
+  ]);
+  await insertObservations(db, "manual", [
+    {
+      commoditySlug: "maize",
+      locationSlug: "kasungu",
+      buyPricePerKg: 950,
+      sellPricePerKg: 1050,
+      priceKind: "market",
+      observedAt: now,
+    },
+  ]);
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);
   t.after(close);
 
-  const payload = await fetch(`${url}/api/market/history?commodity=maize&district=Kasungu&days=30`)
-    .then((r) => r.json());
+  const payload = await fetch(`${url}/api/market/history?commodity=maize&district=Kasungu&days=30`).then((r) =>
+    r.json()
+  );
   assert.equal(payload.points.length, 2);
   assert.equal(payload.points[0].buyPricePerKg, 900);
   assert.equal(payload.points[1].buyPricePerKg, 950);

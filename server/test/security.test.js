@@ -39,7 +39,7 @@ test("rate limiting", async (t) => {
 
   await t.test("should rate limit authentication endpoints", async () => {
     const attempts = [];
-    
+
     // Make 6 rapid requests (limit is 5 per 15 minutes)
     for (let i = 0; i < 6; i++) {
       const res = await fetch(`${url}/api/farmers/login`, {
@@ -49,7 +49,7 @@ test("rate limiting", async (t) => {
       });
       attempts.push(res.status);
     }
-    
+
     // Last request should be rate limited
     const rateLimited = attempts[5] === 429;
     assert.ok(rateLimited, "Expected 6th auth request to be rate limited");

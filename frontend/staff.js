@@ -48,7 +48,11 @@ async function api(method, path, { body, auth = false } = {}) {
   });
   const raw = await res.text();
   let parsed = {};
-  try { parsed = raw ? JSON.parse(raw) : {}; } catch { parsed = { error: raw }; }
+  try {
+    parsed = raw ? JSON.parse(raw) : {};
+  } catch {
+    parsed = { error: raw };
+  }
   addWire(method, path, body ?? null, parsed, res.status);
   if (!res.ok) {
     const error = new Error(parsed.error || raw || res.statusText);
@@ -69,16 +73,19 @@ function roleLabel(role) {
 function renderList() {
   const district = document.getElementById("districtFilter").value;
   const rows = summaries.filter((row) => !district || row.farmer.district === district);
-  document.getElementById("farmerList").innerHTML = rows.map((row) => {
-    const stage = row.currentStage?.name || "Not started";
-    const active = row.farmer.id === selectedId ? " active" : "";
-    return `
+  document.getElementById("farmerList").innerHTML =
+    rows
+      .map((row) => {
+        const stage = row.currentStage?.name || "Not started";
+        const active = row.farmer.id === selectedId ? " active" : "";
+        return `
       <button type="button" class="farmer-card${active}" data-id="${row.farmer.id}">
         <div class="name">${row.farmer.name}</div>
         <div class="meta">${row.farmer.code} · ${row.farmer.district}${row.farmer.epa ? " · " + row.farmer.epa : ""}</div>
         <div class="meta">${stage} · ${row.eventCount} event${row.eventCount === 1 ? "" : "s"}</div>
       </button>`;
-  }).join("") || `<p class="hint">No farmers in this district.</p>`;
+      })
+      .join("") || `<p class="hint">No farmers in this district.</p>`;
 
   document.querySelectorAll(".farmer-card").forEach((btn) => {
     btn.addEventListener("click", () => openFarmer(btn.dataset.id));
@@ -89,7 +96,8 @@ function fillDistrictFilter() {
   const select = document.getElementById("districtFilter");
   const current = select.value;
   const districts = [...new Set(summaries.map((row) => row.farmer.district))].sort();
-  select.innerHTML = `<option value="">All districts</option>` +
+  select.innerHTML =
+    `<option value="">All districts</option>` +
     districts.map((name) => `<option value="${name}">${name}</option>`).join("");
   if (districts.includes(current)) select.value = current;
 }
@@ -103,13 +111,17 @@ async function openFarmer(id) {
   const farmer = detail.farmer;
   document.getElementById("detailCode").textContent = farmer.code;
   document.getElementById("detailName").textContent = farmer.name;
-  document.getElementById("detailPlace").textContent = [farmer.district, farmer.epa, farmer.region].filter(Boolean).join(" · ");
+  document.getElementById("detailPlace").textContent = [farmer.district, farmer.epa, farmer.region]
+    .filter(Boolean)
+    .join(" · ");
   const passport = detail.passport;
   const passEl = document.getElementById("detailPassport");
   passEl.hidden = !passport;
   if (passport) {
     document.getElementById("detailPassportGrade").textContent = passport.grade;
-    document.getElementById("detailPassportScore").textContent = passport.stagesLogged ? `Score ${passport.score}` : "Unrated";
+    document.getElementById("detailPassportScore").textContent = passport.stagesLogged
+      ? `Score ${passport.score}`
+      : "Unrated";
     document.getElementById("detailPassportLabel").textContent = passport.label;
     document.getElementById("detailPassportIncome").textContent = fmtMoney(passport.netIncome);
     document.getElementById("detailPassportLoan").textContent = passport.loanPending
@@ -119,30 +131,40 @@ async function openFarmer(id) {
   document.getElementById("detailCurrent").textContent = detail.currentStage?.name || "Not started";
   document.getElementById("detailNext").textContent = detail.nextStage?.name || "Season complete";
   const current = detail.currentStage?.index ?? -1;
-  document.getElementById("detailStepper").innerHTML = stages.map((stage) => {
-    const cls = stage.index < current ? "done" : stage.index === current ? "current" : "";
-    return `<li class="${cls}"><span class="dot"></span>${stage.name}</li>`;
-  }).join("");
+  document.getElementById("detailStepper").innerHTML = stages
+    .map((stage) => {
+      const cls = stage.index < current ? "done" : stage.index === current ? "current" : "";
+      return `<li class="${cls}"><span class="dot"></span>${stage.name}</li>`;
+    })
+    .join("");
   document.getElementById("detailEvents").innerHTML = detail.events.length
-    ? detail.events.map((event) => `
+    ? detail.events
+        .map(
+          (event) => `
         <div class="event-row">
           <div>
             <strong>${event.stageName}</strong>
             <div class="hint">${fmtTime(event.createdAt)}</div>
           </div>
           <span class="channel ${event.channel}">${event.channel}</span>
-        </div>`).join("")
+        </div>`
+        )
+        .join("")
     : `<p class="hint">No stages logged yet.</p>`;
   const receipts = detail.receipts || [];
   document.getElementById("detailReceiptsTitle").hidden = receipts.length === 0;
-  document.getElementById("detailReceipts").innerHTML = receipts.map((row) => `
+  document.getElementById("detailReceipts").innerHTML = receipts
+    .map(
+      (row) => `
     <div class="ledger-row">
       <div>
         <strong>${row.code}</strong>
         <div class="meta">${row.crop} · ${row.weightKg} kg · ${row.moisturePct}%</div>
       </div>
       <span class="badge ${row.status}">${row.statusLabel}</span>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
   renderIntakeForm(detail);
   renderStaffPlot(detail.plot);
 }
@@ -201,7 +223,8 @@ function showDesk() {
     cooperative: "Cooperative managers grade grain, record buyer offers, and can advance Post-Harvest and Marketing.",
     ministry: "The ministry sets national floor prices and reads the NDVI crop-health map across every EPA.",
     fum: "FUM watches live off-take contracts and the national NDVI map. Offers below the ministry floor are already blocked.",
-    extension: "Extension officers see a visit queue for their EPA — pest reports, stalled seasons, and harvests still waiting at the warehouse.",
+    extension:
+      "Extension officers see a visit queue for their EPA — pest reports, stalled seasons, and harvests still waiting at the warehouse.",
   };
   document.getElementById("staffTopbarNote").textContent = notes[staff.role] || notes.extension;
   const nationalRoles = new Set(["ministry", "fum", "extension"]);
@@ -250,7 +273,10 @@ async function loadMarketAdmin() {
   if (routesPanel) routesPanel.hidden = staff?.role !== "ministry";
   try {
     const payload = await api("GET", "/api/staff/market/sources", { auth: true });
-    document.getElementById("marketSourceList").innerHTML = (payload.sources || []).map((row) => `
+    document.getElementById("marketSourceList").innerHTML =
+      (payload.sources || [])
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.name}</strong>
@@ -258,7 +284,9 @@ async function loadMarketAdmin() {
           ${row.lastError ? `<div class="meta">${row.lastError}</div>` : ""}
         </div>
         <span class="badge ${row.status === "ok" ? "accepted" : row.status === "error" ? "rejected" : "drying_required"}">${row.status} · ${row.updatedLabel}</span>
-      </div>`).join("") || `<p class="hint">No market sources configured yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No market sources configured yet.</p>`;
   } catch (error) {
     document.getElementById("marketSourceList").innerHTML = `<p class="hint">${error.message}</p>`;
   }
@@ -273,20 +301,27 @@ async function loadMarketAdmin() {
   const routeFrom = document.getElementById("routeFromDistrict");
   const routeTo = document.getElementById("routeToDistrict");
   if (routeFrom && routeFrom.options.length <= 1) {
-    const hubOptions = ["Lilongwe", "Kasungu", "Mchinji"].map((name) => `<option value="${name}">${name}</option>`).join("");
+    const hubOptions = ["Lilongwe", "Kasungu", "Mchinji"]
+      .map((name) => `<option value="${name}">${name}</option>`)
+      .join("");
     routeFrom.innerHTML = hubOptions;
     routeTo.innerHTML = hubOptions;
   }
   try {
     const routes = await api("GET", "/api/staff/market/routes", { auth: true });
-    document.getElementById("marketRoutesList").innerHTML = (routes.routes || []).map((row) => `
+    document.getElementById("marketRoutesList").innerHTML =
+      (routes.routes || [])
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.fromDistrict} → ${row.toDistrict}</strong>
           <div class="meta">${row.distanceKm != null ? `${row.distanceKm} km · ` : ""}${row.costLabel}${row.notes ? ` · ${row.notes}` : ""}</div>
         </div>
         <span class="badge accepted">${row.costPerKg} MWK/kg</span>
-      </div>`).join("") || `<p class="hint">No haulage routes configured yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No haulage routes configured yet.</p>`;
   } catch {
     document.getElementById("marketRoutesList").innerHTML = `<p class="hint">Could not load haulage routes.</p>`;
   }
@@ -294,8 +329,9 @@ async function loadMarketAdmin() {
     const prices = await api("GET", "/api/market/prices", { auth: true });
     const trendCommodity = document.getElementById("staffTrendCommodity");
     if (trendCommodity && trendCommodity.options.length <= 1) {
-      trendCommodity.innerHTML = (prices.commodities || [{ slug: "maize", name: "Maize" }]).map((row) =>
-        `<option value="${row.slug}">${row.name}</option>`).join("");
+      trendCommodity.innerHTML = (prices.commodities || [{ slug: "maize", name: "Maize" }])
+        .map((row) => `<option value="${row.slug}">${row.name}</option>`)
+        .join("");
     }
     await loadStaffTrends();
   } catch {
@@ -303,14 +339,20 @@ async function loadMarketAdmin() {
   }
   try {
     const locations = await api("GET", "/api/staff/market/locations", { auth: true });
-    document.getElementById("marketLocationsList").innerHTML = (locations.tradingCentres || []).slice(0, 12).map((row) => `
+    document.getElementById("marketLocationsList").innerHTML =
+      (locations.tradingCentres || [])
+        .slice(0, 12)
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.name}</strong>
           <div class="meta">${row.district}${row.region ? ` · ${row.region}` : ""}</div>
         </div>
         <span class="badge accepted">trading centre</span>
-      </div>`).join("") || `<p class="hint">No trading centres seeded yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No trading centres seeded yet.</p>`;
   } catch {
     document.getElementById("marketLocationsList").innerHTML = `<p class="hint">Could not load location hierarchy.</p>`;
   }
@@ -318,13 +360,18 @@ async function loadMarketAdmin() {
     const alerts = await api("GET", "/api/staff/market/alerts", { auth: true });
     document.getElementById("marketAlertsStaffSummary").textContent =
       `${alerts.activeAlerts || 0} active alerts across ${alerts.farmersWithAlerts || 0} farmers.`;
-    document.getElementById("marketAlertsStaffEvents").innerHTML = (alerts.recentEvents || []).map((row) => `
+    document.getElementById("marketAlertsStaffEvents").innerHTML =
+      (alerts.recentEvents || [])
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.farmerName || "Farmer"} · ${row.message}</strong>
           <div class="meta">${row.farmerPhone || ""} · ${new Date(row.triggeredAt).toLocaleString("en-MW")}</div>
         </div>
-      </div>`).join("") || `<p class="hint">No triggered price alerts yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No triggered price alerts yet.</p>`;
   } catch {
     document.getElementById("marketAlertsStaffSummary").textContent = "Could not load farmer price alerts.";
   }
@@ -409,9 +456,11 @@ async function downloadStaffExport() {
 
 function fillCrops() {
   const select = document.getElementById("intakeCrop");
-  select.innerHTML = crops.map((row) =>
-    `<option value="${row.crop}">${row.crop} · MWK ${row.pricePerKg}/kg · accept ≤ ${row.acceptAt}%</option>`
-  ).join("");
+  select.innerHTML = crops
+    .map(
+      (row) => `<option value="${row.crop}">${row.crop} · MWK ${row.pricePerKg}/kg · accept ≤ ${row.acceptAt}%</option>`
+    )
+    .join("");
 }
 
 function renderWarehouse() {
@@ -433,9 +482,13 @@ function renderWarehouse() {
   const latest = warehouse.latest;
   let loanLine = "Not yet triggered";
   if (latest?.loanPending) loanLine = `${fmtMoney(latest.loanCap)} offered on ${latest.code} — waiting on the farmer`;
-  else if (latest && latest.status === "accepted") loanLine = `${fmtMoney(latest.loanDisbursed)} disbursed on ${latest.code}`;
-  document.getElementById("intakeLedger").innerHTML = (receipts.length
-    ? receipts.map((row) => `
+  else if (latest && latest.status === "accepted")
+    loanLine = `${fmtMoney(latest.loanDisbursed)} disbursed on ${latest.code}`;
+  document.getElementById("intakeLedger").innerHTML =
+    (receipts.length
+      ? receipts
+          .map(
+            (row) => `
         <div class="ledger-row">
           <div>
             <strong>${row.farmerName}</strong>
@@ -445,9 +498,11 @@ function renderWarehouse() {
             <span class="badge ${row.status}">${row.statusLabel}</span>
             <div class="meta">${row.loanPending ? `${fmtMoney(row.loanCap)} waiting` : row.status === "accepted" ? fmtMoney(row.loanDisbursed) : "No loan"}</div>
           </div>
-        </div>`).join("")
-    : `<p class="hint">No lots taken in yet. Select a farmer who has reached Harvest, then grade a moisture reading.</p>`)
-    + `<div class="loan-engine">
+        </div>`
+          )
+          .join("")
+      : `<p class="hint">No lots taken in yet. Select a farmer who has reached Harvest, then grade a moisture reading.</p>`) +
+    `<div class="loan-engine">
         <p class="eyebrow">Moisture-linked microloan</p>
         <p class="hint">Latest intake asset value: ${latest ? fmtMoney(latest.assetValue) : "—"}. Loan cap is 60% of graded value.</p>
         <p class="stat" style="font-size:16px;">${loanLine}</p>
@@ -469,7 +524,9 @@ function renderPests(reports) {
     list.innerHTML = `<p class="hint">No pest reports yet. Farmers send them from the assistant or *413# option 4.</p>`;
     return;
   }
-  list.innerHTML = reports.map((row) => `
+  list.innerHTML = reports
+    .map(
+      (row) => `
     <div class="ledger-row">
       <div>
         <strong>${row.farmerName}</strong>
@@ -477,7 +534,9 @@ function renderPests(reports) {
         <div class="meta">${row.symptoms}</div>
       </div>
       <span class="badge ${row.matchName ? "accepted" : "drying_required"}">${row.matchName || "Unmatched"}</span>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 }
 
 async function loadPests() {
@@ -491,9 +550,10 @@ async function loadPests() {
 
 function renderVisits(payload) {
   const stats = payload.stats || {};
-  document.getElementById("visitHint").textContent = staff?.role === "extension"
-    ? `Visit list for ${payload.area || "your EPA"}. Pest reports, stalled seasons, and harvests still at the farm.`
-    : "National visit list. Extension officers only see their own EPA.";
+  document.getElementById("visitHint").textContent =
+    staff?.role === "extension"
+      ? `Visit list for ${payload.area || "your EPA"}. Pest reports, stalled seasons, and harvests still at the farm.`
+      : "National visit list. Extension officers only see their own EPA.";
   document.getElementById("visitStats").innerHTML = `
     <div>
       <p class="eyebrow">Flagged</p>
@@ -517,7 +577,9 @@ function renderVisits(payload) {
     list.innerHTML = `<p class="hint">No farmers flagged in this area right now.</p>`;
     return;
   }
-  list.innerHTML = visits.map((row) => `
+  list.innerHTML = visits
+    .map(
+      (row) => `
     <button type="button" class="ledger-row visit-row" data-visit-id="${row.farmerId}">
       <div>
         <strong>${row.farmerName}</strong>
@@ -525,7 +587,9 @@ function renderVisits(payload) {
         <div class="meta">${row.reason}</div>
       </div>
       <span class="badge ${row.priority}">${row.priority === "high" ? "High" : "Routine"}</span>
-    </button>`).join("");
+    </button>`
+    )
+    .join("");
   list.querySelectorAll("[data-visit-id]").forEach((btn) => {
     btn.addEventListener("click", () => openFarmer(btn.dataset.visitId));
   });
@@ -542,9 +606,10 @@ async function loadVisits() {
 
 function renderNational(payload) {
   const stats = payload.stats || {};
-  document.getElementById("nationalHint").textContent = payload.scope === "national"
-    ? "Satellite NDVI sampled every five days across every EPA, paired with live pest reports and weather alerts from the register."
-    : `District crop-health map for ${payload.scope}. Satellite NDVI is adjusted when farmers in this area report pests.`;
+  document.getElementById("nationalHint").textContent =
+    payload.scope === "national"
+      ? "Satellite NDVI sampled every five days across every EPA, paired with live pest reports and weather alerts from the register."
+      : `District crop-health map for ${payload.scope}. Satellite NDVI is adjusted when farmers in this area report pests.`;
   document.getElementById("nationalStats").innerHTML = `
     <div>
       <p class="eyebrow">EPAs monitored</p>
@@ -568,13 +633,19 @@ function renderNational(payload) {
     </div>`;
 
   const districts = payload.districts || [];
-  document.getElementById("nationalMap").innerHTML = districts.map((row) => `
+  document.getElementById("nationalMap").innerHTML = districts
+    .map(
+      (row) => `
     <div class="epa-cell ${row.status}" title="${row.name}: NDVI ${row.ndvi} · ${row.label}${row.pestReports ? " · " + row.pestReports + " pest report(s)" : ""}">
       <span>${row.name.slice(0, 3).toUpperCase()}</span>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 
   const regions = payload.regions || [];
-  document.getElementById("nationalRegions").innerHTML = regions.map((row) => `
+  document.getElementById("nationalRegions").innerHTML = regions
+    .map(
+      (row) => `
     <div class="region-card">
       <div class="region-head">
         <strong>${row.name}</strong>
@@ -582,7 +653,9 @@ function renderNational(payload) {
       </div>
       <p class="meta">${row.epasWithFarmers}/${row.epasTotal} EPAs with farmers · ${row.farmersRegistered} registered</p>
       <div class="meter"><span style="width:${row.registeredPct}%"></span></div>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 
   const risks = payload.foodSecurityRisk || [];
   const riskEl = document.getElementById("nationalRisk");
@@ -590,15 +663,21 @@ function renderNational(payload) {
     riskEl.innerHTML = `<p class="hint">No districts flagged for food-security risk on this pass.</p>`;
     return;
   }
-  riskEl.innerHTML = `
-    <p class="eyebrow">Food-security risk</p>` + risks.map((row) => `
+  riskEl.innerHTML =
+    `
+    <p class="eyebrow">Food-security risk</p>` +
+    risks
+      .map(
+        (row) => `
     <div class="ledger-row">
       <div>
         <strong>${row.district}</strong>
         <div class="meta">${row.reason}</div>
       </div>
       <span class="badge high">Risk</span>
-    </div>`).join("");
+    </div>`
+      )
+      .join("");
 }
 
 async function loadNational() {
@@ -615,24 +694,40 @@ async function loadNational() {
 function fillSelect(id, values, selected) {
   const select = document.getElementById(id);
   if (!select) return;
-  select.innerHTML = values.map((value) => {
-    const label = typeof value === "string" ? value : value.label;
-    const v = typeof value === "string" ? value : value.value;
-    return `<option value="${v}">${label}</option>`;
-  }).join("");
+  select.innerHTML = values
+    .map((value) => {
+      const label = typeof value === "string" ? value : value.label;
+      const v = typeof value === "string" ? value : value.value;
+      return `<option value="${v}">${label}</option>`;
+    })
+    .join("");
   if (selected) select.value = selected;
 }
 
 function renderMonitor() {
   const floors = monitor.floors || [];
-  document.getElementById("floorList").innerHTML = floors.map((row) => `
+  document.getElementById("floorList").innerHTML =
+    floors
+      .map(
+        (row) => `
     <div class="kv-row">
       <span>${row.crop} (national floor)</span>
       <strong>${fmtMoney(row.pricePerKg)}/kg</strong>
-    </div>`).join("") || `<p class="hint">No floors published yet.</p>`;
-  fillSelect("floorCrop", floors.map((row) => row.crop));
-  fillSelect("offerCrop", floors.map((row) => row.crop));
-  fillSelect("offerDistrict", districts.map((d) => d.name));
+    </div>`
+      )
+      .join("") || `<p class="hint">No floors published yet.</p>`;
+  fillSelect(
+    "floorCrop",
+    floors.map((row) => row.crop)
+  );
+  fillSelect(
+    "offerCrop",
+    floors.map((row) => row.crop)
+  );
+  fillSelect(
+    "offerDistrict",
+    districts.map((d) => d.name)
+  );
   document.getElementById("floorForm").hidden = staff?.role !== "ministry";
   document.getElementById("contractForm").hidden = staff?.role !== "cooperative";
   const violations = monitor.violationCount || 0;
@@ -641,7 +736,9 @@ function renderMonitor() {
     : "Offers below the ministry floor are blocked automatically and cannot pay the farmer.";
   const contracts = monitor.contracts || [];
   document.getElementById("contractList").innerHTML = contracts.length
-    ? contracts.map((row) => `
+    ? contracts
+        .map(
+          (row) => `
         <div class="ledger-row">
           <div>
             <strong>${row.buyer}</strong>
@@ -651,7 +748,9 @@ function renderMonitor() {
             <span>${fmtMoney(row.pricePerKg)}/kg</span>
             <span class="badge ${row.status}">${row.statusLabel}</span>
           </div>
-        </div>`).join("")
+        </div>`
+        )
+        .join("")
     : `<p class="hint">No buyer offers yet.</p>`;
 }
 
@@ -668,7 +767,9 @@ async function loadAlerts() {
   try {
     const payload = await api("GET", "/api/alerts");
     const districts = payload.districts || [];
-    document.getElementById("alertGrid").innerHTML = districts.map((row) => `
+    document.getElementById("alertGrid").innerHTML = districts
+      .map(
+        (row) => `
       <div class="district-alert ${row.alert || ""}">
         <div class="district-card-top">
           <div>
@@ -680,7 +781,9 @@ async function loadAlerts() {
         <p class="hint">${row.alertHeadline || ""}</p>
         <p class="hint">${row.fieldAdvice || row.advice || ""}</p>
         ${row.rain3dayMm != null ? `<p class="meta">${row.rain3dayMm}mm rain (3d) · ${row.nowC}°C</p>` : ""}
-      </div>`).join("");
+      </div>`
+      )
+      .join("");
   } catch (error) {
     document.getElementById("alertGrid").innerHTML = `<p class="hint">${error.message}</p>`;
   }
@@ -941,7 +1044,11 @@ async function boot() {
   const districtPayload = await api("GET", "/api/districts");
   districts = districtPayload.districts || [];
   if (token) {
-    try { await loadDesk(); } catch { logout(); }
+    try {
+      await loadDesk();
+    } catch {
+      logout();
+    }
   }
 }
 

@@ -4,8 +4,19 @@ import { getMarketPriceFromDb } from "./market.js";
 import { HttpError } from "./util.js";
 
 export const PLAN_CROPS = [
-  "Maize", "Groundnuts", "Soybeans", "Cassava", "Sweet potatoes", "Sorghum",
-  "Pigeon peas", "Rice", "Tobacco", "Cabbages", "Tomatoes", "Irish Potatoes", "Onions",
+  "Maize",
+  "Groundnuts",
+  "Soybeans",
+  "Cassava",
+  "Sweet potatoes",
+  "Sorghum",
+  "Pigeon peas",
+  "Rice",
+  "Tobacco",
+  "Cabbages",
+  "Tomatoes",
+  "Irish Potatoes",
+  "Onions",
 ];
 
 export const PLANTING_WINDOWS = {
@@ -25,29 +36,141 @@ export const PLANTING_WINDOWS = {
 };
 
 const BUDGET_MODEL = {
-  Maize: { yieldKgHa: 1800, priceMwkKg: 610, costPerHa: 450000, riskScore: 40, laborDaysHa: 45, peakWorkersHa: 3, category: "grain" },
-  Groundnuts: { yieldKgHa: 900, priceMwkKg: 460, costPerHa: 230000, riskScore: 45, laborDaysHa: 55, peakWorkersHa: 4, category: "legume" },
-  Soybeans: { yieldKgHa: 1100, priceMwkKg: 520, costPerHa: 260000, riskScore: 42, laborDaysHa: 50, peakWorkersHa: 3, category: "legume" },
-  Cassava: { yieldKgHa: 12000, priceMwkKg: 120, costPerHa: 380000, riskScore: 30, laborDaysHa: 60, peakWorkersHa: 3, category: "root" },
-  "Sweet potatoes": { yieldKgHa: 8000, priceMwkKg: 150, costPerHa: 350000, riskScore: 33, laborDaysHa: 55, peakWorkersHa: 3, category: "root" },
-  Sorghum: { yieldKgHa: 1200, priceMwkKg: 350, costPerHa: 220000, riskScore: 38, laborDaysHa: 40, peakWorkersHa: 3, category: "grain" },
-  "Pigeon peas": { yieldKgHa: 900, priceMwkKg: 480, costPerHa: 210000, riskScore: 40, laborDaysHa: 45, peakWorkersHa: 3, category: "legume" },
-  Rice: { yieldKgHa: 2200, priceMwkKg: 580, costPerHa: 620000, riskScore: 55, laborDaysHa: 70, peakWorkersHa: 5, category: "grain" },
-  Tobacco: { yieldKgHa: 1000, priceMwkKg: 2400, costPerHa: 1150000, riskScore: 62, laborDaysHa: 95, peakWorkersHa: 5, category: "cash" },
-  Cabbages: { yieldKgHa: 27000, priceMwkKg: 300, costPerHa: 3200000, riskScore: 59, laborDaysHa: 115, peakWorkersHa: 5, category: "vegetable" },
-  Tomatoes: { yieldKgHa: 25000, priceMwkKg: 350, costPerHa: 3400000, riskScore: 55, laborDaysHa: 110, peakWorkersHa: 5, category: "vegetable" },
-  "Irish Potatoes": { yieldKgHa: 18000, priceMwkKg: 900, costPerHa: 5200000, riskScore: 50, laborDaysHa: 100, peakWorkersHa: 5, category: "root" },
-  Onions: { yieldKgHa: 20000, priceMwkKg: 400, costPerHa: 3000000, riskScore: 52, laborDaysHa: 95, peakWorkersHa: 4, category: "vegetable" },
+  Maize: {
+    yieldKgHa: 1800,
+    priceMwkKg: 610,
+    costPerHa: 450000,
+    riskScore: 40,
+    laborDaysHa: 45,
+    peakWorkersHa: 3,
+    category: "grain",
+  },
+  Groundnuts: {
+    yieldKgHa: 900,
+    priceMwkKg: 460,
+    costPerHa: 230000,
+    riskScore: 45,
+    laborDaysHa: 55,
+    peakWorkersHa: 4,
+    category: "legume",
+  },
+  Soybeans: {
+    yieldKgHa: 1100,
+    priceMwkKg: 520,
+    costPerHa: 260000,
+    riskScore: 42,
+    laborDaysHa: 50,
+    peakWorkersHa: 3,
+    category: "legume",
+  },
+  Cassava: {
+    yieldKgHa: 12000,
+    priceMwkKg: 120,
+    costPerHa: 380000,
+    riskScore: 30,
+    laborDaysHa: 60,
+    peakWorkersHa: 3,
+    category: "root",
+  },
+  "Sweet potatoes": {
+    yieldKgHa: 8000,
+    priceMwkKg: 150,
+    costPerHa: 350000,
+    riskScore: 33,
+    laborDaysHa: 55,
+    peakWorkersHa: 3,
+    category: "root",
+  },
+  Sorghum: {
+    yieldKgHa: 1200,
+    priceMwkKg: 350,
+    costPerHa: 220000,
+    riskScore: 38,
+    laborDaysHa: 40,
+    peakWorkersHa: 3,
+    category: "grain",
+  },
+  "Pigeon peas": {
+    yieldKgHa: 900,
+    priceMwkKg: 480,
+    costPerHa: 210000,
+    riskScore: 40,
+    laborDaysHa: 45,
+    peakWorkersHa: 3,
+    category: "legume",
+  },
+  Rice: {
+    yieldKgHa: 2200,
+    priceMwkKg: 580,
+    costPerHa: 620000,
+    riskScore: 55,
+    laborDaysHa: 70,
+    peakWorkersHa: 5,
+    category: "grain",
+  },
+  Tobacco: {
+    yieldKgHa: 1000,
+    priceMwkKg: 2400,
+    costPerHa: 1150000,
+    riskScore: 62,
+    laborDaysHa: 95,
+    peakWorkersHa: 5,
+    category: "cash",
+  },
+  Cabbages: {
+    yieldKgHa: 27000,
+    priceMwkKg: 300,
+    costPerHa: 3200000,
+    riskScore: 59,
+    laborDaysHa: 115,
+    peakWorkersHa: 5,
+    category: "vegetable",
+  },
+  Tomatoes: {
+    yieldKgHa: 25000,
+    priceMwkKg: 350,
+    costPerHa: 3400000,
+    riskScore: 55,
+    laborDaysHa: 110,
+    peakWorkersHa: 5,
+    category: "vegetable",
+  },
+  "Irish Potatoes": {
+    yieldKgHa: 18000,
+    priceMwkKg: 900,
+    costPerHa: 5200000,
+    riskScore: 50,
+    laborDaysHa: 100,
+    peakWorkersHa: 5,
+    category: "root",
+  },
+  Onions: {
+    yieldKgHa: 20000,
+    priceMwkKg: 400,
+    costPerHa: 3000000,
+    riskScore: 52,
+    laborDaysHa: 95,
+    peakWorkersHa: 4,
+    category: "vegetable",
+  },
 };
 
-const DEFAULT_MODEL = { yieldKgHa: 1000, priceMwkKg: 400, costPerHa: 300000, riskScore: 50, laborDaysHa: 50, peakWorkersHa: 3, category: "grain" };
+const DEFAULT_MODEL = {
+  yieldKgHa: 1000,
+  priceMwkKg: 400,
+  costPerHa: 300000,
+  riskScore: 50,
+  laborDaysHa: 50,
+  peakWorkersHa: 3,
+  category: "grain",
+};
 
 const CATEGORY_COST_SPLIT = {
-  grain: { Seed: 0.15, Fertiliser: 0.35, Irrigation: 0.05, Labour: 0.30, Transport: 0.15 },
-  legume: { Seed: 0.20, Fertiliser: 0.15, Irrigation: 0.05, Labour: 0.40, Transport: 0.20 },
-  root: { Seed: 0.25, Fertiliser: 0.20, Irrigation: 0.10, Labour: 0.30, Transport: 0.15 },
-  vegetable: { Seed: 0.28, Fertiliser: 0.13, Irrigation: 0.10, Labour: 0.29, Transport: 0.20 },
-  cash: { Seed: 0.10, Fertiliser: 0.30, Irrigation: 0.05, Labour: 0.35, Transport: 0.20 },
+  grain: { Seed: 0.15, Fertiliser: 0.35, Irrigation: 0.05, Labour: 0.3, Transport: 0.15 },
+  legume: { Seed: 0.2, Fertiliser: 0.15, Irrigation: 0.05, Labour: 0.4, Transport: 0.2 },
+  root: { Seed: 0.25, Fertiliser: 0.2, Irrigation: 0.1, Labour: 0.3, Transport: 0.15 },
+  vegetable: { Seed: 0.28, Fertiliser: 0.13, Irrigation: 0.1, Labour: 0.29, Transport: 0.2 },
+  cash: { Seed: 0.1, Fertiliser: 0.3, Irrigation: 0.05, Labour: 0.35, Transport: 0.2 },
 };
 
 const READINESS_DEFAULTS = {
@@ -88,25 +211,64 @@ const TOGGLE_SCORES = {
 const DAILY_PLAN = {
   grain: [
     { day: "Day -21", title: "Land preparation", desc: "Plough and ridge the plot; incorporate basal fertiliser." },
-    { day: "Day -7", title: "Input check", desc: "Confirm seed and fertiliser are on hand before the rains start.", tone: "risk" },
+    {
+      day: "Day -7",
+      title: "Input check",
+      desc: "Confirm seed and fertiliser are on hand before the rains start.",
+      tone: "risk",
+    },
     { day: "Day 0", title: "Planting", desc: "Plant at recommended spacing once rains are established." },
-    { day: "Day 21", title: "First weeding & top-dressing", desc: "Weed and apply top-dressing fertiliser.", tone: "good" },
+    {
+      day: "Day 21",
+      title: "First weeding & top-dressing",
+      desc: "Weed and apply top-dressing fertiliser.",
+      tone: "good",
+    },
     { day: "Day 45", title: "Second weeding", desc: "Control weeds and check for fall armyworm or stalk borer." },
-    { day: "Day 100–120", title: "Harvest window", desc: "Begin harvest once grain moisture is right for storage.", tone: "good" },
+    {
+      day: "Day 100–120",
+      title: "Harvest window",
+      desc: "Begin harvest once grain moisture is right for storage.",
+      tone: "good",
+    },
   ],
   legume: [
     { day: "Day -14", title: "Land preparation", desc: "Plough and prepare ridges; inoculate seed if available." },
     { day: "Day 0", title: "Planting", desc: "Plant at recommended spacing once rains are established." },
-    { day: "Day 21", title: "Weeding", desc: "First weeding round — legumes are sensitive to early weed competition.", tone: "risk" },
-    { day: "Day 40", title: "Pest check", desc: "Scout for aphids and pod borers; spray only if thresholds are exceeded." },
+    {
+      day: "Day 21",
+      title: "Weeding",
+      desc: "First weeding round — legumes are sensitive to early weed competition.",
+      tone: "risk",
+    },
+    {
+      day: "Day 40",
+      title: "Pest check",
+      desc: "Scout for aphids and pod borers; spray only if thresholds are exceeded.",
+    },
     { day: "Day 90–110", title: "Harvest window", desc: "Harvest once pods have dried or matured.", tone: "good" },
   ],
   root: [
     { day: "Day -14", title: "Land preparation", desc: "Ridge the land to allow good root/tuber development." },
     { day: "Day 0", title: "Planting", desc: "Plant cuttings or seed tubers at recommended spacing." },
-    { day: "Day 30", title: "Weeding & earthing up", desc: "Weed and earth up ridges to protect developing roots.", tone: "good" },
-    { day: "Day 90", title: "Mid-season pest check", desc: "Scout for weevils and blight; treat only if needed.", tone: "risk" },
-    { day: "Day 150–270", title: "Harvest window", desc: "Harvest window varies by crop — confirm with your Agritex officer.", tone: "good" },
+    {
+      day: "Day 30",
+      title: "Weeding & earthing up",
+      desc: "Weed and earth up ridges to protect developing roots.",
+      tone: "good",
+    },
+    {
+      day: "Day 90",
+      title: "Mid-season pest check",
+      desc: "Scout for weevils and blight; treat only if needed.",
+      tone: "risk",
+    },
+    {
+      day: "Day 150–270",
+      title: "Harvest window",
+      desc: "Harvest window varies by crop — confirm with your Agritex officer.",
+      tone: "good",
+    },
   ],
   vegetable: [
     { day: "Day -40", title: "Nursery bed preparation", desc: "Prepare well-drained seedling trays or raised beds." },
@@ -117,8 +279,18 @@ const DAILY_PLAN = {
   cash: [
     { day: "Day -50", title: "Nursery preparation", desc: "Prepare seedbeds and sow into sterilised nursery trays." },
     { day: "Day 0", title: "Transplanting", desc: "Transplant into the main field at recommended spacing." },
-    { day: "Day 35", title: "Topping & suckering", desc: "Remove flower heads and suckers to direct growth into leaf quality.", tone: "risk" },
-    { day: "Day 70–100", title: "Reaping & curing", desc: "Reap leaves in stages and cure according to grade requirements.", tone: "good" },
+    {
+      day: "Day 35",
+      title: "Topping & suckering",
+      desc: "Remove flower heads and suckers to direct growth into leaf quality.",
+      tone: "risk",
+    },
+    {
+      day: "Day 70–100",
+      title: "Reaping & curing",
+      desc: "Reap leaves in stages and cure according to grade requirements.",
+      tone: "good",
+    },
   ],
 };
 
@@ -148,11 +320,7 @@ export function plantingWindowStatus(crop, startMonth, now = new Date()) {
   if (inPlantingWindow(month, win.start, win.end)) {
     return { status: "ontime", label: `Inside ${win.label}`, window: win };
   }
-  const dist = Math.min(
-    Math.abs(month - win.start),
-    Math.abs(month - win.end),
-    Math.abs(month - win.start + 12),
-  );
+  const dist = Math.min(Math.abs(month - win.start), Math.abs(month - win.end), Math.abs(month - win.start + 12));
   return {
     status: dist <= 2 ? "early" : "late",
     label: dist <= 2 ? `Slightly early for ${win.label}` : `Outside ${win.label}`,
@@ -225,12 +393,15 @@ export function computeBankability(readiness = READINESS_DEFAULTS) {
   }
   const score = checks.length ? Math.round((checks.reduce((a, b) => a + b, 0) / checks.length) * 100) : 0;
   const grade = score >= 85 ? "A" : score >= 70 ? "B" : score >= 55 ? "C" : score >= 40 ? "D" : "F";
-  const status = score >= 70 ? "Bankable" : score >= 40 ? "Developing — partially bankable" : "Incomplete — not bankable";
+  const status =
+    score >= 70 ? "Bankable" : score >= 40 ? "Developing — partially bankable" : "Incomplete — not bankable";
   return { score, grade, status, checks };
 }
 
 async function loadStoredPlan(db, farmerId) {
-  const row = await db.prepare("SELECT crops_json, readiness_json, updated_at FROM farm_plans WHERE farmer_id = ?").get(farmerId);
+  const row = await db
+    .prepare("SELECT crops_json, readiness_json, updated_at FROM farm_plans WHERE farmer_id = ?")
+    .get(farmerId);
   if (!row) return null;
   return {
     crops: JSON.parse(row.crops_json),
@@ -258,23 +429,28 @@ export async function saveFarmPlan(db, farmer, input) {
   });
   const readiness = { ...READINESS_DEFAULTS, ...(input.readiness || {}) };
   const now = Date.now();
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO farm_plans (farmer_id, crops_json, readiness_json, updated_at)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(farmer_id) DO UPDATE SET
       crops_json = excluded.crops_json,
       readiness_json = excluded.readiness_json,
       updated_at = excluded.updated_at
-  `).run(farmer.id, JSON.stringify(cleaned), JSON.stringify(readiness), now);
+  `
+    )
+    .run(farmer.id, JSON.stringify(cleaned), JSON.stringify(readiness), now);
   return await buildFarmPlan(db, farmer, { stored: { crops: cleaned, readiness, updatedAt: now } });
 }
 
 export async function buildFarmPlan(db, farmer, options = {}) {
-  const stored = options.stored || await loadStoredPlan(db, farmer.id) || {
-    crops: defaultCrops(farmer),
-    readiness: { ...READINESS_DEFAULTS },
-    updatedAt: null,
-  };
+  const stored = options.stored ||
+    (await loadStoredPlan(db, farmer.id)) || {
+      crops: defaultCrops(farmer),
+      readiness: { ...READINESS_DEFAULTS },
+      updatedAt: null,
+    };
   const budgets = [];
   for (const row of stored.crops) {
     budgets.push({
@@ -284,20 +460,23 @@ export async function buildFarmPlan(db, farmer, options = {}) {
       cropInfo: CROP_INFO[row.crop] || null,
     });
   }
-  const combined = budgets.reduce((acc, row) => {
-    const b = row.budget;
-    acc.hectares += b.hectares;
-    acc.totalCost += b.totalCost;
-    acc.totalRevenue += b.totalRevenue;
-    acc.totalMargin += b.totalMargin;
-    acc.peakStaff = Math.max(acc.peakStaff, b.peakStaff);
-    acc.riskScore = Math.max(acc.riskScore, b.riskScore);
-    return acc;
-  }, { hectares: 0, totalCost: 0, totalRevenue: 0, totalMargin: 0, peakStaff: 0, riskScore: 0 });
+  const combined = budgets.reduce(
+    (acc, row) => {
+      const b = row.budget;
+      acc.hectares += b.hectares;
+      acc.totalCost += b.totalCost;
+      acc.totalRevenue += b.totalRevenue;
+      acc.totalMargin += b.totalMargin;
+      acc.peakStaff = Math.max(acc.peakStaff, b.peakStaff);
+      acc.riskScore = Math.max(acc.riskScore, b.riskScore);
+      return acc;
+    },
+    { hectares: 0, totalCost: 0, totalRevenue: 0, totalMargin: 0, peakStaff: 0, riskScore: 0 }
+  );
   combined.roi = combined.totalCost > 0 ? Math.round((combined.totalMargin / combined.totalCost) * 100) : 0;
   combined.profitable = combined.totalMargin > 0;
 
-  const primary = budgets[0]?.budget || await computeBudget("Maize", 1, db, farmer.district);
+  const primary = budgets[0]?.budget || (await computeBudget("Maize", 1, db, farmer.district));
   const bankability = computeBankability(stored.readiness);
   const weather = options.weather;
 
@@ -318,9 +497,7 @@ export async function buildFarmPlan(db, farmer, options = {}) {
       sensitivity: buildSensitivity(primary),
     },
     decisions: buildDecisions(budgets, combined, bankability),
-    weatherNote: weather
-      ? `${weather.district} is ${weather.alert.toUpperCase()} — ${weather.fieldAdvice}`
-      : null,
+    weatherNote: weather ? `${weather.district} is ${weather.alert.toUpperCase()} — ${weather.fieldAdvice}` : null,
   };
 }
 
@@ -328,7 +505,7 @@ function buildCashflow(combined) {
   return [
     { label: "Month 1 — land prep & first inputs", amount: -Math.round(combined.totalCost * 0.45) },
     { label: "Month 2 — labour & fertiliser top-up", amount: -Math.round(combined.totalCost * 0.35) },
-    { label: "Month 3 — final inputs & transport", amount: -Math.round(combined.totalCost * 0.20) },
+    { label: "Month 3 — final inputs & transport", amount: -Math.round(combined.totalCost * 0.2) },
     { label: "Harvest & sale — total revenue", amount: Math.round(combined.totalRevenue) },
   ];
 }
@@ -360,9 +537,10 @@ function buildDecisions(budgets, combined, bankability) {
   items.push({
     icon: bankability.score >= 70 ? "✓" : "!",
     title: `Bankability ${bankability.score}/100 — ${bankability.status}`,
-    detail: bankability.score >= 70
-      ? "Readiness profile is strong enough for most lenders to review."
-      : "Complete the readiness answers before asking for finance.",
+    detail:
+      bankability.score >= 70
+        ? "Readiness profile is strong enough for most lenders to review."
+        : "Complete the readiness answers before asking for finance.",
   });
   const late = budgets.filter((row) => row.planting.status === "late");
   if (late.length) {

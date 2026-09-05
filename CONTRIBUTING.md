@@ -33,6 +33,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 ## Development Workflow
 
 1. **Create a branch** for your work:
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -46,6 +47,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    - Write tests for new functionality
 
 3. **Test your changes**:
+
    ```bash
    npm test           # Run all tests
    npm run lint       # Check code style
@@ -53,6 +55,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    ```
 
 4. **Commit your changes**:
+
    ```bash
    git add .
    git commit -m "feat: add new feature"
@@ -69,6 +72,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    - `chore:` for maintenance tasks
 
 5. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```

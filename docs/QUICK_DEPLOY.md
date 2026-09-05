@@ -22,6 +22,7 @@ Deploy Nzeru za Alimi to your VPS in minutes.
 ```
 
 This script will:
+
 - ✅ Test SSH connection
 - ✅ Package the application
 - ✅ Upload to server
@@ -33,6 +34,7 @@ This script will:
 ### 2. Configure Production Secrets
 
 SSH into your server:
+
 ```bash
 ssh YOUR_SSH_USER@YOUR_VPS_IP
 cd /opt/nzeru-za-alimi
@@ -40,6 +42,7 @@ nano server/.env
 ```
 
 Update these values:
+
 ```env
 JWT_SECRET=your-strong-secret-minimum-32-characters-long
 DATABASE_URL=postgres://nzeru:YOUR_PASSWORD@localhost:5432/nzeru
@@ -110,6 +113,7 @@ sudo nano /etc/nginx/sites-available/nzeru
 ```
 
 Paste this configuration (replace `your-domain.com`):
+
 ```nginx
 server {
     listen 80;
@@ -129,6 +133,7 @@ server {
 ```
 
 Enable and restart:
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/nzeru /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -163,6 +168,7 @@ The script handles everything automatically!
 ## Troubleshooting
 
 ### Service won't start
+
 ```bash
 # View detailed logs
 sudo journalctl -u nzeru-za-alimi -n 100 --no-pager
@@ -172,6 +178,7 @@ sudo systemctl status nzeru-za-alimi
 ```
 
 ### Database connection fails
+
 ```bash
 # Test database
 sudo -u postgres psql -U nzeru -d nzeru -c "SELECT 1;"
@@ -181,6 +188,7 @@ cat /opt/nzeru-za-alimi/server/.env | grep DATABASE_URL
 ```
 
 ### Port 4000 already in use
+
 ```bash
 # Check what's using the port
 sudo lsof -i :4000
