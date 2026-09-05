@@ -1,6 +1,11 @@
 import path from "node:path";
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import { logger, createRequestLogger } from "./logger.js";
+import { securityHeaders, apiLimiter, authLimiter, ussdLimiter, requestSizeLimiter, sanitizeInput } from "./middleware/security.js";
+import { metricsCollector, healthCheckMiddleware, getMetrics } from "./middleware/monitoring.js";
+import { swaggerSpec } from "./swagger.js";
 import { advisorMeta, askAdvisor, listPestReports, logPestReport } from "./advisor.js";
 import { readOptionalFarmer, requireCooperative, requireFarmer, requireStaff, requireStaffRole } from "./auth.js";
 import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer } from "./farmers.js";
@@ -21,12 +26,64 @@ import { marketPayload, marketPricesPayload, marketHistoryPayload, marketCompare
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
   const app = express();
+  
+  // Security middleware
+  app.use(securityHeaders());
+  app.use(requestSizeLimiter("10mb"));
+  
+  // Metrics collection
+  app.use(metricsCollector());
+  
+  // Logging
+  app.use(createRequestLogger());
+  
+  // Health checks
+  app.use(healthCheckMiddleware(db));
+  
+  // CORS and body parsing
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
+  
+  // Input sanitization
+  app.use(sanitizeInput);
+  
+  // Trust proxy for rate limiting behind reverse proxy
+  app.set("trust proxy", 1);
 
-  app.get("/health", (_req, res) => {
-    res.json({ ok: true, service: APP_SLUG, name: APP_NAME, database: "postgresql" });
+  app.get("/health", async (_req, res) => {
+    try {
+      // Check database connectivity
+      await db.query("SELECT 1");
+      res.json({ 
+        ok: true, 
+        service: APP_SLUG, 
+        name: APP_NAME, 
+        database: "postgresql",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Health check failed");
+      res.status(503).json({ 
+        ok: false, 
+        service: APP_SLUG,
+        error: "Service unavailable",
+      });
+    }
+  });
+
+  app.get("/metrics", (_req, res) => {
+    res.json(getMetrics());
+  });
+
+  // API Documentation
+  app.use("/api-docs", swaggerUi.serve);
+  app.get("/api-docs", swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: `${APP_NAME} API Documentation`,
+    customfavIcon: "/favicon.ico",
+  }));
+  app.get("/api-docs.json", (_req, res) => {
+    res.json(swaggerSpec);
   });
 
   app.get("/api/stages", (_req, res) => {
@@ -217,7 +274,7 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/farmers/register", async (req, res, next) => {
+  app.post("/api/farmers/register", authLimiter, async (req, res, next) => {
     try {
       res.status(201).json(await registerFarmer(db, req.body || {}, jwtSecret));
     } catch (error) {
@@ -225,7 +282,7 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/farmers/login", async (req, res, next) => {
+  app.post("/api/farmers/login", authLimiter, async (req, res, next) => {
     try {
       res.json(await loginFarmer(db, req.body || {}, jwtSecret));
     } catch (error) {
@@ -307,7 +364,7 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/login", async (req, res, next) => {
+  app.post("/api/staff/login", authLimiter, async (req, res, next) => {
     try {
       res.json(await loginStaff(db, req.body || {}, jwtSecret));
     } catch (error) {
@@ -569,7 +626,7 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/ussd", async (req, res, next) => {
+  app.post("/ussd", ussdLimiter, async (req, res, next) => {
     try {
       const reply = await handleUssd(db, req.body || {});
       res.type("text/plain").send(reply);

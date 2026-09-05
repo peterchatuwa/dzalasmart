@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nzeru-postgres
+    environment:
+      POSTGRES_USER: nzeru
+      POSTGRES_PASSWORD: nzeru_dev_password
+      POSTGRES_DB: nzeru
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nzeru"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      target: development
+    container_name: nzeru-app
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgres://nzeru:nzeru_dev_password@postgres:5432/nzeru
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/server/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run dev
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nzeru-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@nzeru.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5050:5050"
+    depends_on:
+      - postgres
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: nzeru-network
