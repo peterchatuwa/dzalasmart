@@ -136,6 +136,21 @@
             <div id="vouchersList" class="ledger-list"></div>
           </div>
 
+          <div class="market-card" id="inputsCard">
+            <p class="eyebrow">Agricultural inputs</p>
+            <h2 style="margin-top: 0">Available farm inputs & prices</h2>
+            <p class="hint" id="inputsNote">Loading inputs catalog…</p>
+            
+            <div class="tabs" style="margin-top: 1rem;">
+              <button type="button" class="tab active" data-input-category="all">All</button>
+              <button type="button" class="tab" data-input-category="fertilizer">Fertilizers</button>
+              <button type="button" class="tab" data-input-category="seed">Seeds</button>
+              <button type="button" class="tab" data-input-category="pesticide">Pesticides</button>
+            </div>
+            
+            <div id="inputsList" class="ledger-list" style="margin-top: 1rem;"></div>
+          </div>
+
           <div class="market-card" id="plotCard">
             <p class="eyebrow">GPS plot</p>
             <h2 style="margin-top: 0">Your field on the map</h2>

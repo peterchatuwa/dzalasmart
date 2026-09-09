@@ -258,6 +258,7 @@ function renderFarm() {
   loadPlot();
   loadMarket();
   loadVouchers();
+  loadInputsCatalog();
 }
 
 async function loadStatus() {
@@ -769,6 +770,52 @@ async function loadVouchers() {
       .join("");
   } catch (error) {
     note.textContent = `Failed to load vouchers: ${error.message}`;
+    list.innerHTML = "";
+  }
+}
+
+let currentInputCategory = "all";
+
+async function loadInputsCatalog(category = "all") {
+  const note = document.getElementById("inputsNote");
+  const list = document.getElementById("inputsList");
+  currentInputCategory = category;
+
+  try {
+    note.textContent = "Loading inputs…";
+    const params = category !== "all" ? `?category=${category}` : "";
+    const payload = await api("GET", `/api/inputs${params}`, { auth: false });
+    const inputs = payload.inputs || [];
+
+    if (inputs.length === 0) {
+      note.textContent = category !== "all" ? `No ${category} inputs available.` : "No inputs available.";
+      list.innerHTML = "";
+      return;
+    }
+
+    note.textContent = `${inputs.length} input${inputs.length === 1 ? "" : "s"} available${category !== "all" ? ` in ${category}` : ""}.`;
+
+    list.innerHTML = inputs
+      .map((inp) => {
+        const categoryBadge = inp.category === "fertilizer" ? "accepted" : inp.category === "seed" ? "loan_disbursed" : "pending";
+        
+        return `
+          <div class="ledger-row">
+            <div>
+              <strong>${inp.name}</strong>
+              <div class="hint">${inp.description || "No description"}</div>
+              ${inp.supplier ? `<div class="hint" style="margin-top:4px;">Supplier: ${inp.supplier}</div>` : ""}
+            </div>
+            <div class="ledger-side">
+              <span class="badge ${categoryBadge}">${inp.category.toUpperCase()}</span>
+              <div class="stat">MWK ${inp.standardPrice.toLocaleString("en")}/${inp.unit}</div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  } catch (error) {
+    note.textContent = `Failed to load inputs: ${error.message}`;
     list.innerHTML = "";
   }
 }
@@ -1372,6 +1419,16 @@ async function boot() {
       alert(error.message || "Export failed");
     }
   });
+
+  // Input catalog category tabs
+  document.querySelectorAll("[data-input-category]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-input-category]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadInputsCatalog(btn.dataset.inputCategory);
+    });
+  });
+
   await loadAdvisor();
   if (token) {
     try {
