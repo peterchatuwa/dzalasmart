@@ -11,6 +11,7 @@ import { seedStaffIfEmpty, staffIdByRole } from "./staff.js";
 import { seedMarketCatalog } from "./market.js";
 import { seedInputsIfEmpty } from "./inputs.js";
 import { seedVouchersIfEmpty } from "./vouchers.js";
+import { seedGroupsIfEmpty } from "./groups.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const port = config.port;
@@ -25,6 +26,7 @@ async function main() {
   await seedContractsIfEmpty(db, await staffIdByRole(db, "cooperative"));
   const inputsSeeded = await seedInputsIfEmpty(db);
   const vouchersSeeded = await seedVouchersIfEmpty(db);
+  const groupsSeeded = await seedGroupsIfEmpty(db);
   const frontendDir = path.join(here, "..", "..", "frontend");
   const app = createApp(db, { jwtSecret, frontendDir });
 
@@ -55,6 +57,9 @@ async function main() {
     }
     if (vouchersSeeded) {
       logger.info("Seeded demo vouchers (2 FISP vouchers: 1 redeemed, 1 active)");
+    }
+    if (groupsSeeded) {
+      logger.info("Seeded demo groups (2 groups: Kasungu Coop, Zidyana Club)");
     }
   });
 }

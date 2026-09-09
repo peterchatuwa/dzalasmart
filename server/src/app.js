@@ -40,6 +40,19 @@ import {
   getVoucherStats,
   VOUCHER_STATUS,
 } from "./vouchers.js";
+import {
+  createGroup,
+  getGroupById,
+  listGroups,
+  addMemberToGroup,
+  removeMemberFromGroup,
+  listGroupMembers,
+  listFarmerGroups,
+  updateMemberRole,
+  getGroupStats,
+  GROUP_TYPES,
+  MEMBER_ROLES,
+} from "./groups.js";
 import { listDistricts } from "./places.js";
 import { STAGES } from "./stages.js";
 import { loginStaff } from "./staff.js";
@@ -626,6 +639,118 @@ export function createApp(db, options = {}) {
       crops: GRAIN_CROPS,
       note: "Maize is accepted at or below 13.5% moisture, matching the original warehouse meter rule.",
     });
+  });
+
+  // ============================================================================
+  // Farmer Groups Endpoints
+  // ============================================================================
+
+  // Farmer: List my groups
+  app.get("/api/farmers/me/groups", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json({
+        groups: await listFarmerGroups(db, req.farmer.id),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: List all groups (filtered)
+  app.get("/api/groups", async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || null;
+      const epa = String(req.query.epa || "").trim() || null;
+      const type = String(req.query.type || "").trim() || null;
+      res.json({
+        groups: await listGroups(db, { district, epa, type }),
+        types: Object.values(GROUP_TYPES),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: Get group details
+  app.get("/api/groups/:id", async (req, res, next) => {
+    try {
+      const group = await getGroupById(db, req.params.id);
+      if (!group) {
+        res.status(404).json({ error: "Group not found" });
+        return;
+      }
+      res.json(group);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: List group members
+  app.get("/api/groups/:id/members", async (req, res, next) => {
+    try {
+      res.json({
+        members: await listGroupMembers(db, req.params.id),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Create group
+  app.post("/api/staff/groups", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.status(201).json(await createGroup(db, req.staff, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Add member to group
+  app.post("/api/staff/groups/:id/members", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const farmerId = req.body?.farmerId;
+      const role = req.body?.role || "member";
+      if (!farmerId) {
+        res.status(400).json({ error: "farmerId is required" });
+        return;
+      }
+      res.status(201).json(await addMemberToGroup(db, req.params.id, farmerId, role));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Remove member from group
+  app.delete("/api/staff/groups/:groupId/members/:farmerId", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await removeMemberFromGroup(db, req.params.groupId, req.params.farmerId));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Update member role
+  app.put("/api/staff/groups/members/:membershipId", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const newRole = req.body?.role;
+      if (!newRole) {
+        res.status(400).json({ error: "role is required" });
+        return;
+      }
+      res.json(await updateMemberRole(db, req.params.membershipId, newRole));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Group statistics
+  app.get("/api/staff/groups/stats", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      res.json(await getGroupStats(db, { district }));
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.get("/api/advisor", (_req, res) => {
