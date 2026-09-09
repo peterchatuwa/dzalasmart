@@ -20,6 +20,59 @@ function showError(id, message) {
   el.textContent = message || "";
 }
 
+// Toast notification system
+function showToast(message, type = "info", duration = 5000) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+
+  const icons = {
+    success: "✓",
+    error: "✕",
+    warning: "⚠",
+    info: "ℹ",
+  };
+
+  const titles = {
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Info",
+  };
+
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || icons.info}</div>
+    <div class="toast-content">
+      <div class="toast-title">${titles[type] || titles.info}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" aria-label="Close">&times;</button>
+    ${duration > 0 ? '<div class="toast-progress"></div>' : ""}
+  `;
+
+  const closeBtn = toast.querySelector(".toast-close");
+  const removeToast = () => {
+    toast.classList.add("toast-exit");
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 250);
+  };
+
+  closeBtn.addEventListener("click", removeToast);
+
+  container.appendChild(toast);
+
+  if (duration > 0) {
+    setTimeout(removeToast, duration);
+  }
+
+  return toast;
+}
+
 function fmtTime(ts) {
   return new Date(ts).toLocaleString(undefined, {
     month: "short",
@@ -801,9 +854,11 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
     });
     token = payload.token;
     localStorage.setItem(TOKEN_KEY, token);
+    showToast(`Welcome back, ${payload.staff.name}!`, "success");
     await loadDesk();
   } catch (error) {
     showError("loginError", error.message);
+    showToast(error.message || "Login failed", "error");
   }
 });
 

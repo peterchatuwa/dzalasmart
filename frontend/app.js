@@ -101,6 +101,59 @@ function showError(id, message) {
   el.textContent = message || "";
 }
 
+// Toast notification system
+function showToast(message, type = "info", duration = 5000) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+
+  const icons = {
+    success: "✓",
+    error: "✕",
+    warning: "⚠",
+    info: "ℹ",
+  };
+
+  const titles = {
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Info",
+  };
+
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || icons.info}</div>
+    <div class="toast-content">
+      <div class="toast-title">${titles[type] || titles.info}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" aria-label="Close">&times;</button>
+    ${duration > 0 ? '<div class="toast-progress"></div>' : ""}
+  `;
+
+  const closeBtn = toast.querySelector(".toast-close");
+  const removeToast = () => {
+    toast.classList.add("toast-exit");
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 250);
+  };
+
+  closeBtn.addEventListener("click", removeToast);
+
+  container.appendChild(toast);
+
+  if (duration > 0) {
+    setTimeout(removeToast, duration);
+  }
+
+  return toast;
+}
+
 function fmtTime(ts) {
   return new Date(ts).toLocaleString(undefined, {
     month: "short",
@@ -809,18 +862,12 @@ async function saveProfile(formData) {
       body: formData,
     });
     
-    document.getElementById("profileSuccess").hidden = false;
-    document.getElementById("profileError").hidden = true;
-    setTimeout(() => {
-      document.getElementById("profileSuccess").hidden = true;
-    }, 3000);
+    showToast("Your profile has been updated successfully!", "success");
     
     // Reload status to refresh farmer info
     await loadStatus();
   } catch (error) {
-    document.getElementById("profileError").textContent = error.message;
-    document.getElementById("profileError").hidden = false;
-    document.getElementById("profileSuccess").hidden = true;
+    showToast(error.message || "Failed to update profile", "error");
   }
 }
 
@@ -918,9 +965,11 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
       },
     });
     setSession(payload);
+    showToast(`Welcome back, ${payload.farmer.name}!`, "success");
     await loadStatus();
   } catch (error) {
     showError("loginError", error.message);
+    showToast(error.message || "Login failed", "error");
   }
 });
 
@@ -938,9 +987,11 @@ document.getElementById("registerForm").addEventListener("submit", async (event)
       },
     });
     setSession(payload);
+    showToast(`Welcome to Nzeru za Alimi, ${payload.farmer.name}! Your account has been created.`, "success");
     await loadStatus();
   } catch (error) {
     showError("registerError", error.message);
+    showToast(error.message || "Registration failed", "error");
   }
 });
 
@@ -951,9 +1002,11 @@ document.getElementById("advanceBtn").addEventListener("click", async () => {
   showError("advanceError", "");
   try {
     status = await api("POST", "/api/farmers/me/events", { auth: true, body: {} });
+    showToast(`Milestone logged: ${status.currentStage?.name || "Complete"}!`, "success");
     renderFarm();
   } catch (error) {
     showError("advanceError", error.message);
+    showToast(error.message || "Failed to log milestone", "error");
   }
 });
 
@@ -1401,9 +1454,11 @@ document.getElementById("planSaveBtn").addEventListener("click", async () => {
       crops: farmPlan.crops.map((row) => ({ crop: row.crop, hectares: row.hectares, startMonth: row.startMonth })),
       readiness: { ...farmPlan.readiness },
     };
+    showToast("Your farm plan has been saved successfully!", "success");
     renderPlan();
   } catch (error) {
     showError("planError", error.message);
+    showToast(error.message || "Failed to save farm plan", "error");
   }
 });
 
