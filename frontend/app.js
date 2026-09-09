@@ -1555,11 +1555,11 @@ async function boot() {
 
   // Household and assets management (placeholders for now)
   document.getElementById("addHouseholdBtn")?.addEventListener("click", () => {
-    alert("Household member management coming soon! Please contact your extension officer to update household information.");
+    showToast("Household member management coming soon! Please contact your extension officer to update household information.", "info", 8000);
   });
 
   document.getElementById("addAssetBtn")?.addEventListener("click", () => {
-    alert("Asset tracking coming soon! Please contact your extension officer to register your assets and livestock.");
+    showToast("Asset tracking coming soon! Please contact your extension officer to register your assets and livestock.", "info", 8000);
   });
 
   await loadAdvisor();
