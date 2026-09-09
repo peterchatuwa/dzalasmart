@@ -257,6 +257,7 @@ function renderFarm() {
   loadPlan();
   loadPlot();
   loadMarket();
+  loadVouchers();
 }
 
 async function loadStatus() {
@@ -711,6 +712,64 @@ async function loadMarket(options = {}) {
       .join("");
   } catch {
     document.getElementById("floorTable").innerHTML = "";
+  }
+}
+
+async function loadVouchers() {
+  const note = document.getElementById("vouchersNote");
+  const list = document.getElementById("vouchersList");
+  
+  if (!status?.farmer) {
+    note.textContent = "Sign in to view your input vouchers.";
+    list.innerHTML = "";
+    return;
+  }
+
+  try {
+    note.textContent = "Loading vouchers…";
+    const payload = await api("GET", "/api/farmers/me/vouchers", { auth: true });
+    const vouchers = payload.vouchers || [];
+
+    if (vouchers.length === 0) {
+      note.textContent = "You have no input vouchers yet. Contact your extension officer for FISP allocation.";
+      list.innerHTML = "";
+      return;
+    }
+
+    note.textContent = `You have ${vouchers.length} voucher${vouchers.length === 1 ? "" : "s"}.`;
+
+    list.innerHTML = vouchers
+      .map((v) => {
+        const statusClass = v.status === "active" ? "accepted" : v.status === "redeemed" ? "loan_disbursed" : "rejected";
+        const statusText = v.status === "active" ? "ACTIVE — Ready to redeem" : v.status === "redeemed" ? "REDEEMED" : v.status.toUpperCase();
+        
+        const inputList = v.inputs
+          .map((inp) => `<div class="hint">• ${inp.inputName}: ${inp.quantity} ${inp.inputUnit}</div>`)
+          .join("");
+
+        const expiryDate = new Date(v.expiresAt);
+        const isExpiringSoon = v.status === "active" && (expiryDate - Date.now()) < 30 * 24 * 60 * 60 * 1000;
+
+        return `
+          <div class="ledger-row">
+            <div>
+              <strong>${v.code}</strong>
+              <div class="hint">Season ${v.season} · ${v.inputs.length} input${v.inputs.length === 1 ? "" : "s"}</div>
+              ${inputList}
+              ${v.summary.totalFarmerContribution > 0 ? `<div class="hint" style="margin-top:4px;">Your contribution: MWK ${v.summary.totalFarmerContribution.toLocaleString("en")}</div>` : `<div class="hint" style="margin-top:4px;">Fully subsidized (${Math.round(v.summary.subsidyPercentage)}% govt support)</div>`}
+              ${isExpiringSoon ? `<div class="hint" style="color:#d97706;margin-top:4px;">⚠ Expires ${fmtTime(v.expiresAt)}</div>` : ""}
+            </div>
+            <div class="ledger-side">
+              <span class="badge ${statusClass}">${statusText}</span>
+              <div class="hint">${fmtTime(v.issuedAt)}</div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  } catch (error) {
+    note.textContent = `Failed to load vouchers: ${error.message}`;
+    list.innerHTML = "";
   }
 }
 

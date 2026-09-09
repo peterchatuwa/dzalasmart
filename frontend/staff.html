@@ -96,6 +96,73 @@
             <div id="nationalRegions" class="region-grid"></div>
             <div id="nationalRisk" class="ledger-list"></div>
           </div>
+          <div id="voucherPanel">
+            <h2>Agricultural input vouchers</h2>
+            <p class="hint" id="voucherHint">Issue FISP vouchers to farmers and track redemptions.</p>
+            <div id="voucherStats" class="status-card warehouse-stats"></div>
+            <div id="voucherList" class="ledger-list"></div>
+            <form id="issueVoucherForm" class="stack intake-form" hidden>
+              <p class="eyebrow">Issue new voucher</p>
+              <label
+                >Farmer ID
+                <input id="voucherFarmerId" type="text" placeholder="Farmer ID" required />
+              </label>
+              <label
+                >Season
+                <input id="voucherSeason" type="text" placeholder="2024/25" value="2024/25" required />
+              </label>
+              <div id="voucherInputs">
+                <p class="eyebrow">Inputs (at least one required)</p>
+                <div class="voucher-input-row">
+                  <label>
+                    Input
+                    <select class="voucher-input-select">
+                      <option value="">Select input...</option>
+                    </select>
+                  </label>
+                  <label>
+                    Quantity
+                    <input type="number" class="voucher-quantity" step="0.1" min="0.1" placeholder="10" />
+                  </label>
+                  <label>
+                    Subsidy %
+                    <input type="number" class="voucher-subsidy" step="5" min="0" max="100" value="70" placeholder="70" />
+                  </label>
+                </div>
+              </div>
+              <div class="demo-row">
+                <button type="button" class="ghost" id="addVoucherInputBtn">+ Add another input</button>
+              </div>
+              <button type="submit" class="primary">Issue voucher</button>
+              <p class="form-error" id="voucherIssueError" hidden></p>
+            </form>
+            <form id="redeemVoucherForm" class="stack intake-form" hidden>
+              <p class="eyebrow">Redeem voucher</p>
+              <label
+                >Voucher code
+                <input id="redeemCode" type="text" placeholder="FISP-2024-ABC12345" required />
+              </label>
+              <label
+                >Agro-dealer
+                <input id="redeemDealer" type="text" placeholder="Lilongwe Agro Supplies" required />
+              </label>
+              <label
+                >Location
+                <input id="redeemLocation" type="text" placeholder="Lilongwe Market" required />
+              </label>
+              <label
+                >District
+                <input id="redeemDistrict" type="text" placeholder="Lilongwe" required />
+              </label>
+              <label
+                >Notes (optional)
+                <textarea id="redeemNotes" rows="2" placeholder="Any additional notes..."></textarea>
+              </label>
+              <button type="submit" class="primary">Process redemption</button>
+              <p class="form-error" id="voucherRedeemError" hidden></p>
+            </form>
+          </div>
+
           <h2>Grain intake ledger</h2>
           <p class="hint">
             Warehouse staff test moisture before accepting grain. Accepted lots write Post-Harvest Handling onto the
