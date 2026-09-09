@@ -111,6 +111,73 @@ CREATE TABLE IF NOT EXISTS farm_plots (
   updated_at BIGINT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS inputs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  unit TEXT NOT NULL,
+  standard_price INTEGER NOT NULL,
+  supplier TEXT,
+  description TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_inputs_category ON inputs(category, active);
+
+CREATE TABLE IF NOT EXISTS farmer_vouchers (
+  id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  issued_by TEXT NOT NULL REFERENCES staff(id),
+  season TEXT NOT NULL,
+  status TEXT NOT NULL,
+  issued_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  redeemed_at BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_vouchers_farmer ON farmer_vouchers(farmer_id, status);
+CREATE INDEX IF NOT EXISTS idx_vouchers_code ON farmer_vouchers(code);
+
+CREATE TABLE IF NOT EXISTS voucher_inputs (
+  id TEXT PRIMARY KEY,
+  voucher_id TEXT NOT NULL REFERENCES farmer_vouchers(id),
+  input_id TEXT NOT NULL REFERENCES inputs(id),
+  quantity DOUBLE PRECISION NOT NULL,
+  unit_price INTEGER NOT NULL,
+  subsidy_rate DOUBLE PRECISION NOT NULL,
+  farmer_contribution INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_voucher_inputs_voucher ON voucher_inputs(voucher_id);
+
+CREATE TABLE IF NOT EXISTS input_redemptions (
+  id TEXT PRIMARY KEY,
+  voucher_id TEXT NOT NULL REFERENCES farmer_vouchers(id),
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  agro_dealer TEXT NOT NULL,
+  location TEXT NOT NULL,
+  district TEXT NOT NULL,
+  staff_id TEXT REFERENCES staff(id),
+  redeemed_at BIGINT NOT NULL,
+  notes TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_redemptions_farmer ON input_redemptions(farmer_id, redeemed_at);
+CREATE INDEX IF NOT EXISTS idx_redemptions_district ON input_redemptions(district, redeemed_at);
+
+CREATE TABLE IF NOT EXISTS redemption_inputs (
+  id TEXT PRIMARY KEY,
+  redemption_id TEXT NOT NULL REFERENCES input_redemptions(id),
+  input_id TEXT NOT NULL REFERENCES inputs(id),
+  quantity_issued DOUBLE PRECISION NOT NULL,
+  batch_number TEXT,
+  expiry_date BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_redemption_inputs_redemption ON redemption_inputs(redemption_id);
+
 CREATE TABLE IF NOT EXISTS market_sources (
   id TEXT PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,

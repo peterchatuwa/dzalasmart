@@ -18,6 +18,28 @@ import { readOptionalFarmer, requireCooperative, requireFarmer, requireStaff, re
 import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer } from "./farmers.js";
 import { contractMonitor, listFloors, recordOffer, setFloor } from "./floors.js";
 import { APP_NAME, APP_SLUG } from "./brand.js";
+import {
+  listInputs,
+  getInputById,
+  createInput,
+  updateInput,
+  deactivateInput,
+  INPUT_CATEGORIES,
+  INPUT_UNITS,
+} from "./inputs.js";
+import {
+  issueVoucher,
+  getVoucherById,
+  getVoucherByCode,
+  listFarmerVouchers,
+  listAllVouchers,
+  redeemVoucher,
+  listFarmerRedemptions,
+  listAllRedemptions,
+  cancelVoucher,
+  getVoucherStats,
+  VOUCHER_STATUS,
+} from "./vouchers.js";
 import { listDistricts } from "./places.js";
 import { STAGES } from "./stages.js";
 import { loginStaff } from "./staff.js";
@@ -407,6 +429,184 @@ export function createApp(db, options = {}) {
     try {
       const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
       res.json(await saveFarmerPlot(db, row, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ============================================================================
+  // Input & Voucher Endpoints
+  // ============================================================================
+
+  // Public: List all active inputs
+  app.get("/api/inputs", async (req, res, next) => {
+    try {
+      const category = String(req.query.category || "").trim() || null;
+      res.json({
+        inputs: await listInputs(db, { category }),
+        categories: Object.values(INPUT_CATEGORIES),
+        units: Object.values(INPUT_UNITS),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: Get input by ID
+  app.get("/api/inputs/:id", async (req, res, next) => {
+    try {
+      const input = await getInputById(db, req.params.id);
+      if (!input) {
+        res.status(404).json({ error: "Input not found" });
+        return;
+      }
+      res.json(input);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Farmer: List my vouchers
+  app.get("/api/farmers/me/vouchers", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = String(req.query.status || "").trim() || null;
+      const season = String(req.query.season || "").trim() || null;
+      res.json({
+        vouchers: await listFarmerVouchers(db, req.farmer.id, { status, season }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Farmer: Get voucher by code
+  app.get("/api/farmers/me/vouchers/:code", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const voucher = await getVoucherByCode(db, req.params.code.toUpperCase());
+      if (!voucher || voucher.farmerId !== req.farmer.id) {
+        res.status(404).json({ error: "Voucher not found" });
+        return;
+      }
+      res.json(voucher);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Farmer: List my redemptions
+  app.get("/api/farmers/me/redemptions", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json({
+        redemptions: await listFarmerRedemptions(db, req.farmer.id),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Create input
+  app.post("/api/staff/inputs", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.status(201).json(await createInput(db, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Update input
+  app.put("/api/staff/inputs/:id", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.json(await updateInput(db, req.params.id, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Deactivate input
+  app.delete("/api/staff/inputs/:id", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.json(await deactivateInput(db, req.params.id));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Issue voucher to farmer
+  app.post("/api/staff/vouchers/issue", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.status(201).json(await issueVoucher(db, req.staff, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: List all vouchers (filtered by district)
+  app.get("/api/staff/vouchers", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = String(req.query.status || "").trim() || null;
+      const season = String(req.query.season || "").trim() || null;
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      res.json({
+        vouchers: await listAllVouchers(db, { status, season, district }),
+        stats: await getVoucherStats(db, { district, season }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Get voucher by ID
+  app.get("/api/staff/vouchers/:id", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const voucher = await getVoucherById(db, req.params.id);
+      if (!voucher) {
+        res.status(404).json({ error: "Voucher not found" });
+        return;
+      }
+      res.json(voucher);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Cancel voucher
+  app.delete("/api/staff/vouchers/:id", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await cancelVoucher(db, req.params.id, req.body?.reason));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Redeem voucher (agro-dealer or extension officer)
+  app.post("/api/staff/vouchers/redeem", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const data = { ...req.body, staffId: req.staff.id };
+      res.status(201).json(await redeemVoucher(db, data));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: List all redemptions
+  app.get("/api/staff/redemptions", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        redemptions: await listAllRedemptions(db, { district, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Voucher statistics
+  app.get("/api/staff/vouchers/stats", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      const season = String(req.query.season || "").trim() || null;
+      res.json(await getVoucherStats(db, { district, season }));
     } catch (error) {
       next(error);
     }

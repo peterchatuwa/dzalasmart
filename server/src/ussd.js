@@ -5,6 +5,7 @@ import { getMarketPriceFromDb } from "./market.js";
 import { listFarmerAlerts, listFarmerAlertEvents } from "./market/alerts.js";
 import { acceptWarehouseLoan, listReceiptsForFarmer, pendingLoanReceipts } from "./warehouse.js";
 import { fetchDistrictWeather, publicWeather, ussdWeatherLine } from "./weather.js";
+import { listFarmerVouchers, VOUCHER_STATUS } from "./vouchers.js";
 
 const USSD_PEST = {
   1: "worms on leaves holes in the leaves caterpillar mphutsi",
@@ -46,7 +47,7 @@ export async function handleUssd(db, body = {}) {
 
   if (parts.length === 0) {
     return ussdReply(
-      `CON ${APP_NAME} — ${farmer.name}\n1. Log next milestone\n2. My season status\n3. Weather for my district\n4. Report a pest problem\n5. Warehouse & loan\n6. Market price\n7. Price alerts`
+      `CON ${APP_NAME} — ${farmer.name}\n1. Log next milestone\n2. My season status\n3. Weather for my district\n4. Report a pest problem\n5. Warehouse & loan\n6. Market price\n7. Price alerts\n8. Input vouchers`
     );
   }
 
@@ -171,6 +172,72 @@ export async function handleUssd(db, body = {}) {
       lines.push(`Latest: ${events[0].message}`);
     }
     return ussdReply(`END ${lines.join("\n")}`);
+  }
+
+  if (parts[0] === "8") {
+    const vouchers = await listFarmerVouchers(db, farmer.id, {});
+    const active = vouchers.filter((v) => v.status === VOUCHER_STATUS.ACTIVE);
+    const redeemed = vouchers.filter((v) => v.status === VOUCHER_STATUS.REDEEMED);
+
+    if (vouchers.length === 0) {
+      return ussdReply("END You have no input vouchers yet. Contact your extension officer for FISP allocation.");
+    }
+
+    if (parts.length === 1) {
+      const lines = [`You have ${vouchers.length} voucher${vouchers.length === 1 ? "" : "s"}`];
+      if (active.length > 0) {
+        lines.push(`${active.length} active — ready to redeem`);
+      }
+      if (redeemed.length > 0) {
+        lines.push(`${redeemed.length} already redeemed`);
+      }
+      lines.push("1. View active vouchers");
+      lines.push("0. Back");
+      return ussdReply(`CON ${lines.join("\n")}`);
+    }
+
+    if (parts[1] === "1") {
+      if (active.length === 0) {
+        return ussdReply("END You have no active vouchers. All vouchers have been redeemed or expired.");
+      }
+
+      if (parts.length === 2) {
+        const lines = ["Active vouchers:"];
+        for (let i = 0; i < Math.min(3, active.length); i++) {
+          const v = active[i];
+          lines.push(`${i + 1}. ${v.code} (${v.season})`);
+        }
+        lines.push("0. Back");
+        return ussdReply(`CON ${lines.join("\n")}`);
+      }
+
+      const index = Number(parts[2]) - 1;
+      if (index < 0 || index >= active.length) {
+        return ussdReply("END Invalid choice.");
+      }
+
+      const voucher = active[index];
+      const lines = [
+        `Code: ${voucher.code}`,
+        `Season: ${voucher.season}`,
+        `Inputs: ${voucher.inputs.length} item${voucher.inputs.length === 1 ? "" : "s"}`,
+      ];
+
+      for (const input of voucher.inputs.slice(0, 3)) {
+        lines.push(`· ${input.inputName}: ${input.quantity} ${input.inputUnit}`);
+      }
+
+      const contributionText = voucher.summary.totalFarmerContribution > 0 
+        ? `Your share: MWK ${voucher.summary.totalFarmerContribution.toLocaleString("en")}`
+        : "Fully subsidized";
+
+      lines.push(contributionText);
+      lines.push("Redeem at your nearest agro-dealer.");
+
+      return ussdReply(`END ${lines.join("\n")}`);
+    }
+
+    return ussdReply("END Invalid choice.");
   }
 
   return ussdReply("END Invalid choice.");

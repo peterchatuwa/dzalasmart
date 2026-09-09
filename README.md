@@ -18,6 +18,15 @@ Server-backed farming system for Malawi. One farmer record, written by the mobil
 - 🌤️ **Weather Integration** - District-level alerts and forecasts
 - 💬 **AI Advisory** - Multilingual crop advice (English, Chichewa, Tumbuka)
 
+## 🌐 Production Site
+
+**Live Application**: https://zammunda.com
+
+- **Farmer App**: https://zammunda.com
+- **Staff Desk**: https://staff.zammunda.com
+- **API Documentation**: https://docs.zammunda.com
+- **API Endpoint**: https://api.zammunda.com
+
 ## Quick Start
 
 ### Prerequisites
@@ -166,6 +175,20 @@ If you have an old SQLite database:
 ```bash
 DATABASE_URL=postgres://... node scripts/migrate-sqlite-to-pg.js
 ```
+
+## Domain Setup
+
+### Map to Your Domain (zammunda.com)
+
+Automated setup with SSL/HTTPS:
+
+```bash
+# On your VPS
+cd /opt/nzeru-za-alimi
+sudo ./scripts/setup-domain.sh
+```
+
+See [docs/DOMAIN_QUICK_START.md](docs/DOMAIN_QUICK_START.md) for details.
 
 ## Deployment
 

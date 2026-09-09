@@ -9,6 +9,8 @@ import { seedIfEmpty } from "./farmers.js";
 import { seedContractsIfEmpty, seedFloorsIfEmpty } from "./floors.js";
 import { seedStaffIfEmpty, staffIdByRole } from "./staff.js";
 import { seedMarketCatalog } from "./market.js";
+import { seedInputsIfEmpty } from "./inputs.js";
+import { seedVouchersIfEmpty } from "./vouchers.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const port = config.port;
@@ -21,6 +23,8 @@ async function main() {
   const staffSeeded = await seedStaffIfEmpty(db);
   await seedFloorsIfEmpty(db);
   await seedContractsIfEmpty(db, await staffIdByRole(db, "cooperative"));
+  const inputsSeeded = await seedInputsIfEmpty(db);
+  const vouchersSeeded = await seedVouchersIfEmpty(db);
   const frontendDir = path.join(here, "..", "..", "frontend");
   const app = createApp(db, { jwtSecret, frontendDir });
 
@@ -45,6 +49,12 @@ async function main() {
       logger.info("  Grace Banda   +265888000001  — season at Harvest");
       logger.info("  Joseph Kaunda +265888000002  — season at Land Preparation");
       logger.info("  Estere Mvula  +265888000003  — season not started");
+    }
+    if (inputsSeeded) {
+      logger.info("Seeded input catalog (17 items: seeds, fertilizers, pesticides, tools)");
+    }
+    if (vouchersSeeded) {
+      logger.info("Seeded demo vouchers (2 FISP vouchers: 1 redeemed, 1 active)");
     }
   });
 }
