@@ -1365,7 +1365,8 @@ async function boot() {
   const districtPayload = await api("GET", "/api/districts");
   districts = districtPayload.districts || [];
   fillDistricts();
-  loadMarket();
+  // Don't load market prices until user logs in (district filtering requires authentication)
+  // loadMarket() will be called in renderFarm() after login
   document.getElementById("marketCommodityFilter")?.addEventListener("change", () => loadMarket());
   document.getElementById("marketLocationFilter")?.addEventListener("change", () => loadMarket());
   document.getElementById("marketRefreshBtn")?.addEventListener("click", () => loadMarket({ refresh: true }));
