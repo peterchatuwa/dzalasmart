@@ -15,7 +15,7 @@ import { metricsCollector, healthCheckMiddleware, getMetrics } from "./middlewar
 import { swaggerSpec } from "./swagger.js";
 import { advisorMeta, askAdvisor, listPestReports, logPestReport } from "./advisor.js";
 import { readOptionalFarmer, requireCooperative, requireFarmer, requireStaff, requireStaffRole } from "./auth.js";
-import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer } from "./farmers.js";
+import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer, updateFarmerProfile } from "./farmers.js";
 import { contractMonitor, listFloors, recordOffer, setFloor } from "./floors.js";
 import { APP_NAME, APP_SLUG } from "./brand.js";
 import {
@@ -380,6 +380,15 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/me", requireFarmer(db, jwtSecret), (req, res) => {
     res.json({ farmer: req.farmer });
+  });
+
+  app.put("/api/farmers/me", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const updatedFarmer = await updateFarmerProfile(db, req.farmer.id, req.body || {});
+      res.json({ farmer: updatedFarmer, message: "Profile updated successfully" });
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.get("/api/farmers/me/status", requireFarmer(db, jwtSecret), async (req, res, next) => {

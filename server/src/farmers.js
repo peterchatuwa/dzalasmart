@@ -128,6 +128,66 @@ export async function loginFarmer(db, input, jwtSecret) {
   };
 }
 
+export async function updateFarmerProfile(db, farmerId, input) {
+  const updates = [];
+  const params = [];
+
+  if (input.gender !== undefined) {
+    updates.push("gender = ?");
+    params.push(input.gender || null);
+  }
+  if (input.dateOfBirth !== undefined) {
+    updates.push("date_of_birth = ?");
+    params.push(input.dateOfBirth ? new Date(input.dateOfBirth).getTime() : null);
+  }
+  if (input.nationalId !== undefined) {
+    updates.push("national_id = ?");
+    params.push(input.nationalId || null);
+  }
+  if (input.village !== undefined) {
+    updates.push("village = ?");
+    params.push(input.village || null);
+  }
+  if (input.maritalStatus !== undefined) {
+    updates.push("marital_status = ?");
+    params.push(input.maritalStatus || null);
+  }
+  if (input.householdSize !== undefined) {
+    updates.push("household_size = ?");
+    params.push(Number(input.householdSize) || null);
+  }
+  if (input.educationLevel !== undefined) {
+    updates.push("education_level = ?");
+    params.push(input.educationLevel || null);
+  }
+  if (input.yearsOfExperience !== undefined) {
+    updates.push("years_of_experience = ?");
+    params.push(Number(input.yearsOfExperience) || null);
+  }
+  if (input.alternativePhone !== undefined) {
+    updates.push("alternative_phone = ?");
+    params.push(input.alternativePhone || null);
+  }
+  if (input.email !== undefined) {
+    updates.push("email = ?");
+    params.push(input.email || null);
+  }
+
+  if (updates.length === 0) {
+    throw HttpError(400, "No fields to update");
+  }
+
+  updates.push("updated_at = ?");
+  params.push(Date.now());
+  params.push(farmerId);
+
+  await db
+    .prepare(`UPDATE farmers SET ${updates.join(", ")} WHERE id = ?`)
+    .run(...params);
+
+  return await getFarmerById(db, farmerId);
+}
+
 export async function logStage(db, farmer, input = {}) {
   const currentIndex = await currentStageIndex(db, farmer.id);
   if (currentIndex >= STAGES.length - 1) {

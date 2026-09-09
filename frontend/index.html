@@ -129,6 +129,99 @@
             <div class="passport-checks" id="passportChecks"></div>
           </div>
 
+          <div class="market-card" id="profileCard">
+            <p class="eyebrow">My profile</p>
+            <h2 style="margin-top: 0">Personal & household information</h2>
+            <p class="hint">Update your profile to qualify for FISP, loans, and extension services.</p>
+            
+            <form id="profileForm" class="stack" style="margin-top: 1rem;">
+              <h3 style="margin-top: 1rem;">Personal Information</h3>
+              
+              <label>
+                Gender
+                <select id="profileGender" name="gender">
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+
+              <label>
+                Date of Birth
+                <input id="profileDob" name="dateOfBirth" type="date" />
+              </label>
+
+              <label>
+                National ID
+                <input id="profileNationalId" name="nationalId" placeholder="e.g. MWI123456789" />
+              </label>
+
+              <label>
+                Village
+                <input id="profileVillage" name="village" placeholder="Your village name" />
+              </label>
+
+              <label>
+                Marital Status
+                <select id="profileMaritalStatus" name="maritalStatus">
+                  <option value="">Select status</option>
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                  <option value="widowed">Widowed</option>
+                  <option value="divorced">Divorced</option>
+                </select>
+              </label>
+
+              <label>
+                Household Size (total people)
+                <input id="profileHouseholdSize" name="householdSize" type="number" min="1" placeholder="e.g. 5" />
+              </label>
+
+              <label>
+                Education Level
+                <select id="profileEducation" name="educationLevel">
+                  <option value="">Select education</option>
+                  <option value="none">No formal education</option>
+                  <option value="primary">Primary</option>
+                  <option value="secondary">Secondary</option>
+                  <option value="tertiary">Tertiary/College</option>
+                </select>
+              </label>
+
+              <label>
+                Years of Farming Experience
+                <input id="profileExperience" name="yearsOfExperience" type="number" min="0" placeholder="e.g. 10" />
+              </label>
+
+              <label>
+                Alternative Phone (optional)
+                <input id="profileAltPhone" name="alternativePhone" type="tel" placeholder="+265..." />
+              </label>
+
+              <label>
+                Email (optional)
+                <input id="profileEmail" name="email" type="email" placeholder="your@email.com" />
+              </label>
+
+              <button type="submit" class="primary">Save Profile</button>
+              <p class="form-error" id="profileError" hidden></p>
+              <p class="hint" id="profileSuccess" hidden style="color: #059669;">Profile updated successfully!</p>
+            </form>
+
+            <h3 style="margin-top: 2rem;">Household Members</h3>
+            <p class="hint" id="householdNote">Add your household members (spouse, children, dependents)</p>
+            <div id="householdList" class="ledger-list" style="margin-top: 1rem;"></div>
+            
+            <button type="button" class="primary" id="addHouseholdBtn" style="margin-top: 1rem;">+ Add Household Member</button>
+
+            <h3 style="margin-top: 2rem;">Assets & Livestock</h3>
+            <p class="hint" id="assetsNote">Track your farming assets for FISP eligibility and loans</p>
+            <div id="assetsList" class="ledger-list" style="margin-top: 1rem;"></div>
+            
+            <button type="button" class="primary" id="addAssetBtn" style="margin-top: 1rem;">+ Add Asset</button>
+          </div>
+
           <div class="market-card" id="vouchersCard">
             <p class="eyebrow">Input vouchers</p>
             <h2 style="margin-top: 0">My agricultural input vouchers</h2>
