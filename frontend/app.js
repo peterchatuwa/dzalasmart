@@ -259,6 +259,7 @@ function renderFarm() {
   loadMarket();
   loadVouchers();
   loadInputsCatalog();
+  loadFarmerProfile();
 }
 
 async function loadStatus() {
@@ -771,6 +772,55 @@ async function loadVouchers() {
   } catch (error) {
     note.textContent = `Failed to load vouchers: ${error.message}`;
     list.innerHTML = "";
+  }
+}
+
+async function loadFarmerProfile() {
+  if (!status?.farmer) return;
+
+  try {
+    // Load farmer's full profile from database
+    const profileData = await api("GET", "/api/farmers/me", { auth: true });
+    const farmer = profileData.farmer;
+
+    // Populate form fields with existing data
+    if (document.getElementById("profileGender")) document.getElementById("profileGender").value = farmer.gender || "";
+    if (document.getElementById("profileDob") && farmer.dateOfBirth) {
+      const date = new Date(farmer.dateOfBirth);
+      document.getElementById("profileDob").value = date.toISOString().split("T")[0];
+    }
+    if (document.getElementById("profileNationalId")) document.getElementById("profileNationalId").value = farmer.nationalId || "";
+    if (document.getElementById("profileVillage")) document.getElementById("profileVillage").value = farmer.village || "";
+    if (document.getElementById("profileMaritalStatus")) document.getElementById("profileMaritalStatus").value = farmer.maritalStatus || "";
+    if (document.getElementById("profileHouseholdSize")) document.getElementById("profileHouseholdSize").value = farmer.householdSize || "";
+    if (document.getElementById("profileEducation")) document.getElementById("profileEducation").value = farmer.educationLevel || "";
+    if (document.getElementById("profileExperience")) document.getElementById("profileExperience").value = farmer.yearsOfExperience || "";
+    if (document.getElementById("profileAltPhone")) document.getElementById("profileAltPhone").value = farmer.alternativePhone || "";
+    if (document.getElementById("profileEmail")) document.getElementById("profileEmail").value = farmer.email || "";
+  } catch (error) {
+    console.error("Failed to load farmer profile:", error);
+  }
+}
+
+async function saveProfile(formData) {
+  try {
+    await api("PUT", "/api/farmers/me", {
+      auth: true,
+      body: formData,
+    });
+    
+    document.getElementById("profileSuccess").hidden = false;
+    document.getElementById("profileError").hidden = true;
+    setTimeout(() => {
+      document.getElementById("profileSuccess").hidden = true;
+    }, 3000);
+    
+    // Reload status to refresh farmer info
+    await loadStatus();
+  } catch (error) {
+    document.getElementById("profileError").textContent = error.message;
+    document.getElementById("profileError").hidden = false;
+    document.getElementById("profileSuccess").hidden = true;
   }
 }
 
@@ -1428,6 +1478,33 @@ async function boot() {
       btn.classList.add("active");
       loadInputsCatalog(btn.dataset.inputCategory);
     });
+  });
+
+  // Profile form submit
+  document.getElementById("profileForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = {
+      gender: document.getElementById("profileGender")?.value || null,
+      dateOfBirth: document.getElementById("profileDob")?.value || null,
+      nationalId: document.getElementById("profileNationalId")?.value || null,
+      village: document.getElementById("profileVillage")?.value || null,
+      maritalStatus: document.getElementById("profileMaritalStatus")?.value || null,
+      householdSize: document.getElementById("profileHouseholdSize")?.value || null,
+      educationLevel: document.getElementById("profileEducation")?.value || null,
+      yearsOfExperience: document.getElementById("profileExperience")?.value || null,
+      alternativePhone: document.getElementById("profileAltPhone")?.value || null,
+      email: document.getElementById("profileEmail")?.value || null,
+    };
+    await saveProfile(formData);
+  });
+
+  // Household and assets management (placeholders for now)
+  document.getElementById("addHouseholdBtn")?.addEventListener("click", () => {
+    alert("Household member management coming soon! Please contact your extension officer to update household information.");
+  });
+
+  document.getElementById("addAssetBtn")?.addEventListener("click", () => {
+    alert("Asset tracking coming soon! Please contact your extension officer to register your assets and livestock.");
   });
 
   await loadAdvisor();
