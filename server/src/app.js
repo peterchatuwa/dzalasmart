@@ -164,7 +164,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       res.json(await marketPayload(db, { district }));
     } catch (error) {
       next(error);
@@ -174,7 +175,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market/prices", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       res.json(
         await marketPricesPayload(db, {
           district: district || undefined,
@@ -193,7 +195,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market/history", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       res.json(
         await marketHistoryPayload(db, {
           district: district || undefined,
@@ -225,7 +228,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market/sources/compare", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim();
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim();
       res.json(
         await marketSourcesComparePayload(db, {
           commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
@@ -261,7 +265,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market/trends", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       res.json(
         await marketTrendsPayload(db, {
           commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
@@ -278,7 +283,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market/export", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       const payload = await marketExportPayload(db, {
         commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
         district: district || undefined,
@@ -297,7 +303,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market/locations", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       res.json(
         await marketLocationsPayload(db, {
           district: district || undefined,
