@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS farmers (
   village TEXT,
   marital_status TEXT,
   household_size INTEGER,
+  household_type TEXT,
+  livestock TEXT,
   primary_language TEXT DEFAULT 'en',
   education_level TEXT,
   years_of_experience INTEGER,

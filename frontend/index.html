@@ -60,26 +60,66 @@
           </form>
 
           <form id="registerForm" class="stack" hidden>
+            <h3 style="margin-top: 0;">Basic Information</h3>
             <label
               >Full name
-              <input id="regName" name="name" autocomplete="name" />
+              <input id="regName" name="name" autocomplete="name" required />
             </label>
             <label
               >Phone
-              <input id="regPhone" name="phone" inputmode="tel" placeholder="0881 234 567" />
+              <input id="regPhone" name="phone" inputmode="tel" placeholder="0881 234 567" required />
             </label>
             <label
               >PIN (4 digits)
-              <input id="regPin" name="pin" inputmode="numeric" maxlength="4" />
+              <input id="regPin" name="pin" inputmode="numeric" maxlength="4" required />
             </label>
             <label
               >District
-              <select id="regDistrict" name="district"></select>
+              <select id="regDistrict" name="district" required></select>
             </label>
             <label
               >EPA
               <select id="regEpa" name="epa"></select>
             </label>
+            <label
+              >Village / Business centre
+              <input id="regVillage" name="village" placeholder="Your village name" />
+            </label>
+
+            <h3 style="margin-top: 1.5rem;">Household & Demographics</h3>
+            <label
+              >Gender
+              <select id="regGender" name="gender">
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label
+              >Age (years)
+              <input id="regAge" name="age" type="number" min="15" max="120" placeholder="e.g. 35" />
+            </label>
+            <label
+              >Household type
+              <select id="regHouseholdType" name="householdType">
+                <option value="">Select type</option>
+                <option value="nuclear">Nuclear family (parents + children)</option>
+                <option value="extended">Extended family (multiple generations)</option>
+                <option value="single">Single-person household</option>
+                <option value="child-headed">Child-headed household</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label
+              >Family size (total people in household)
+              <input id="regHouseholdSize" name="householdSize" type="number" min="1" placeholder="e.g. 5" />
+            </label>
+            <label
+              >Livestock owned (if any)
+              <input id="regLivestock" name="livestock" placeholder="e.g. 3 goats, 10 chickens" />
+            </label>
+
             <button type="submit" class="primary">Create farmer record</button>
             <p class="form-error" id="registerError" hidden></p>
           </form>
@@ -465,9 +505,18 @@
                   placeholder="e.g. holes in the leaves, yellow streaks, or what fertiliser to use"
                 ></textarea>
               </label>
-              <div class="demo-row">
+              <div class="demo-row" style="flex-wrap: wrap;">
                 <button type="submit" class="primary" id="chatSend">Send</button>
-                <button type="button" class="ghost" id="chatCropBtn">Recommend a crop</button>
+                <button type="button" class="chip" id="chatCropBtn">🌾 Crop advice</button>
+                <button type="button" class="chip" id="chatWeatherBtn">🌤 Weather</button>
+                <button type="button" class="chip" id="chatMarketBtn">📈 Market</button>
+                <button type="button" class="chip" id="chatPestBtn">🐛 Pest help</button>
+                <button type="button" class="chip" id="chatFertiliserBtn">🌱 Fertiliser & soil</button>
+                <button type="button" class="chip" id="chatIrrigationBtn">💧 Irrigation</button>
+                <button type="button" class="chip" id="chatStorageBtn">📦 Storage</button>
+                <button type="button" class="chip" id="chatLoansBtn">💰 Loans & financing</button>
+                <button type="button" class="chip" id="chatLivestockBtn">🐄 Livestock</button>
+                <button type="button" class="chip" id="chatCoopBtn">🤝 Cooperatives</button>
               </div>
               <p class="form-error" id="chatError" hidden></p>
             </form>

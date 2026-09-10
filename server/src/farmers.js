@@ -98,14 +98,28 @@ export async function registerFarmer(db, input, jwtSecret) {
     region,
     soil_type: input.soilType || null,
     nutrient_status: input.nutrientStatus || null,
+    village: input.village || null,
+    gender: input.gender || null,
+    date_of_birth: input.dateOfBirth || null,
+    household_size: input.householdSize || null,
+    household_type: input.householdType || null,
+    livestock: input.livestock || null,
     created_at: Date.now(),
   };
 
   await db
     .prepare(
       `
-    INSERT INTO farmers (id, code, name, phone, pin_hash, district, epa, region, soil_type, nutrient_status, created_at)
-    VALUES (@id, @code, @name, @phone, @pin_hash, @district, @epa, @region, @soil_type, @nutrient_status, @created_at)
+    INSERT INTO farmers (
+      id, code, name, phone, pin_hash, district, epa, region, 
+      soil_type, nutrient_status, village, gender, date_of_birth, 
+      household_size, household_type, livestock, created_at
+    )
+    VALUES (
+      @id, @code, @name, @phone, @pin_hash, @district, @epa, @region, 
+      @soil_type, @nutrient_status, @village, @gender, @date_of_birth, 
+      @household_size, @household_type, @livestock, @created_at
+    )
   `
     )
     .run(farmer);

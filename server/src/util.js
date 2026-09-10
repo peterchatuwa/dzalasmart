@@ -44,6 +44,8 @@ export function publicFarmer(row) {
     village: row.village || null,
     maritalStatus: row.marital_status || null,
     householdSize: row.household_size || null,
+    householdType: row.household_type || null,
+    livestock: row.livestock || null,
     primaryLanguage: row.primary_language || null,
     educationLevel: row.education_level || null,
     yearsOfExperience: row.years_of_experience || null,

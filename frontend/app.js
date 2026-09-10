@@ -984,6 +984,14 @@ document.getElementById("registerForm").addEventListener("submit", async (event)
         pin: document.getElementById("regPin").value,
         district: document.getElementById("regDistrict").value,
         epa: document.getElementById("regEpa").value,
+        village: document.getElementById("regVillage")?.value || null,
+        gender: document.getElementById("regGender")?.value || null,
+        dateOfBirth: document.getElementById("regAge")?.value ? 
+          new Date(new Date().getFullYear() - parseInt(document.getElementById("regAge").value), 0, 1).getTime() : null,
+        householdSize: document.getElementById("regHouseholdSize")?.value ? 
+          parseInt(document.getElementById("regHouseholdSize").value) : null,
+        householdType: document.getElementById("regHouseholdType")?.value || null,
+        livestock: document.getElementById("regLivestock")?.value || null,
       },
     });
     setSession(payload);
@@ -1140,6 +1148,42 @@ document.getElementById("chatCropBtn").addEventListener("click", async () => {
     soil: document.getElementById("chatSoil").value,
     nutrient: document.getElementById("chatNutrient").value,
   });
+});
+
+document.getElementById("chatWeatherBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "What's the weather forecast for my area?", topic: "weather", showUser: true });
+});
+
+document.getElementById("chatMarketBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "When is the best time to sell my crops?", topic: "selling", showUser: true });
+});
+
+document.getElementById("chatPestBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How do I identify and treat crop pests?", topic: "pest", showUser: true });
+});
+
+document.getElementById("chatFertiliserBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "What fertiliser should I use for my soil?", topic: "fertiliser", showUser: true });
+});
+
+document.getElementById("chatIrrigationBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How can I improve my irrigation and water management?", topic: "irrigation", showUser: true });
+});
+
+document.getElementById("chatStorageBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How do I store my harvest to reduce post-harvest loss?", topic: "storage", showUser: true });
+});
+
+document.getElementById("chatLoansBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How can I access loans and financing for my farm?", topic: "loans", showUser: true });
+});
+
+document.getElementById("chatLivestockBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "What's the best way to feed and care for my livestock?", topic: "livestock", showUser: true });
+});
+
+document.getElementById("chatCoopBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How can I join or start a farmer cooperative?", topic: "cooperatives", showUser: true });
 });
 
 document.getElementById("chatForm").addEventListener("submit", async (event) => {
@@ -1341,6 +1385,31 @@ function renderPlan() {
   renderPlanCropRows();
   const bank = farmPlan.bankability;
   const border = bank.score >= 70 ? "var(--green)" : bank.score >= 40 ? "var(--gold-deep)" : "var(--alert)";
+  
+  // Render breakdown if available
+  let breakdownHtml = "";
+  if (bank.breakdown) {
+    breakdownHtml = `
+      <div style="display: grid; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line);">
+        ${Object.entries(bank.breakdown)
+          .map(([key, data]) => {
+            const barColor = data.score >= 70 ? "var(--green)" : data.score >= 40 ? "var(--gold-deep)" : "var(--alert)";
+            return `
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 13px; color: var(--ink-soft);">${data.label}</span>
+                  <span style="font-size: 13px; font-weight: 600; color: ${barColor};">${data.score}%</span>
+                </div>
+                <div style="height: 6px; background: var(--paper-dim); border-radius: 3px; overflow: hidden;">
+                  <div style="height: 100%; width: ${data.score}%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                </div>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>`;
+  }
+  
   document.getElementById("planBankability").innerHTML = `
     <div class="plan-bank-top">
       <div class="plan-bank-score" style="border-color:${border}">
@@ -1350,7 +1419,8 @@ function renderPlan() {
         <strong>${bank.status}</strong>
         <p class="hint">Grade ${bank.grade} · saved ${farmPlan.updatedAt ? fmtTime(farmPlan.updatedAt) : "just now"}</p>
       </div>
-    </div>`;
+    </div>
+    ${breakdownHtml}`;
   document.getElementById("planWeatherNote").textContent = farmPlan.weatherNote || "";
   const c = farmPlan.combined;
   document.getElementById("planSummary").innerHTML = `

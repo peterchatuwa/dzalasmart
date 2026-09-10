@@ -385,6 +385,33 @@ export function suggestCrops(farmer) {
 export function computeBankability(readiness = READINESS_DEFAULTS) {
   const merged = { ...READINESS_DEFAULTS, ...readiness };
   const checks = [];
+  
+  // Category 1: Infrastructure & Water
+  const infraChecks = [];
+  if (merged.waterSource) infraChecks.push(READINESS_SCORES.waterSource[merged.waterSource] ?? 0.5);
+  if (merged.solarPump) infraChecks.push(TOGGLE_SCORES.solarPump);
+  if (merged.storage) infraChecks.push(TOGGLE_SCORES.storage);
+  if (merged.equipment) infraChecks.push(TOGGLE_SCORES.equipment);
+  if (merged.ownTransport) infraChecks.push(TOGGLE_SCORES.ownTransport);
+  const infraScore = infraChecks.length ? Math.round((infraChecks.reduce((a, b) => a + b, 0) / infraChecks.length) * 100) : 0;
+  
+  // Category 2: Human Capital & Knowledge  
+  const humanChecks = [];
+  if (merged.experience) humanChecks.push(READINESS_SCORES.experience[merged.experience] ?? 0.5);
+  if (merged.visitFrequency) humanChecks.push(READINESS_SCORES.visitFrequency[merged.visitFrequency] ?? 0.5);
+  if (merged.labourModel) humanChecks.push(READINESS_SCORES.labourModel[merged.labourModel] ?? 0.5);
+  if (merged.agronomist) humanChecks.push(TOGGLE_SCORES.agronomist);
+  if (merged.agritex) humanChecks.push(TOGGLE_SCORES.agritex);
+  const humanScore = humanChecks.length ? Math.round((humanChecks.reduce((a, b) => a + b, 0) / humanChecks.length) * 100) : 0;
+  
+  // Category 3: Input Access & Logistics
+  const inputChecks = [];
+  if (merged.landTenure) inputChecks.push(READINESS_SCORES.landTenure[merged.landTenure] ?? 0.5);
+  if (merged.supplierDistance) inputChecks.push(READINESS_SCORES.supplierDistance[merged.supplierDistance] ?? 0.5);
+  if (merged.bulkBuy) inputChecks.push(TOGGLE_SCORES.bulkBuy);
+  const inputScore = inputChecks.length ? Math.round((inputChecks.reduce((a, b) => a + b, 0) / inputChecks.length) * 100) : 0;
+  
+  // Overall score
   for (const [key, map] of Object.entries(READINESS_SCORES)) {
     checks.push(map[merged[key]] ?? 0.5);
   }
@@ -395,7 +422,18 @@ export function computeBankability(readiness = READINESS_DEFAULTS) {
   const grade = score >= 85 ? "A" : score >= 70 ? "B" : score >= 55 ? "C" : score >= 40 ? "D" : "F";
   const status =
     score >= 70 ? "Bankable" : score >= 40 ? "Developing — partially bankable" : "Incomplete — not bankable";
-  return { score, grade, status, checks };
+  
+  return { 
+    score, 
+    grade, 
+    status, 
+    checks,
+    breakdown: {
+      infrastructure: { score: infraScore, label: "Infrastructure & Water" },
+      humanCapital: { score: humanScore, label: "Human Capital & Knowledge" },
+      inputAccess: { score: inputScore, label: "Input Access & Logistics" },
+    },
+  };
 }
 
 async function loadStoredPlan(db, farmerId) {
