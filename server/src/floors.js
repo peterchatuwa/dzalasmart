@@ -74,11 +74,43 @@ export async function listContractsForFarmer(db, farmerId) {
 export async function contractMonitor(db) {
   const contracts = await listContracts(db);
   const violations = contracts.filter((row) => row.status === "blocked");
+  
+  // Calculate exposure by district
+  const exposureByDistrict = {};
+  for (const contract of contracts) {
+    const district = contract.district || "Unknown";
+    if (!exposureByDistrict[district]) {
+      exposureByDistrict[district] = {
+        district,
+        totalValue: 0,
+        totalWeight: 0,
+        contractCount: 0,
+        violationCount: 0,
+        clearedCount: 0,
+      };
+    }
+    
+    exposureByDistrict[district].totalValue += contract.offerPrice * contract.weightKg;
+    exposureByDistrict[district].totalWeight += contract.weightKg;
+    exposureByDistrict[district].contractCount += 1;
+    
+    if (contract.status === "blocked") {
+      exposureByDistrict[district].violationCount += 1;
+    } else if (contract.status === "cleared") {
+      exposureByDistrict[district].clearedCount += 1;
+    }
+  }
+  
+  // Sort by total value descending
+  const exposureBreakdown = Object.values(exposureByDistrict).sort((a, b) => b.totalValue - a.totalValue);
+  
   return {
     floors: await listFloors(db),
     contracts,
     violationCount: violations.length,
     clearedCount: contracts.filter((row) => row.status === "cleared").length,
+    exposureByDistrict: exposureBreakdown,
+    totalExposure: exposureBreakdown.reduce((sum, d) => sum + d.totalValue, 0),
   };
 }
 

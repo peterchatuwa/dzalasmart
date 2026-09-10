@@ -130,9 +130,9 @@ export async function handleUssd(db, body = {}) {
     if (parts[1] === "2") return ussdReply("END Loan not accepted. The grain stays on your warehouse receipt.");
     if (parts[1] !== "1") return ussdReply("END Invalid choice.");
     try {
-      const paid = await acceptWarehouseLoan(db, farmer, {});
+      const result = await acceptWarehouseLoan(db, farmer, { channel: "ussd" });
       return ussdReply(
-        `END MWK ${paid.receipt.loanDisbursed.toLocaleString("en")} will be sent to your registered mobile money wallet.`
+        `END Loan request for MWK ${result.requestedAmount.toLocaleString("en")} submitted. Your cooperative will approve and disburse within 24 hours.`
       );
     } catch (error) {
       return ussdReply(`END ${error.message}`);

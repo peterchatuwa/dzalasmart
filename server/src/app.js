@@ -61,7 +61,16 @@ import { visitQueue } from "./visits.js";
 import { nationalViewWithWeather } from "./ndvi.js";
 import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
-import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
+import {
+  GRAIN_CROPS,
+  acceptWarehouseLoan,
+  recordIntake,
+  warehouseSummary,
+  withReceipts,
+  listLoanRequests,
+  approveLoanRequest,
+  rejectLoanRequest,
+} from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
 import {
   marketPayload,
@@ -847,7 +856,41 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/staff/contracts", requireStaff(db, jwtSecret), async (_req, res, next) => {
+  // Staff: List loan requests (cooperative and ministry only)
+  app.get("/api/staff/loans/requests", requireStaff(db, jwtSecret), requireStaffRole("cooperative", "ministry"), async (req, res, next) => {
+    try {
+      const status = String(req.query.status || "").trim() || undefined;
+      const district = req.staff.role === "cooperative" ? req.staff.district : String(req.query.district || "").trim() || undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        requests: await listLoanRequests(db, { status, district, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Approve loan request (cooperative only)
+  app.post("/api/staff/loans/requests/:id/approve", requireStaff(db, jwtSecret), requireCooperative(), async (req, res, next) => {
+    try {
+      const notes = String(req.body?.notes || "").trim() || "";
+      res.json(await approveLoanRequest(db, req.params.id, req.staff, notes));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Reject loan request (cooperative only)
+  app.post("/api/staff/loans/requests/:id/reject", requireStaff(db, jwtSecret), requireCooperative(), async (req, res, next) => {
+    try {
+      const reason = String(req.body?.reason || "").trim() || "Request rejected";
+      res.json(await rejectLoanRequest(db, req.params.id, req.staff, reason));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/contracts", requireStaff(db, jwtSecret), requireStaffRole("cooperative", "fum", "ministry"), async (_req, res, next) => {
     try {
       res.json(await contractMonitor(db));
     } catch (error) {
@@ -1015,7 +1058,7 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/staff/national", requireStaff(db, jwtSecret), async (req, res, next) => {
+  app.get("/api/staff/national", requireStaff(db, jwtSecret), requireStaffRole("ministry", "fum"), async (req, res, next) => {
     try {
       res.json(await nationalViewWithWeather(db, req.staff));
     } catch (error) {
@@ -1023,9 +1066,9 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/staff/farmers", requireStaff(db, jwtSecret), async (_req, res, next) => {
+  app.get("/api/staff/farmers", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
-      res.json({ farmers: await listFarmerSummaries(db) });
+      res.json({ farmers: await listFarmerSummaries(db, req.staff) });
     } catch (error) {
       next(error);
     }

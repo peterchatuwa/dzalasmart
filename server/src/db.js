@@ -79,6 +79,23 @@ CREATE TABLE IF NOT EXISTS warehouse_receipts (
 
 CREATE INDEX IF NOT EXISTS idx_receipts_farmer ON warehouse_receipts(farmer_id, created_at);
 
+CREATE TABLE IF NOT EXISTS loan_requests (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  receipt_id TEXT NOT NULL REFERENCES warehouse_receipts(id),
+  requested_amount INTEGER NOT NULL,
+  request_channel TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  requested_at BIGINT NOT NULL,
+  reviewed_by TEXT REFERENCES staff(id),
+  reviewed_at BIGINT,
+  approval_notes TEXT,
+  disbursed_at BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_loan_requests_farmer ON loan_requests(farmer_id, requested_at);
+CREATE INDEX IF NOT EXISTS idx_loan_requests_status ON loan_requests(status, requested_at);
+
 CREATE TABLE IF NOT EXISTS price_floors (
   crop TEXT PRIMARY KEY,
   price_per_kg INTEGER NOT NULL,

@@ -127,11 +127,32 @@ export async function acceptWarehouseLoan(db, farmer, input = {}) {
     throw HttpError(409, "This warehouse loan has already been sent to the registered wallet.");
   }
 
-  await db.prepare("UPDATE warehouse_receipts SET loan_disbursed = loan_cap WHERE id = ?").run(target.id);
-  const updated = (await listReceiptsForFarmer(db, farmer.id)).find((row) => row.id === target.id);
+  // Check if there's already a pending request for this receipt
+  const existingRequest = await db
+    .prepare("SELECT * FROM loan_requests WHERE receipt_id = ? AND status = 'pending' ORDER BY requested_at DESC LIMIT 1")
+    .get(target.id);
+
+  if (existingRequest) {
+    throw HttpError(409, "A loan request for this receipt is already pending approval.");
+  }
+
+  // Create loan request instead of immediate disbursement
+  const requestId = `LR${Date.now()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const now = Date.now();
+  const channel = input.channel || "mobile_app";
+
+  await db
+    .prepare(
+      "INSERT INTO loan_requests (id, farmer_id, receipt_id, requested_amount, request_channel, status, requested_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+    .run(requestId, farmer.id, target.id, target.loanCap, channel, "pending", now);
+
   return {
-    receipt: updated,
-    farmer: await withReceipts(db, await farmerStatus(db, farmer)),
+    requestId,
+    status: "pending",
+    requestedAmount: target.loanCap,
+    message: "Your loan request has been submitted and is pending approval by cooperative staff.",
+    receipt: target,
   };
 }
 
@@ -230,4 +251,100 @@ export async function recordIntake(db, staff, input = {}) {
     stageAdvanced,
     farmer: await withReceipts(db, nextStatus),
   };
+}
+
+export async function listLoanRequests(db, filters = {}) {
+  let query = `
+    SELECT 
+      lr.*,
+      f.name as farmer_name,
+      f.phone as farmer_phone,
+      f.district as farmer_district,
+      wr.code as receipt_code,
+      wr.crop,
+      wr.weight_kg,
+      wr.moisture_pct
+    FROM loan_requests lr
+    JOIN farmers f ON lr.farmer_id = f.id
+    JOIN warehouse_receipts wr ON lr.receipt_id = wr.id
+  `;
+  const conditions = [];
+  const params = [];
+
+  if (filters.status) {
+    conditions.push("lr.status = ?");
+    params.push(filters.status);
+  }
+
+  if (filters.district) {
+    conditions.push("f.district = ?");
+    params.push(filters.district);
+  }
+
+  if (conditions.length > 0) {
+    query += " WHERE " + conditions.join(" AND ");
+  }
+
+  query += " ORDER BY lr.requested_at DESC";
+
+  if (filters.limit) {
+    query += " LIMIT ?";
+    params.push(filters.limit);
+  }
+
+  return await db.prepare(query).all(...params);
+}
+
+export async function approveLoanRequest(db, requestId, staff, notes = "") {
+  const request = await db.prepare("SELECT * FROM loan_requests WHERE id = ?").get(requestId);
+
+  if (!request) {
+    throw HttpError(404, "Loan request not found");
+  }
+
+  if (request.status !== "pending") {
+    throw HttpError(409, `This loan request is already ${request.status}`);
+  }
+
+  const receipt = await db.prepare("SELECT * FROM warehouse_receipts WHERE id = ?").get(request.receiptId);
+
+  if (!receipt) {
+    throw HttpError(404, "Associated warehouse receipt not found");
+  }
+
+  if (receipt.loanDisbursed > 0) {
+    throw HttpError(409, "This receipt already has a loan disbursed");
+  }
+
+  const now = Date.now();
+
+  // Update the warehouse receipt with the disbursed amount
+  await db.prepare("UPDATE warehouse_receipts SET loan_disbursed = loan_cap WHERE id = ?").run(request.receiptId);
+
+  // Update the loan request
+  await db
+    .prepare("UPDATE loan_requests SET status = ?, reviewed_by = ?, reviewed_at = ?, approval_notes = ?, disbursed_at = ? WHERE id = ?")
+    .run("approved", staff.id, now, notes, now, requestId);
+
+  return await db.prepare("SELECT * FROM loan_requests WHERE id = ?").get(requestId);
+}
+
+export async function rejectLoanRequest(db, requestId, staff, reason) {
+  const request = await db.prepare("SELECT * FROM loan_requests WHERE id = ?").get(requestId);
+
+  if (!request) {
+    throw HttpError(404, "Loan request not found");
+  }
+
+  if (request.status !== "pending") {
+    throw HttpError(409, `This loan request is already ${request.status}`);
+  }
+
+  const now = Date.now();
+
+  await db
+    .prepare("UPDATE loan_requests SET status = ?, reviewed_by = ?, reviewed_at = ?, approval_notes = ? WHERE id = ?")
+    .run("rejected", staff.id, now, reason, requestId);
+
+  return await db.prepare("SELECT * FROM loan_requests WHERE id = ?").get(requestId);
 }

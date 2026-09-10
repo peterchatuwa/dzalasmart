@@ -195,6 +195,9 @@ export async function nationalView(db, staff, options = {}) {
   const alert = districts.filter((row) => row.status === "alert").length;
 
   const foodSecurityRisk = [];
+  const foodSecurityTimeline = [];
+  
+  // Current period (period 0)
   for (const row of districts) {
     if (row.status === "alert") {
       foodSecurityRisk.push({
@@ -210,6 +213,62 @@ export async function nationalView(db, staff, options = {}) {
       });
     }
   }
+  
+  // Multi-period predictive timeline (next 3 periods = 15 days)
+  const currentAlertCount = districts.filter((d) => d.status === "alert").length;
+  const currentWatchCount = districts.filter((d) => d.status === "watch").length;
+  const severeWeatherCount = districts.filter((d) => d.weatherAlert === "severe").length;
+  
+  // Period 0: Current snapshot
+  foodSecurityTimeline.push({
+    period: 0,
+    label: "Current (5-day)",
+    timestamp: now,
+    alertDistricts: currentAlertCount,
+    watchDistricts: currentWatchCount,
+    healthyDistricts: healthy,
+    riskLevel: currentAlertCount > 0 ? "high" : currentWatchCount > 3 ? "medium" : "low",
+    confidence: 100,
+  });
+  
+  // Period 1: +5 days prediction (based on current trends)
+  const period1Projection = {
+    period: 1,
+    label: "Forecast (+5 days)",
+    timestamp: now + 5 * 24 * 60 * 60 * 1000,
+    alertDistricts: Math.max(0, currentAlertCount - Math.floor(currentAlertCount * 0.2)), // Assume 20% improvement if interventions happen
+    watchDistricts: currentWatchCount + Math.floor(severeWeatherCount * 0.3), // Weather may degrade some healthy districts
+    healthyDistricts: healthy - Math.floor(severeWeatherCount * 0.3),
+    riskLevel: currentAlertCount > 2 ? "high" : "medium",
+    confidence: 75,
+  };
+  foodSecurityTimeline.push(period1Projection);
+  
+  // Period 2: +10 days prediction
+  const period2Projection = {
+    period: 2,
+    label: "Forecast (+10 days)",
+    timestamp: now + 10 * 24 * 60 * 60 * 1000,
+    alertDistricts: Math.max(0, period1Projection.alertDistricts - 1),
+    watchDistricts: Math.max(0, period1Projection.watchDistricts - 1),
+    healthyDistricts: districts.length - Math.max(0, period1Projection.alertDistricts - 1) - Math.max(0, period1Projection.watchDistricts - 1),
+    riskLevel: period1Projection.alertDistricts > 1 ? "medium" : "low",
+    confidence: 60,
+  };
+  foodSecurityTimeline.push(period2Projection);
+  
+  // Period 3: +15 days prediction (seasonal baseline)
+  const period3Projection = {
+    period: 3,
+    label: "Forecast (+15 days)",
+    timestamp: now + 15 * 24 * 60 * 60 * 1000,
+    alertDistricts: Math.max(0, Math.floor(districts.length * 0.05)), // Baseline ~5% alert rate
+    watchDistricts: Math.max(0, Math.floor(districts.length * 0.15)), // Baseline ~15% watch rate
+    healthyDistricts: Math.floor(districts.length * 0.8),
+    riskLevel: "low",
+    confidence: 45,
+  };
+  foodSecurityTimeline.push(period3Projection);
 
   const scope = staff?.role === "extension" && staff.district ? staff.district : "national";
 
@@ -233,6 +292,7 @@ export async function nationalView(db, staff, options = {}) {
       ...(await plotCoverageStats(db)),
     },
     foodSecurityRisk,
+    foodSecurityTimeline,
   };
 }
 

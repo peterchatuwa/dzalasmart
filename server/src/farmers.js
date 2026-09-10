@@ -56,8 +56,31 @@ export async function getFarmerById(db, id) {
   return (await db.prepare("SELECT * FROM farmers WHERE id = ?").get(id)) || null;
 }
 
-export async function listFarmerSummaries(db) {
-  const rows = await db.prepare("SELECT * FROM farmers ORDER BY name COLLATE NOCASE").all();
+export async function listFarmerSummaries(db, staff = null) {
+  // Apply role-based filtering
+  let query = "SELECT * FROM farmers";
+  const params = [];
+  
+  if (staff) {
+    // Extension officers can only see farmers in their EPA
+    if (staff.role === "extension" && staff.epa) {
+      query += " WHERE epa = ? AND district = ?";
+      params.push(staff.epa, staff.district);
+    }
+    // Cooperative staff can only see farmers in their district
+    else if (staff.role === "cooperative" && staff.district) {
+      query += " WHERE district = ?";
+      params.push(staff.district);
+    }
+    // Ministry and FUM have nationwide access (no filter)
+  }
+  
+  query += " ORDER BY name COLLATE NOCASE";
+  
+  const rows = params.length > 0 
+    ? await db.prepare(query).all(...params)
+    : await db.prepare(query).all();
+    
   const summaries = [];
   for (const row of rows) {
     const status = await farmerStatus(db, row);
