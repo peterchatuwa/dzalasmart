@@ -17,6 +17,30 @@ import { advisorMeta, askAdvisor, listPestReports, logPestReport } from "./advis
 import { readOptionalFarmer, requireCooperative, requireFarmer, requireStaff, requireStaffRole } from "./auth.js";
 import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer, updateFarmerProfile } from "./farmers.js";
 import { contractMonitor, listFloors, recordOffer, setFloor } from "./floors.js";
+import { getTelemetryDashboard, getImpactMetrics } from "./ngo-telemetry.js";
+import { getSupplierRedemptions, getSupplierStats, recordSupplierInventory } from "./input-suppliers.js";
+import { getLendingOpportunities, getLendingPortfolio, getRiskAssessment } from "./financial-institutions.js";
+import {
+  listEquipment,
+  createEquipment,
+  updateEquipment,
+  listBookings,
+  createBooking,
+  confirmBooking,
+  completeBooking,
+  cancelBooking,
+  getBookingStats,
+  EQUIPMENT_TYPES,
+} from "./mechanisation.js";
+import {
+  listBuyers,
+  getBuyerById,
+  getBuyerByStaffId,
+  createBuyer,
+  updateBuyer,
+  getBuyerContracts,
+  getBuyerDashboard,
+} from "./buyers.js";
 import { APP_NAME, APP_SLUG } from "./brand.js";
 import {
   listInputs,
@@ -55,7 +79,16 @@ import {
 } from "./groups.js";
 import { listDistricts } from "./places.js";
 import { STAGES } from "./stages.js";
-import { loginStaff } from "./staff.js";
+import {
+  loginStaff,
+  listAllStaff,
+  getStaffById,
+  createStaff,
+  updateStaff,
+  deactivateStaff,
+  reactivateStaff,
+  STAFF_ROLES,
+} from "./staff.js";
 import { handleUssd } from "./ussd.js";
 import { visitQueue } from "./visits.js";
 import { nationalViewWithWeather } from "./ndvi.js";
@@ -840,6 +873,71 @@ export function createApp(db, options = {}) {
     res.json({ staff: req.staff });
   });
 
+  // System Admin: List all staff
+  app.get("/api/staff/users", requireStaff(db, jwtSecret), requireStaffRole("system_admin", "ministry"), async (req, res, next) => {
+    try {
+      const role = String(req.query.role || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json({
+        staff: await listAllStaff(db, { role, status, district }),
+        roles: STAFF_ROLES,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Get specific staff member
+  app.get("/api/staff/users/:id", requireStaff(db, jwtSecret), requireStaffRole("system_admin", "ministry"), async (req, res, next) => {
+    try {
+      const staff = await getStaffById(db, req.params.id);
+      if (!staff) {
+        res.status(404).json({ error: "Staff member not found" });
+        return;
+      }
+      res.json({ staff });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Create new staff member
+  app.post("/api/staff/users", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.status(201).json({ staff: await createStaff(db, req.staff, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Update staff member
+  app.put("/api/staff/users/:id", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ staff: await updateStaff(db, req.params.id, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Deactivate staff member
+  app.post("/api/staff/users/:id/deactivate", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ staff: await deactivateStaff(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Reactivate staff member
+  app.post("/api/staff/users/:id/reactivate", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ staff: await reactivateStaff(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/staff/warehouse", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
       res.json(await warehouseSummary(db));
@@ -1040,6 +1138,258 @@ export function createApp(db, options = {}) {
   app.get("/api/staff/market/alerts", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
       res.json(await staffMarketAlertsSummary(db));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // NGO & Donors: M&E Telemetry Dashboard
+  app.get("/api/staff/ngo/telemetry", requireStaff(db, jwtSecret), requireStaffRole("ngo", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const startDate = req.query.startDate ? Number(req.query.startDate) : undefined;
+      const endDate = req.query.endDate ? Number(req.query.endDate) : undefined;
+      res.json(await getTelemetryDashboard(db, { district, startDate, endDate }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // NGO & Donors: Impact Metrics
+  app.get("/api/staff/ngo/impact", requireStaff(db, jwtSecret), requireStaffRole("ngo", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json(await getImpactMetrics(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Input Suppliers: View redemptions
+  app.get("/api/staff/suppliers/redemptions", requireStaff(db, jwtSecret), requireStaffRole("input_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const startDate = req.query.startDate ? Number(req.query.startDate) : undefined;
+      const endDate = req.query.endDate ? Number(req.query.endDate) : undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        redemptions: await getSupplierRedemptions(db, req.staff.id, { district, startDate, endDate, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Input Suppliers: Stats dashboard
+  app.get("/api/staff/suppliers/stats", requireStaff(db, jwtSecret), requireStaffRole("input_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const startDate = req.query.startDate ? Number(req.query.startDate) : undefined;
+      const endDate = req.query.endDate ? Number(req.query.endDate) : undefined;
+      res.json(await getSupplierStats(db, { district, startDate, endDate }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Input Suppliers: Record inventory
+  app.post("/api/staff/suppliers/inventory", requireStaff(db, jwtSecret), requireStaffRole("input_supplier"), async (req, res, next) => {
+    try {
+      res.status(201).json(await recordSupplierInventory(db, req.staff.id, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Financial Institutions: Lending opportunities
+  app.get("/api/staff/fi/opportunities", requireStaff(db, jwtSecret), requireStaffRole("financial_institution", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const minBankability = req.query.minBankability ? Number(req.query.minBankability) : undefined;
+      const limit = Number(req.query.limit) || 50;
+      res.json({
+        opportunities: await getLendingOpportunities(db, { district, minBankability, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Financial Institutions: Portfolio dashboard
+  app.get("/api/staff/fi/portfolio", requireStaff(db, jwtSecret), requireStaffRole("financial_institution", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json(await getLendingPortfolio(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Financial Institutions: Risk assessment
+  app.get("/api/staff/fi/risk", requireStaff(db, jwtSecret), requireStaffRole("financial_institution", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json(await getRiskAssessment(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: List equipment
+  app.get("/api/staff/mechanisation/equipment", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const type = String(req.query.type || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      res.json({
+        equipment: await listEquipment(db, { type, district, status }),
+        types: EQUIPMENT_TYPES,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Create equipment
+  app.post("/api/staff/mechanisation/equipment", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.status(201).json({ equipment: await createEquipment(db, req.staff, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Update equipment
+  app.put("/api/staff/mechanisation/equipment/:id", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.json({ equipment: await updateEquipment(db, req.params.id, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: List bookings
+  app.get("/api/staff/mechanisation/bookings", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const equipmentId = String(req.query.equipmentId || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        bookings: await listBookings(db, { equipmentId, status, district, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Create booking
+  app.post("/api/staff/mechanisation/bookings", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "extension"), async (req, res, next) => {
+    try {
+      res.status(201).json({ booking: await createBooking(db, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Confirm booking
+  app.post("/api/staff/mechanisation/bookings/:id/confirm", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.json({ booking: await confirmBooking(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Complete booking
+  app.post("/api/staff/mechanisation/bookings/:id/complete", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.json({ booking: await completeBooking(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Cancel booking
+  app.post("/api/staff/mechanisation/bookings/:id/cancel", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "extension"), async (req, res, next) => {
+    try {
+      res.json({ booking: await cancelBooking(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Booking stats
+  app.get("/api/staff/mechanisation/stats", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const supplierId = req.staff.role === "mechanisation_supplier" ? req.staff.id : undefined;
+      res.json(await getBookingStats(db, { district, supplierId }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin / Ministry: List all buyers
+  app.get("/api/staff/buyers", requireStaff(db, jwtSecret), requireStaffRole("system_admin", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      res.json({
+        buyers: await listBuyers(db, { district, status }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Create buyer
+  app.post("/api/staff/buyers", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.status(201).json({ buyer: await createBuyer(db, req.staff, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Update buyer
+  app.put("/api/staff/buyers/:id", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ buyer: await updateBuyer(db, req.params.id, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Buyers: View their own dashboard
+  app.get("/api/staff/buyers/me/dashboard", requireStaff(db, jwtSecret), requireStaffRole("buyer"), async (req, res, next) => {
+    try {
+      const buyer = await getBuyerByStaffId(db, req.staff.id);
+      if (!buyer) {
+        res.status(404).json({ error: "No buyer account linked to this staff login" });
+        return;
+      }
+      res.json(await getBuyerDashboard(db, buyer.id));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Buyers: View their contracts
+  app.get("/api/staff/buyers/me/contracts", requireStaff(db, jwtSecret), requireStaffRole("buyer"), async (req, res, next) => {
+    try {
+      const buyer = await getBuyerByStaffId(db, req.staff.id);
+      if (!buyer) {
+        res.status(404).json({ error: "No buyer account linked to this staff login" });
+        return;
+      }
+      const status = String(req.query.status || "").trim() || undefined;
+      const crop = String(req.query.crop || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        contracts: await getBuyerContracts(db, buyer.id, { status, crop, district, limit }),
+      });
     } catch (error) {
       next(error);
     }

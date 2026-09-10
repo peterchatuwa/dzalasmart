@@ -58,7 +58,10 @@ CREATE TABLE IF NOT EXISTS staff (
   org TEXT NOT NULL,
   district TEXT,
   epa TEXT,
-  created_at BIGINT NOT NULL
+  status TEXT NOT NULL DEFAULT 'active',
+  created_by TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS warehouse_receipts (
@@ -96,6 +99,37 @@ CREATE TABLE IF NOT EXISTS loan_requests (
 CREATE INDEX IF NOT EXISTS idx_loan_requests_farmer ON loan_requests(farmer_id, requested_at);
 CREATE INDEX IF NOT EXISTS idx_loan_requests_status ON loan_requests(status, requested_at);
 
+CREATE TABLE IF NOT EXISTS equipment (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  capacity TEXT,
+  rate_per_day INTEGER NOT NULL,
+  rate_per_hectare INTEGER,
+  supplier_id TEXT REFERENCES staff(id),
+  district TEXT,
+  status TEXT NOT NULL DEFAULT 'available',
+  created_at BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS equipment_bookings (
+  id TEXT PRIMARY KEY,
+  equipment_id TEXT NOT NULL REFERENCES equipment(id),
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  booking_date BIGINT NOT NULL,
+  start_date BIGINT NOT NULL,
+  end_date BIGINT,
+  hectares DOUBLE PRECISION,
+  total_cost INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at BIGINT NOT NULL,
+  confirmed_at BIGINT,
+  completed_at BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_farmer ON equipment_bookings(farmer_id, booking_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_equipment ON equipment_bookings(equipment_id, start_date);
+
 CREATE TABLE IF NOT EXISTS price_floors (
   crop TEXT PRIMARY KEY,
   price_per_kg INTEGER NOT NULL,
@@ -103,9 +137,24 @@ CREATE TABLE IF NOT EXISTS price_floors (
   updated_by TEXT
 );
 
+CREATE TABLE IF NOT EXISTS buyers (
+  id TEXT PRIMARY KEY,
+  staff_id TEXT REFERENCES staff(id),
+  name TEXT NOT NULL,
+  org TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  district TEXT,
+  commodities TEXT,
+  credit_limit INTEGER DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at BIGINT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS offtake_contracts (
   id TEXT PRIMARY KEY,
   buyer TEXT NOT NULL,
+  buyer_id TEXT REFERENCES buyers(id),
   crop TEXT NOT NULL,
   district TEXT NOT NULL,
   price_per_kg INTEGER NOT NULL,
