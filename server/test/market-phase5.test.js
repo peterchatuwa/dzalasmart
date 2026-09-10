@@ -37,13 +37,17 @@ test("logistics routes subtract haulage from opportunity margin", async (t) => {
   const db = await openDatabase(":memory:");
   await seedMarketCatalog(db);
   const catalog = parseLocalBuyHtml(SAMPLE_HTML).catalog;
-  await insertObservations(db, "localbuy", catalog.map((row) => ({
-    commoditySlug: row.commoditySlug,
-    locationSlug: `warehouse-${row.hub.toLowerCase()}`,
-    buyPricePerKg: row.buyPricePerKg,
-    sellPricePerKg: row.sellPricePerKg,
-    grade: row.grade,
-  })));
+  await insertObservations(
+    db,
+    "localbuy",
+    catalog.map((row) => ({
+      commoditySlug: row.commoditySlug,
+      locationSlug: `warehouse-${row.hub.toLowerCase()}`,
+      buyPricePerKg: row.buyPricePerKg,
+      sellPricePerKg: row.sellPricePerKg,
+      grade: row.grade,
+    }))
+  );
   await upsertLogisticsRoute(db, {
     fromDistrict: "Lilongwe",
     toDistrict: "Kasungu",
@@ -56,16 +60,18 @@ test("logistics routes subtract haulage from opportunity margin", async (t) => {
   t.after(close);
 
   const opps = await fetch(`${url}/api/market/opportunities?commodity=maize`).then((r) => r.json());
-  const lilongweToKasungu = opps.opportunities.find((row) =>
-    row.fromDistrict === "Lilongwe" && row.toDistrict === "Kasungu");
+  const lilongweToKasungu = opps.opportunities.find(
+    (row) => row.fromDistrict === "Lilongwe" && row.toDistrict === "Kasungu"
+  );
   assert.ok(lilongweToKasungu);
   assert.equal(lilongweToKasungu.grossSpreadPerKg, 220);
   assert.equal(lilongweToKasungu.transportPerKg, 200);
   assert.equal(lilongweToKasungu.netMarginPerKg, 20);
   assert.equal(lilongweToKasungu.profitable, true);
 
-  const kasunguToLilongwe = opps.opportunities.find((row) =>
-    row.fromDistrict === "Kasungu" && row.toDistrict === "Lilongwe");
+  const kasunguToLilongwe = opps.opportunities.find(
+    (row) => row.fromDistrict === "Kasungu" && row.toDistrict === "Lilongwe"
+  );
   assert.ok(kasunguToLilongwe);
   assert.equal(kasunguToLilongwe.grossSpreadPerKg, 50);
   assert.ok(kasunguToLilongwe.transportPerKg > 0);
@@ -103,6 +109,7 @@ test("ministry can save a logistics route", async (t) => {
   assert.equal(saved.status, 201);
 
   const routes = await fetch(`${url}/api/market/logistics/routes`).then((r) => r.json());
-  assert.ok(routes.routes.some((row) =>
-    row.fromDistrict === "Mchinji" && row.toDistrict === "Lilongwe" && row.costPerKg === 40));
+  assert.ok(
+    routes.routes.some((row) => row.fromDistrict === "Mchinji" && row.toDistrict === "Lilongwe" && row.costPerKg === 40)
+  );
 });

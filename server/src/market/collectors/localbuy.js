@@ -16,7 +16,8 @@ export { LOCALBUY_URL };
 
 export function parseLocalBuyHtml(html) {
   const catalog = [];
-  const rowRe = /<tr>\s*<td>([A-Z]{2})<\/td>\s*<td>[\s\S]*?title="([^"]+)"[\s\S]*?<\/td>\s*<td>([^<]*)<\/td>\s*<td>([\d,]+\.?\d*)<\/td>\s*<td>([\d,]+\.?\d*)<\/td>\s*<td>([^<]+)<\/td>/g;
+  const rowRe =
+    /<tr>\s*<td>([A-Z]{2})<\/td>\s*<td>[\s\S]*?title="([^"]+)"[\s\S]*?<\/td>\s*<td>([^<]*)<\/td>\s*<td>([\d,]+\.?\d*)<\/td>\s*<td>([\d,]+\.?\d*)<\/td>\s*<td>([^<]+)<\/td>/g;
   let match;
   while ((match = rowRe.exec(html)) !== null) {
     const buyPrice = parseMoney(match[4]);

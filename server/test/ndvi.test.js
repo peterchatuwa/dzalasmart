@@ -51,15 +51,23 @@ test("national view flags Grace's district after a pest report and scopes extens
   await seedIfEmpty(db);
   await seedStaffIfEmpty(db);
   const grace = await db.prepare("SELECT * FROM farmers WHERE phone = ?").get("+265888000001");
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO pest_reports (id, farmer_id, symptoms, match_name, channel, created_at)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(crypto.randomUUID(), grace.id, "holes in the leaves", "Fall Armyworm (on maize)", "mobile", Date.now());
+  `
+    )
+    .run(crypto.randomUUID(), grace.id, "holes in the leaves", "Fall Armyworm (on maize)", "mobile", Date.now());
 
-  const ministry = await nationalView(db, { role: "ministry" }, {
-    now: Date.parse("2026-09-04T08:00:00Z"),
-    weatherAlerts: [{ district: "Chikwawa", alert: "severe" }],
-  });
+  const ministry = await nationalView(
+    db,
+    { role: "ministry" },
+    {
+      now: Date.parse("2026-09-04T08:00:00Z"),
+      weatherAlerts: [{ district: "Chikwawa", alert: "severe" }],
+    }
+  );
   assert.equal(ministry.scope, "national");
   assert.ok(ministry.districts.length >= 28);
   const nkhotakota = ministry.districts.find((row) => row.name === "Nkhotakota");
@@ -68,9 +76,13 @@ test("national view flags Grace's district after a pest report and scopes extens
   assert.notEqual(nkhotakota.status, "healthy");
   assert.ok(ministry.foodSecurityRisk.some((row) => row.district === "Chikwawa"));
 
-  const mercy = await nationalView(db, { role: "extension", district: "Nkhotakota", epa: "Zidyana" }, {
-    now: Date.parse("2026-09-04T08:00:00Z"),
-  });
+  const mercy = await nationalView(
+    db,
+    { role: "extension", district: "Nkhotakota", epa: "Zidyana" },
+    {
+      now: Date.parse("2026-09-04T08:00:00Z"),
+    }
+  );
   assert.equal(mercy.scope, "Nkhotakota");
   assert.ok(mercy.districts.every((row) => row.name === "Nkhotakota"));
   assert.equal(mercy.stats.farmersRegistered, 1);

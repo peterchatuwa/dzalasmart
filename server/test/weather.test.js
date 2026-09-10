@@ -24,7 +24,15 @@ test("season advice is Malawi dry vs rainy calendar", () => {
 
 test("alert districts match the original Open-Meteo watch list", () => {
   assert.deepEqual(ALERT_DISTRICTS, [
-    "Karonga", "Mzuzu", "Rumphi", "Lilongwe", "Kasungu", "Salima", "Blantyre", "Chikwawa", "Nsanje",
+    "Karonga",
+    "Mzuzu",
+    "Rumphi",
+    "Lilongwe",
+    "Kasungu",
+    "Salima",
+    "Blantyre",
+    "Chikwawa",
+    "Nsanje",
   ]);
   assert.equal(regionForDistrict("Mzuzu"), "Northern Region");
   assert.equal(alertHeadline("clear"), "No warnings");

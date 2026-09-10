@@ -2,7 +2,9 @@ import { resolveCompareCommodity } from "./compare.js";
 import { priceHistory } from "./store.js";
 
 export function parseTrendRange(range = "30d") {
-  const key = String(range || "30d").trim().toLowerCase();
+  const key = String(range || "30d")
+    .trim()
+    .toLowerCase();
   if (key === "3m" || key === "90d") return { days: 90, label: "3 months", range: "3m" };
   if (key === "1y" || key === "365d") return { days: 365, label: "1 year", range: "1y" };
   return { days: 30, label: "30 days", range: "30d" };

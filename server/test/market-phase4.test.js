@@ -28,20 +28,22 @@ test("parseTrendRange maps 30d, 3m, and 1y", () => {
 });
 
 test("observationsToCsv renders a header and quoted notes", () => {
-  const csv = observationsToCsv([{
-    fetchedAt: Date.parse("2026-01-15T10:00:00.000Z"),
-    commodity: "Maize",
-    commoditySlug: "maize",
-    district: "Lilongwe",
-    market: "Lilongwe warehouse",
-    source: "LocalBuyEx",
-    sourceSlug: "localbuy",
-    priceKind: "market",
-    buyPricePerKg: 900,
-    sellPricePerKg: 1000,
-    grade: "A",
-    notes: "note, with comma",
-  }]);
+  const csv = observationsToCsv([
+    {
+      fetchedAt: Date.parse("2026-01-15T10:00:00.000Z"),
+      commodity: "Maize",
+      commoditySlug: "maize",
+      district: "Lilongwe",
+      market: "Lilongwe warehouse",
+      source: "LocalBuyEx",
+      sourceSlug: "localbuy",
+      priceKind: "market",
+      buyPricePerKg: 900,
+      sellPricePerKg: 1000,
+      grade: "A",
+      notes: "note, with comma",
+    },
+  ]);
   assert.match(csv, /^observed_at,commodity,/);
   assert.match(csv, /"note, with comma"/);
 });
@@ -74,8 +76,9 @@ test("market trends API returns chart-ready series", async (t) => {
   const { url, close } = await listen(app);
   t.after(close);
 
-  const payload = await fetch(`${url}/api/market/trends?commodity=maize&district=Lilongwe&range=30d`)
-    .then((r) => r.json());
+  const payload = await fetch(`${url}/api/market/trends?commodity=maize&district=Lilongwe&range=30d`).then((r) =>
+    r.json()
+  );
   assert.equal(payload.commoditySlug, "maize");
   assert.ok(payload.series.length >= 1);
   assert.ok(payload.labels.length >= 1);
@@ -85,12 +88,14 @@ test("market trends API returns chart-ready series", async (t) => {
 test("market export API returns CSV attachment", async (t) => {
   const db = await openDatabase(":memory:");
   await seedMarketCatalog(db);
-  await insertObservations(db, "manual", [{
-    commoditySlug: "maize",
-    locationSlug: "kasungu",
-    buyPricePerKg: 1050,
-    priceKind: "market",
-  }]);
+  await insertObservations(db, "manual", [
+    {
+      commoditySlug: "maize",
+      locationSlug: "kasungu",
+      buyPricePerKg: 1050,
+      priceKind: "market",
+    },
+  ]);
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);
   t.after(close);

@@ -4,24 +4,32 @@ import { STAGES, publicStage, stageByIndex, stageByKey } from "./stages.js";
 import { HttpError, assertPin, normalizePhone, publicFarmer } from "./util.js";
 
 function genFarmerCode(district) {
-  const letters = (district || "MW").replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
+  const letters = (district || "MW")
+    .replace(/[^A-Za-z]/g, "")
+    .slice(0, 3)
+    .toUpperCase()
+    .padEnd(3, "X");
   const r1 = String(Math.floor(1000 + Math.random() * 9000));
   const r2 = String(Math.floor(1000 + Math.random() * 9000));
   return `MW-${letters}-${r1}-${r2}`;
 }
 
 async function currentStageIndex(db, farmerId) {
-  const row = await db.prepare(
-    "SELECT MAX(stage_index) AS max_index FROM season_events WHERE farmer_id = ?"
-  ).get(farmerId);
+  const row = await db
+    .prepare("SELECT MAX(stage_index) AS max_index FROM season_events WHERE farmer_id = ?")
+    .get(farmerId);
   return row?.max_index == null ? -1 : row.max_index;
 }
 
 async function listEvents(db, farmerId) {
-  return (await db.prepare(
-    `SELECT id, stage_index, stage_key, stage_name, channel, created_at
+  return (
+    await db
+      .prepare(
+        `SELECT id, stage_index, stage_key, stage_name, channel, created_at
      FROM season_events WHERE farmer_id = ? ORDER BY stage_index ASC`
-  ).all(farmerId)).map((row) => ({
+      )
+      .all(farmerId)
+  ).map((row) => ({
     id: row.id,
     stageIndex: row.stage_index,
     stageKey: row.stage_key,
@@ -48,8 +56,31 @@ export async function getFarmerById(db, id) {
   return (await db.prepare("SELECT * FROM farmers WHERE id = ?").get(id)) || null;
 }
 
-export async function listFarmerSummaries(db) {
-  const rows = await db.prepare("SELECT * FROM farmers ORDER BY name COLLATE NOCASE").all();
+export async function listFarmerSummaries(db, staff = null) {
+  // Apply role-based filtering
+  let query = "SELECT * FROM farmers";
+  const params = [];
+  
+  if (staff) {
+    // Extension officers can only see farmers in their EPA
+    if (staff.role === "extension" && staff.epa) {
+      query += " WHERE epa = ? AND district = ?";
+      params.push(staff.epa, staff.district);
+    }
+    // Cooperative staff can only see farmers in their district
+    else if (staff.role === "cooperative" && staff.district) {
+      query += " WHERE district = ?";
+      params.push(staff.district);
+    }
+    // Ministry and FUM have nationwide access (no filter)
+  }
+  
+  query += " ORDER BY name COLLATE NOCASE";
+  
+  const rows = params.length > 0 
+    ? await db.prepare(query).all(...params)
+    : await db.prepare(query).all();
+    
   const summaries = [];
   for (const row of rows) {
     const status = await farmerStatus(db, row);
@@ -90,13 +121,31 @@ export async function registerFarmer(db, input, jwtSecret) {
     region,
     soil_type: input.soilType || null,
     nutrient_status: input.nutrientStatus || null,
+    village: input.village || null,
+    gender: input.gender || null,
+    date_of_birth: input.dateOfBirth || null,
+    household_size: input.householdSize || null,
+    household_type: input.householdType || null,
+    livestock: input.livestock || null,
     created_at: Date.now(),
   };
 
-  await db.prepare(`
-    INSERT INTO farmers (id, code, name, phone, pin_hash, district, epa, region, soil_type, nutrient_status, created_at)
-    VALUES (@id, @code, @name, @phone, @pin_hash, @district, @epa, @region, @soil_type, @nutrient_status, @created_at)
-  `).run(farmer);
+  await db
+    .prepare(
+      `
+    INSERT INTO farmers (
+      id, code, name, phone, pin_hash, district, epa, region, 
+      soil_type, nutrient_status, village, gender, date_of_birth, 
+      household_size, household_type, livestock, created_at
+    )
+    VALUES (
+      @id, @code, @name, @phone, @pin_hash, @district, @epa, @region, 
+      @soil_type, @nutrient_status, @village, @gender, @date_of_birth, 
+      @household_size, @household_type, @livestock, @created_at
+    )
+  `
+    )
+    .run(farmer);
 
   const saved = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(farmer.id);
   return {
@@ -114,6 +163,66 @@ export async function loginFarmer(db, input, jwtSecret) {
     token: signFarmerToken(farmer, jwtSecret),
     farmer: publicFarmer(farmer),
   };
+}
+
+export async function updateFarmerProfile(db, farmerId, input) {
+  const updates = [];
+  const params = [];
+
+  if (input.gender !== undefined) {
+    updates.push("gender = ?");
+    params.push(input.gender || null);
+  }
+  if (input.dateOfBirth !== undefined) {
+    updates.push("date_of_birth = ?");
+    params.push(input.dateOfBirth ? new Date(input.dateOfBirth).getTime() : null);
+  }
+  if (input.nationalId !== undefined) {
+    updates.push("national_id = ?");
+    params.push(input.nationalId || null);
+  }
+  if (input.village !== undefined) {
+    updates.push("village = ?");
+    params.push(input.village || null);
+  }
+  if (input.maritalStatus !== undefined) {
+    updates.push("marital_status = ?");
+    params.push(input.maritalStatus || null);
+  }
+  if (input.householdSize !== undefined) {
+    updates.push("household_size = ?");
+    params.push(Number(input.householdSize) || null);
+  }
+  if (input.educationLevel !== undefined) {
+    updates.push("education_level = ?");
+    params.push(input.educationLevel || null);
+  }
+  if (input.yearsOfExperience !== undefined) {
+    updates.push("years_of_experience = ?");
+    params.push(Number(input.yearsOfExperience) || null);
+  }
+  if (input.alternativePhone !== undefined) {
+    updates.push("alternative_phone = ?");
+    params.push(input.alternativePhone || null);
+  }
+  if (input.email !== undefined) {
+    updates.push("email = ?");
+    params.push(input.email || null);
+  }
+
+  if (updates.length === 0) {
+    throw HttpError(400, "No fields to update");
+  }
+
+  updates.push("updated_at = ?");
+  params.push(Date.now());
+  params.push(farmerId);
+
+  await db
+    .prepare(`UPDATE farmers SET ${updates.join(", ")} WHERE id = ?`)
+    .run(...params);
+
+  return await getFarmerById(db, farmerId);
 }
 
 export async function logStage(db, farmer, input = {}) {
@@ -138,10 +247,14 @@ export async function logStage(db, farmer, input = {}) {
     created_at: Date.now(),
   };
 
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO season_events (id, farmer_id, stage_index, stage_key, stage_name, channel, created_at)
     VALUES (@id, @farmer_id, @stage_index, @stage_key, @stage_name, @channel, @created_at)
-  `).run(event);
+  `
+    )
+    .run(event);
 
   return await farmerStatus(db, farmer);
 }

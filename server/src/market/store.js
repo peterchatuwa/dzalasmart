@@ -1,11 +1,7 @@
 import { fmtPricePerKg, relativeUpdatedLabel } from "./normalize.js";
 import { matchCommodityName } from "./catalog.js";
 import { districtSlug, nearestWarehouseHub } from "./locations.js";
-import {
-  commodityIdBySlug,
-  locationIdBySlug,
-  sourceIdBySlug,
-} from "./seed.js";
+import { commodityIdBySlug, locationIdBySlug, sourceIdBySlug } from "./seed.js";
 
 const INSERT_OBS = `
   INSERT INTO market_price_observations (
@@ -22,17 +18,25 @@ const INSERT_OBS = `
 export async function updateSourceStatus(db, slug, { ok, error = null }) {
   const now = Date.now();
   if (ok) {
-    await db.prepare(`
+    await db
+      .prepare(
+        `
       UPDATE market_sources
       SET last_ok_at = ?, last_error = NULL, updated_at = ?
       WHERE slug = ?
-    `).run(now, now, slug);
+    `
+      )
+      .run(now, now, slug);
   } else {
-    await db.prepare(`
+    await db
+      .prepare(
+        `
       UPDATE market_sources
       SET last_error = ?, updated_at = ?
       WHERE slug = ?
-    `).run(String(error || "Unknown error").slice(0, 500), now, slug);
+    `
+      )
+      .run(String(error || "Unknown error").slice(0, 500), now, slug);
   }
 }
 
@@ -41,10 +45,8 @@ export async function insertObservations(db, sourceSlug, rows, fetchedAt = Date.
   if (!sourceId) throw new Error(`Unknown market source: ${sourceSlug}`);
   let count = 0;
   for (const row of rows) {
-    const commodityId = row.commodityId
-      || (row.commoditySlug ? await commodityIdBySlug(db, row.commoditySlug) : null);
-    const locationId = row.locationId
-      || (row.locationSlug ? await locationIdBySlug(db, row.locationSlug) : null);
+    const commodityId = row.commodityId || (row.commoditySlug ? await commodityIdBySlug(db, row.commoditySlug) : null);
+    const locationId = row.locationId || (row.locationSlug ? await locationIdBySlug(db, row.locationSlug) : null);
     if (!commodityId || !locationId) continue;
     await db.prepare(INSERT_OBS).run({
       id: crypto.randomUUID(),
@@ -190,11 +192,17 @@ export async function priceHistory(db, filters = {}) {
 }
 
 export async function listSources(db) {
-  return (await db.prepare(`
+  return (
+    await db
+      .prepare(
+        `
     SELECT slug, name, kind, url, enabled, last_ok_at, last_error, updated_at
     FROM market_sources
     ORDER BY name
-  `).all()).map((row) => ({
+  `
+      )
+      .all()
+  ).map((row) => ({
     slug: row.slug,
     name: row.name,
     kind: row.kind,
@@ -209,9 +217,15 @@ export async function listSources(db) {
 }
 
 export async function listCommodities(db) {
-  return (await db.prepare(`
+  return (
+    await db
+      .prepare(
+        `
     SELECT slug, name, aliases_json FROM market_commodities WHERE active = 1 ORDER BY name
-  `).all()).map((row) => ({
+  `
+      )
+      .all()
+  ).map((row) => ({
     slug: row.slug,
     name: row.name,
     aliases: JSON.parse(row.aliases_json || "[]"),
@@ -235,11 +249,15 @@ export async function resolveCommodity(db, crop) {
   if (matched) {
     return db.prepare("SELECT id, slug, name FROM market_commodities WHERE slug = ?").get(matched.slug);
   }
-  return db.prepare(`
+  return db
+    .prepare(
+      `
     SELECT id, slug, name FROM market_commodities
     WHERE LOWER(name) = LOWER(?)
     LIMIT 1
-  `).get(name);
+  `
+    )
+    .get(name);
 }
 
 export async function resolveLocation(db, { district, locationSlug }) {
@@ -247,7 +265,9 @@ export async function resolveLocation(db, { district, locationSlug }) {
     return db.prepare("SELECT id, slug, name, district FROM market_locations WHERE slug = ?").get(locationSlug);
   }
   if (district) {
-    return db.prepare("SELECT id, slug, name, district FROM market_locations WHERE district = ? AND type = 'district'").get(district);
+    return db
+      .prepare("SELECT id, slug, name, district FROM market_locations WHERE district = ? AND type = 'district'")
+      .get(district);
   }
   return null;
 }

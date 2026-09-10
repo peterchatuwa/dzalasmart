@@ -33,7 +33,7 @@ export function transportCostPerKg(route, loadKg = DEFAULT_LOAD_KG) {
   const flat = Number(route.costFlatMwk || 0);
   const load = Math.max(1, Number(loadKg) || DEFAULT_LOAD_KG);
   if (!Number.isFinite(perKg)) return null;
-  return perKg + (flat / load);
+  return perKg + flat / load;
 }
 
 function mapRoute(row) {
@@ -52,20 +52,28 @@ function mapRoute(row) {
 }
 
 export async function listLogisticsRoutes(db) {
-  const rows = await db.prepare(`
+  const rows = await db
+    .prepare(
+      `
     SELECT id, from_district, to_district, distance_km, cost_per_kg, cost_flat_mwk, notes, updated_at
     FROM market_logistics_routes
     ORDER BY from_district, to_district
-  `).all();
+  `
+    )
+    .all();
   return rows.map(mapRoute);
 }
 
 export async function getLogisticsRoute(db, fromDistrict, toDistrict) {
-  const row = await db.prepare(`
+  const row = await db
+    .prepare(
+      `
     SELECT id, from_district, to_district, distance_km, cost_per_kg, cost_flat_mwk, notes, updated_at
     FROM market_logistics_routes
     WHERE from_district = ? AND to_district = ?
-  `).get(fromDistrict, toDistrict);
+  `
+    )
+    .get(fromDistrict, toDistrict);
   return row ? mapRoute(row) : null;
 }
 
@@ -106,14 +114,14 @@ export async function upsertLogisticsRoute(db, input = {}) {
     throw HttpError(400, "costPerKg must be a non-negative number");
   }
 
-  const distanceKm = input.distanceKm != null
-    ? Number(input.distanceKm)
-    : estimateDistanceKm(fromDistrict, toDistrict);
+  const distanceKm = input.distanceKm != null ? Number(input.distanceKm) : estimateDistanceKm(fromDistrict, toDistrict);
   const costFlatMwk = input.costFlatMwk != null ? Number(input.costFlatMwk) : null;
   const now = Date.now();
   const id = input.id || `route-${fromDistrict.toLowerCase()}-${toDistrict.toLowerCase()}`.replace(/[^a-z0-9-]+/g, "-");
 
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO market_logistics_routes (
       id, from_district, to_district, distance_km, cost_per_kg, cost_flat_mwk, notes, updated_at
     ) VALUES (@id, @from_district, @to_district, @distance_km, @cost_per_kg, @cost_flat_mwk, @notes, @updated_at)
@@ -123,16 +131,18 @@ export async function upsertLogisticsRoute(db, input = {}) {
       cost_flat_mwk = EXCLUDED.cost_flat_mwk,
       notes = EXCLUDED.notes,
       updated_at = EXCLUDED.updated_at
-  `).run({
-    id,
-    from_district: fromDistrict,
-    to_district: toDistrict,
-    distance_km: distanceKm,
-    cost_per_kg: costPerKg,
-    cost_flat_mwk: costFlatMwk,
-    notes: input.notes || null,
-    updated_at: now,
-  });
+  `
+    )
+    .run({
+      id,
+      from_district: fromDistrict,
+      to_district: toDistrict,
+      distance_km: distanceKm,
+      cost_per_kg: costPerKg,
+      cost_flat_mwk: costFlatMwk,
+      notes: input.notes || null,
+      updated_at: now,
+    });
 
   return getLogisticsRoute(db, fromDistrict, toDistrict);
 }

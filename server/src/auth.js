@@ -11,19 +11,15 @@ export function pinMatches(pin, pinHash) {
 }
 
 export function signFarmerToken(farmer, secret) {
-  return jwt.sign(
-    { sub: farmer.id, phone: farmer.phone, code: farmer.code, role: "farmer" },
-    secret,
-    { expiresIn: "30d" }
-  );
+  return jwt.sign({ sub: farmer.id, phone: farmer.phone, code: farmer.code, role: "farmer" }, secret, {
+    expiresIn: "30d",
+  });
 }
 
 export function signStaffToken(staff, secret) {
-  return jwt.sign(
-    { sub: staff.id, phone: staff.phone, role: "staff", staffRole: staff.role },
-    secret,
-    { expiresIn: "30d" }
-  );
+  return jwt.sign({ sub: staff.id, phone: staff.phone, role: "staff", staffRole: staff.role }, secret, {
+    expiresIn: "30d",
+  });
 }
 
 export async function readOptionalFarmer(db, secret, req) {

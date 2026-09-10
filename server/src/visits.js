@@ -41,9 +41,7 @@ export async function visitQueue(db, staff) {
       farmerCode: report.farmerCode,
       district: report.district,
       epa: report.epa,
-      reason: report.matchName
-        ? `Suspected ${report.matchName}`
-        : "Pest report waiting for a field visit",
+      reason: report.matchName ? `Suspected ${report.matchName}` : "Pest report waiting for a field visit",
       priority: "high",
       source: "pest",
       at: report.createdAt,
@@ -117,21 +115,32 @@ export async function visitQueue(db, staff) {
   });
 
   const ussdFarmers = new Set(
-    (await db.prepare(`
+    (
+      await db
+        .prepare(
+          `
       SELECT DISTINCT farmer_id FROM season_events
       WHERE channel = 'ussd' AND created_at >= ?
-    `).all(weekAgo)).map((row) => row.farmer_id)
+    `
+        )
+        .all(weekAgo)
+    ).map((row) => row.farmer_id)
   );
-  for (const row of await db.prepare(`
+  for (const row of await db
+    .prepare(
+      `
     SELECT DISTINCT farmer_id FROM pest_reports
     WHERE channel = 'ussd' AND created_at >= ?
-  `).all(weekAgo)) {
+  `
+    )
+    .all(weekAgo)) {
     ussdFarmers.add(row.farmer_id);
   }
 
-  const area = staff?.role === "extension"
-    ? [staff.epa, staff.district].filter(Boolean).join(" · ") || "Assigned area"
-    : "All districts";
+  const area =
+    staff?.role === "extension"
+      ? [staff.epa, staff.district].filter(Boolean).join(" · ") || "Assigned area"
+      : "All districts";
 
   return {
     area,

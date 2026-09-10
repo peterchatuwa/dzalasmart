@@ -60,7 +60,10 @@ test("extension visit queue is scoped to the officer EPA and flags pests and har
   assert.ok(graceBefore);
   assert.equal(graceBefore.priority, "high");
   assert.match(graceBefore.reason, /grain not yet taken in/i);
-  assert.equal(before.body.visits.some((row) => row.farmerName === "Estere Mvula"), false);
+  assert.equal(
+    before.body.visits.some((row) => row.farmerName === "Estere Mvula"),
+    false
+  );
 
   await json(`${url}/api/advisor/ask`, {
     method: "POST",

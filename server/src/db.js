@@ -14,7 +14,27 @@ CREATE TABLE IF NOT EXISTS farmers (
   region TEXT NOT NULL,
   soil_type TEXT,
   nutrient_status TEXT,
-  created_at BIGINT NOT NULL
+  gender TEXT,
+  date_of_birth BIGINT,
+  national_id TEXT,
+  village TEXT,
+  marital_status TEXT,
+  household_size INTEGER,
+  household_type TEXT,
+  livestock TEXT,
+  primary_language TEXT DEFAULT 'en',
+  education_level TEXT,
+  years_of_experience INTEGER,
+  registration_source TEXT DEFAULT 'mobile_app',
+  verified INTEGER DEFAULT 0,
+  verification_date BIGINT,
+  status TEXT NOT NULL DEFAULT 'active',
+  email TEXT,
+  alternative_phone TEXT,
+  photo_url TEXT,
+  last_active_at BIGINT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS season_events (
@@ -38,7 +58,10 @@ CREATE TABLE IF NOT EXISTS staff (
   org TEXT NOT NULL,
   district TEXT,
   epa TEXT,
-  created_at BIGINT NOT NULL
+  status TEXT NOT NULL DEFAULT 'active',
+  created_by TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS warehouse_receipts (
@@ -59,6 +82,54 @@ CREATE TABLE IF NOT EXISTS warehouse_receipts (
 
 CREATE INDEX IF NOT EXISTS idx_receipts_farmer ON warehouse_receipts(farmer_id, created_at);
 
+CREATE TABLE IF NOT EXISTS loan_requests (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  receipt_id TEXT NOT NULL REFERENCES warehouse_receipts(id),
+  requested_amount INTEGER NOT NULL,
+  request_channel TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  requested_at BIGINT NOT NULL,
+  reviewed_by TEXT REFERENCES staff(id),
+  reviewed_at BIGINT,
+  approval_notes TEXT,
+  disbursed_at BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_loan_requests_farmer ON loan_requests(farmer_id, requested_at);
+CREATE INDEX IF NOT EXISTS idx_loan_requests_status ON loan_requests(status, requested_at);
+
+CREATE TABLE IF NOT EXISTS equipment (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  capacity TEXT,
+  rate_per_day INTEGER NOT NULL,
+  rate_per_hectare INTEGER,
+  supplier_id TEXT REFERENCES staff(id),
+  district TEXT,
+  status TEXT NOT NULL DEFAULT 'available',
+  created_at BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS equipment_bookings (
+  id TEXT PRIMARY KEY,
+  equipment_id TEXT NOT NULL REFERENCES equipment(id),
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  booking_date BIGINT NOT NULL,
+  start_date BIGINT NOT NULL,
+  end_date BIGINT,
+  hectares DOUBLE PRECISION,
+  total_cost INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at BIGINT NOT NULL,
+  confirmed_at BIGINT,
+  completed_at BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_farmer ON equipment_bookings(farmer_id, booking_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_equipment ON equipment_bookings(equipment_id, start_date);
+
 CREATE TABLE IF NOT EXISTS price_floors (
   crop TEXT PRIMARY KEY,
   price_per_kg INTEGER NOT NULL,
@@ -66,9 +137,24 @@ CREATE TABLE IF NOT EXISTS price_floors (
   updated_by TEXT
 );
 
+CREATE TABLE IF NOT EXISTS buyers (
+  id TEXT PRIMARY KEY,
+  staff_id TEXT REFERENCES staff(id),
+  name TEXT NOT NULL,
+  org TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  district TEXT,
+  commodities TEXT,
+  credit_limit INTEGER DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at BIGINT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS offtake_contracts (
   id TEXT PRIMARY KEY,
   buyer TEXT NOT NULL,
+  buyer_id TEXT REFERENCES buyers(id),
   crop TEXT NOT NULL,
   district TEXT NOT NULL,
   price_per_kg INTEGER NOT NULL,
@@ -99,17 +185,111 @@ CREATE TABLE IF NOT EXISTS farm_plans (
   updated_at BIGINT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS farm_plots (
-  farmer_id TEXT PRIMARY KEY REFERENCES farmers(id),
-  lat DOUBLE PRECISION NOT NULL,
-  lon DOUBLE PRECISION NOT NULL,
+CREATE TABLE IF NOT EXISTS farm_land_parcels (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  parcel_name TEXT,
   hectares DOUBLE PRECISION NOT NULL,
-  polygon_json TEXT NOT NULL,
-  source TEXT NOT NULL,
+  tenure_type TEXT NOT NULL DEFAULT 'customary',
+  lat DOUBLE PRECISION,
+  lon DOUBLE PRECISION,
+  polygon_json TEXT,
   accuracy_m DOUBLE PRECISION,
-  ndvi DOUBLE PRECISION NOT NULL,
+  soil_type TEXT,
+  topography TEXT,
+  water_access TEXT DEFAULT 'rainfed_only',
+  irrigation_type TEXT,
+  ndvi DOUBLE PRECISION,
+  last_ndvi_update BIGINT,
+  title_deed_number TEXT,
+  lease_expiry BIGINT,
+  landlord_name TEXT,
+  rental_cost_per_season INTEGER,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at BIGINT NOT NULL,
   updated_at BIGINT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_parcels_farmer ON farm_land_parcels(farmer_id, active);
+
+CREATE TABLE IF NOT EXISTS parcel_crop_history (
+  id TEXT PRIMARY KEY,
+  parcel_id TEXT NOT NULL REFERENCES farm_land_parcels(id),
+  crop TEXT NOT NULL,
+  season TEXT NOT NULL,
+  yield_kg DOUBLE PRECISION,
+  notes TEXT,
+  created_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_parcel_history ON parcel_crop_history(parcel_id, season);
+
+CREATE TABLE IF NOT EXISTS inputs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  unit TEXT NOT NULL,
+  standard_price INTEGER NOT NULL,
+  supplier TEXT,
+  description TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_inputs_category ON inputs(category, active);
+
+CREATE TABLE IF NOT EXISTS farmer_vouchers (
+  id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  issued_by TEXT NOT NULL REFERENCES staff(id),
+  season TEXT NOT NULL,
+  status TEXT NOT NULL,
+  issued_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  redeemed_at BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_vouchers_farmer ON farmer_vouchers(farmer_id, status);
+CREATE INDEX IF NOT EXISTS idx_vouchers_code ON farmer_vouchers(code);
+
+CREATE TABLE IF NOT EXISTS voucher_inputs (
+  id TEXT PRIMARY KEY,
+  voucher_id TEXT NOT NULL REFERENCES farmer_vouchers(id),
+  input_id TEXT NOT NULL REFERENCES inputs(id),
+  quantity DOUBLE PRECISION NOT NULL,
+  unit_price INTEGER NOT NULL,
+  subsidy_rate DOUBLE PRECISION NOT NULL,
+  farmer_contribution INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_voucher_inputs_voucher ON voucher_inputs(voucher_id);
+
+CREATE TABLE IF NOT EXISTS input_redemptions (
+  id TEXT PRIMARY KEY,
+  voucher_id TEXT NOT NULL REFERENCES farmer_vouchers(id),
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  agro_dealer TEXT NOT NULL,
+  location TEXT NOT NULL,
+  district TEXT NOT NULL,
+  staff_id TEXT REFERENCES staff(id),
+  redeemed_at BIGINT NOT NULL,
+  notes TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_redemptions_farmer ON input_redemptions(farmer_id, redeemed_at);
+CREATE INDEX IF NOT EXISTS idx_redemptions_district ON input_redemptions(district, redeemed_at);
+
+CREATE TABLE IF NOT EXISTS redemption_inputs (
+  id TEXT PRIMARY KEY,
+  redemption_id TEXT NOT NULL REFERENCES input_redemptions(id),
+  input_id TEXT NOT NULL REFERENCES inputs(id),
+  quantity_issued DOUBLE PRECISION NOT NULL,
+  batch_number TEXT,
+  expiry_date BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_redemption_inputs_redemption ON redemption_inputs(redemption_id);
 
 CREATE TABLE IF NOT EXISTS market_sources (
   id TEXT PRIMARY KEY,
@@ -216,6 +396,82 @@ CREATE TABLE IF NOT EXISTS market_price_alert_events (
 CREATE INDEX IF NOT EXISTS idx_market_alert_events_farmer ON market_price_alert_events(farmer_id, triggered_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_market_locations_type ON market_locations(type);
+
+CREATE TABLE IF NOT EXISTS farmer_groups (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  district TEXT NOT NULL,
+  epa TEXT,
+  registration_number TEXT,
+  registration_date BIGINT,
+  leader_farmer_id TEXT REFERENCES farmers(id),
+  status TEXT NOT NULL DEFAULT 'active',
+  member_count INTEGER DEFAULT 0,
+  created_at BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS farmer_group_members (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  group_id TEXT NOT NULL REFERENCES farmer_groups(id),
+  role TEXT NOT NULL DEFAULT 'member',
+  joined_at BIGINT NOT NULL,
+  left_at BIGINT,
+  status TEXT NOT NULL DEFAULT 'active'
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_group_members_unique ON farmer_group_members(farmer_id, group_id) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_group_members_farmer ON farmer_group_members(farmer_id, status);
+CREATE INDEX IF NOT EXISTS idx_group_members_group ON farmer_group_members(group_id, status);
+
+CREATE TABLE IF NOT EXISTS farmer_household_members (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  relationship TEXT NOT NULL,
+  name TEXT NOT NULL,
+  gender TEXT,
+  age INTEGER,
+  in_school INTEGER DEFAULT 0,
+  contributes_labor INTEGER DEFAULT 0,
+  has_disability INTEGER DEFAULT 0,
+  created_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_household_farmer ON farmer_household_members(farmer_id);
+
+CREATE TABLE IF NOT EXISTS farmer_assets (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  asset_type TEXT NOT NULL,
+  asset_name TEXT NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  condition TEXT,
+  acquisition_date BIGINT,
+  estimated_value INTEGER,
+  notes TEXT,
+  created_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_assets_farmer ON farmer_assets(farmer_id, asset_type);
+
+CREATE TABLE IF NOT EXISTS extension_visits (
+  id TEXT PRIMARY KEY,
+  farmer_id TEXT NOT NULL REFERENCES farmers(id),
+  staff_id TEXT NOT NULL REFERENCES staff(id),
+  visit_date BIGINT NOT NULL,
+  visit_type TEXT NOT NULL,
+  topics_covered TEXT,
+  recommendations TEXT,
+  farmer_feedback TEXT,
+  follow_up_required INTEGER DEFAULT 0,
+  follow_up_date BIGINT,
+  follow_up_notes TEXT,
+  created_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_visits_farmer ON extension_visits(farmer_id, visit_date);
+CREATE INDEX IF NOT EXISTS idx_visits_staff ON extension_visits(staff_id, visit_date);
 `;
 
 function toPgSql(sql) {
@@ -239,11 +495,7 @@ function compileSql(sql, params) {
     return { text: pgSql, values };
   }
 
-  const values = Array.isArray(params)
-    ? [...params]
-    : params === undefined
-      ? []
-      : [params];
+  const values = Array.isArray(params) ? [...params] : params === undefined ? [] : [params];
   let index = 0;
   pgSql = pgSql.replace(/\?/g, () => {
     index += 1;
@@ -343,7 +595,7 @@ export async function openDatabase(target) {
   const connectionString = process.env.DATABASE_URL || target;
   if (!connectionString || !String(connectionString).startsWith("postgres")) {
     throw new Error(
-      "Set DATABASE_URL to a PostgreSQL connection string (postgres://…). Tests may use openDatabase(\":memory:\")."
+      'Set DATABASE_URL to a PostgreSQL connection string (postgres://…). Tests may use openDatabase(":memory:").'
     );
   }
   return openPostgresDatabase(connectionString);

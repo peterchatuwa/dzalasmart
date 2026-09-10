@@ -5,12 +5,54 @@ const CACHE_MS = 10 * 60 * 1000;
 const cache = new Map();
 
 export const MARKET = [
-  { crop: "Irish potato", price: "MWK 900/kg", trend: "down", trendLabel: "↘ -3.6%", yieldKg: "12,000 kg", net: "MWK 7,400,000" },
-  { crop: "Maize (MH26)", price: "MWK 1,050/kg", trend: "up", trendLabel: "↗ +4.2%", yieldKg: "3,500 kg", net: "MWK 2,525,000" },
-  { crop: "Tobacco (burley)", price: "MWK 3,100/kg", trend: "up", trendLabel: "↗ +2.1%", yieldKg: "1,400 kg", net: "MWK 2,240,000" },
-  { crop: "Soya beans", price: "MWK 1,720/kg", trend: "up", trendLabel: "↗ +6.8%", yieldKg: "1,800 kg", net: "MWK 2,196,000" },
-  { crop: "Groundnuts", price: "MWK 2,400/kg", trend: "down", trendLabel: "↘ -1.4%", yieldKg: "1,200 kg", net: "MWK 2,100,000" },
-  { crop: "Pigeon peas", price: "MWK 1,150/kg", trend: "flat", trendLabel: "— 0.0%", yieldKg: "1,000 kg", net: "MWK 730,000" },
+  {
+    crop: "Irish potato",
+    price: "MWK 900/kg",
+    trend: "down",
+    trendLabel: "↘ -3.6%",
+    yieldKg: "12,000 kg",
+    net: "MWK 7,400,000",
+  },
+  {
+    crop: "Maize (MH26)",
+    price: "MWK 1,050/kg",
+    trend: "up",
+    trendLabel: "↗ +4.2%",
+    yieldKg: "3,500 kg",
+    net: "MWK 2,525,000",
+  },
+  {
+    crop: "Tobacco (burley)",
+    price: "MWK 3,100/kg",
+    trend: "up",
+    trendLabel: "↗ +2.1%",
+    yieldKg: "1,400 kg",
+    net: "MWK 2,240,000",
+  },
+  {
+    crop: "Soya beans",
+    price: "MWK 1,720/kg",
+    trend: "up",
+    trendLabel: "↗ +6.8%",
+    yieldKg: "1,800 kg",
+    net: "MWK 2,196,000",
+  },
+  {
+    crop: "Groundnuts",
+    price: "MWK 2,400/kg",
+    trend: "down",
+    trendLabel: "↘ -1.4%",
+    yieldKg: "1,200 kg",
+    net: "MWK 2,100,000",
+  },
+  {
+    crop: "Pigeon peas",
+    price: "MWK 1,150/kg",
+    trend: "flat",
+    trendLabel: "— 0.0%",
+    yieldKg: "1,000 kg",
+    net: "MWK 730,000",
+  },
 ];
 
 export function classifyAlert(weather) {
@@ -92,10 +134,11 @@ export async function fetchDistrictWeather(district) {
   if (cached && Date.now() - cached.at < CACHE_MS) return cached.data;
 
   const [lat, lon] = coords;
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-    + `&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`
-    + `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum`
-    + `&past_days=3&forecast_days=6&timezone=Africa%2FBlantyre`;
+  const url =
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m` +
+    `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
+    `&past_days=3&forecast_days=6&timezone=Africa%2FBlantyre`;
   let res = await fetch(url);
   if (!res.ok) {
     await sleep(400);

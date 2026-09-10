@@ -1,54 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nzeru za Alimi — USSD simulator</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=21">
-</head>
-<body>
-  <header class="topbar">
-    <div class="brand"><span class="seed"></span>Nzeru za Alimi</div>
-    <p class="topbar-note">Developer USSD simulator — not shown to farmers.</p>
-    <a class="nav-link" href="/">Farmer app</a>
-    <a class="nav-link" href="/staff">Staff desk</a>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nzeru za Alimi — USSD simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css?v=21" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span class="seed"></span>Nzeru za Alimi</div>
+      <p class="topbar-note">Developer USSD simulator — not shown to farmers.</p>
+      <a class="nav-link" href="/">Farmer app</a>
+      <a class="nav-link" href="/staff">Staff desk</a>
+    </header>
 
-  <main class="layout ussd-layout">
-    <section class="panel phone-panel" aria-label="USSD phone">
-      <div class="panel-label">Feature phone · POST /ussd</div>
-      <h1>Dial *413#</h1>
-      <p class="lede">Same Africa’s Talking payload a real gateway will send. The SIM number is the farmer — no app login.</p>
+    <main class="layout ussd-layout">
+      <section class="panel phone-panel" aria-label="USSD phone">
+        <div class="panel-label">Feature phone · POST /ussd</div>
+        <h1>Dial *413#</h1>
+        <p class="lede">
+          Same Africa’s Talking payload a real gateway will send. The SIM number is the farmer — no app login.
+        </p>
 
-      <label class="ussd-phone-label">Phone on this SIM
-        <input id="ussdPhone" value="+265888000003">
-      </label>
+        <label class="ussd-phone-label"
+          >Phone on this SIM
+          <input id="ussdPhone" value="+265888000003" />
+        </label>
 
-      <div class="phone">
-        <div class="phone-screen">
-          <div class="screen-title">*413# — Nzeru za Alimi</div>
-          <pre class="screen-body" id="ussdScreen">Press Dial to start a USSD session.</pre>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="screen-title">*413# — Nzeru za Alimi</div>
+            <pre class="screen-body" id="ussdScreen">Press Dial to start a USSD session.</pre>
+          </div>
+          <div class="keypad" id="ussdKeys"></div>
         </div>
-        <div class="keypad" id="ussdKeys"></div>
+        <div class="ussd-actions">
+          <button type="button" class="primary" id="ussdDial">Dial *413#</button>
+          <button type="button" class="ghost" id="ussdHangup">End session</button>
+        </div>
+      </section>
+    </main>
+
+    <section class="wire" aria-label="Network traffic">
+      <div class="wire-head">
+        <h2>Live traffic to the server</h2>
+        <button type="button" class="ghost" id="clearWire">Clear</button>
       </div>
-      <div class="ussd-actions">
-        <button type="button" class="primary" id="ussdDial">Dial *413#</button>
-        <button type="button" class="ghost" id="ussdHangup">End session</button>
-      </div>
+      <p class="hint">USSD requests and responses for debugging.</p>
+      <div id="wireLog" class="wire-log"></div>
     </section>
-  </main>
 
-  <section class="wire" aria-label="Network traffic">
-    <div class="wire-head">
-      <h2>Live traffic to the server</h2>
-      <button type="button" class="ghost" id="clearWire">Clear</button>
-    </div>
-    <p class="hint">USSD requests and responses for debugging.</p>
-    <div id="wireLog" class="wire-log"></div>
-  </section>
-
-  <script src="/ussd.js?v=1"></script>
-</body>
+    <script src="/ussd.js?v=1"></script>
+  </body>
 </html>

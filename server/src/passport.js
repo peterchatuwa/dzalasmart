@@ -4,10 +4,22 @@ function tierFor(score, stagesLogged) {
   if (stagesLogged === 0) {
     return { grade: "—", label: "Unrated", status: "Log the season to start a credit record." };
   }
-  if (score >= 650) return { grade: "A", label: "Bankable", status: "Verified grain and a cleared sale sit on this record." };
-  if (score >= 550) return { grade: "B", label: "Bankable — building", status: "Warehouse evidence is on file. A cleared sale would lift this further." };
-  if (score >= 450) return { grade: "C", label: "Developing", status: "The season log is underway. Graded grain is the next proof lenders look for." };
-  if (score >= 340) return { grade: "D", label: "Early record", status: "Identity is on the register. Keep logging stages." };
+  if (score >= 650)
+    return { grade: "A", label: "Bankable", status: "Verified grain and a cleared sale sit on this record." };
+  if (score >= 550)
+    return {
+      grade: "B",
+      label: "Bankable — building",
+      status: "Warehouse evidence is on file. A cleared sale would lift this further.",
+    };
+  if (score >= 450)
+    return {
+      grade: "C",
+      label: "Developing",
+      status: "The season log is underway. Graded grain is the next proof lenders look for.",
+    };
+  if (score >= 340)
+    return { grade: "D", label: "Early record", status: "Identity is on the register. Keep logging stages." };
   return { grade: "F", label: "Incomplete", status: "Not yet enough verified activity for a lender to read." };
 }
 
