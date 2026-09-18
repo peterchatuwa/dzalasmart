@@ -1,0 +1,72 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                   🚀 QUICK START - BUILD APK                             ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📂 STEP 1: CLONE REPOSITORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd C:\Users\peter\Projects
+git clone https://github.com/peterchatuwa/dzalasmart.git
+cd dzalasmart
+git checkout cursor/comprehensive-improvements-7360
+
+🔧 STEP 2: BUILD APK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd farmer-app
+npm install
+npx cap sync android
+npx cap open android
+
+(Wait for Gradle sync, then: Build → Build APK)
+
+📱 STEP 3: INSTALL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+APK Location:
+android\app\build\outputs\apk\debug\app-debug.apk
+
+Install via ADB:
+adb install app-debug.apk
+
+Or copy to phone and tap to install.
+
+🧪 TEST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Login: +265888000101
+PIN:   0000
+
+📚 DETAILED GUIDES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+→ CLONE_AND_BUILD_STEP_BY_STEP.md   (Complete guide)
+→ REBUILD_APK_NOW.md                (After crash fixes)
+→ APK_CRASH_FIXES.md                (Technical details)
+→ BUILD_ON_YOUR_MACHINE_NOW.md      (Original guide)
+
+⏱️ TIME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Total: 10-15 minutes (first time)
+
+✅ CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☐ Git installed
+☐ Node.js v22+ installed
+☐ Android Studio installed
+☐ Repository cloned
+☐ Correct branch checked out
+☐ Dependencies installed
+☐ APK built
+☐ APK installed on phone
+☐ App opens successfully
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  Repository: https://github.com/peterchatuwa/dzalasmart                 ║
+║  Branch: cursor/comprehensive-improvements-7360                          ║
+║  Status: ✅ Ready to build                                               ║
+╚══════════════════════════════════════════════════════════════════════════╝
