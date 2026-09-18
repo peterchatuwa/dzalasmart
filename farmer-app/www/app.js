@@ -5,33 +5,46 @@ const API_URL = 'https://api.zammunda.com';
 let currentFarmer = null;
 let authToken = null;
 
-// Initialize app
-document.addEventListener('DOMContentLoaded', async () => {
+// Wait for Capacitor to be ready
+async function initializeApp() {
     console.log('App initializing...');
     
-    // Check for saved session
-    const session = await Preferences.get({ key: 'farmer_session' });
-    
-    setTimeout(async () => {
-        hideLoading();
+    try {
+        // Check for saved session
+        const session = await Preferences.get({ key: 'farmer_session' });
         
-        if (session.value) {
-            try {
-                const sessionData = JSON.parse(session.value);
-                authToken = sessionData.token;
-                await loadFarmerData();
-                showMainApp();
-            } catch (error) {
-                console.error('Session restore failed:', error);
+        setTimeout(async () => {
+            hideLoading();
+            
+            if (session.value) {
+                try {
+                    const sessionData = JSON.parse(session.value);
+                    authToken = sessionData.token;
+                    await loadFarmerData();
+                    showMainApp();
+                } catch (error) {
+                    console.error('Session restore failed:', error);
+                    showLogin();
+                }
+            } else {
                 showLogin();
             }
-        } else {
-            showLogin();
-        }
-    }, 2000);
+        }, 1000);
+    } catch (error) {
+        console.error('Initialization error:', error);
+        hideLoading();
+        showLogin();
+    }
     
     setupEventListeners();
-});
+}
+
+// Initialize app when both DOM and Capacitor are ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -65,6 +78,10 @@ async function handleLogin(e) {
     const phone = document.getElementById('loginPhone').value;
     const pin = document.getElementById('loginPin').value;
     
+    const loginBtn = e.target.querySelector('button[type="submit"]');
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Logging in...';
+    
     try {
         const response = await fetch(`${API_URL}/api/farmers/login`, {
             method: 'POST',
@@ -78,26 +95,38 @@ async function handleLogin(e) {
             currentFarmer = data.farmer;
             
             // Save session
-            await Preferences.set({
-                key: 'farmer_session',
-                value: JSON.stringify({ token: authToken, farmer: currentFarmer })
-            });
+            try {
+                await Preferences.set({
+                    key: 'farmer_session',
+                    value: JSON.stringify({ token: authToken, farmer: currentFarmer })
+                });
+            } catch (prefError) {
+                console.warn('Could not save session:', prefError);
+            }
             
             await loadFarmerData();
             showMainApp();
             showToast('Welcome back!', 'success');
         } else {
-            showToast('Invalid phone number or PIN', 'error');
+            const errorData = await response.json().catch(() => ({}));
+            showToast(errorData.message || 'Invalid phone number or PIN', 'error');
         }
     } catch (error) {
         console.error('Login error:', error);
-        showToast('Connection error. Please try again.', 'error');
+        showToast('Connection error. Please check your internet.', 'error');
+    } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
     }
 }
 
 async function handleLogout() {
     if (confirm('Are you sure you want to logout?')) {
-        await Preferences.remove({ key: 'farmer_session' });
+        try {
+            await Preferences.remove({ key: 'farmer_session' });
+        } catch (error) {
+            console.warn('Could not clear session:', error);
+        }
         authToken = null;
         currentFarmer = null;
         showLogin();
@@ -132,27 +161,45 @@ async function loadFarmerData() {
 function updateUI() {
     if (!currentFarmer) return;
     
-    // Home tab
-    document.getElementById('welcomeName').textContent = `Welcome, ${currentFarmer.name}!`;
-    document.getElementById('welcomeDistrict').textContent = `${currentFarmer.district} - ${currentFarmer.epa || ''}`;
-    
-    // Stats
-    document.getElementById('totalLand').textContent = currentFarmer.totalLand || '0';
-    document.getElementById('totalReceipts').textContent = currentFarmer.receipts?.length || '0';
-    document.getElementById('totalLoans').textContent = currentFarmer.loans?.active || '0';
-    
-    // Profile tab
-    document.getElementById('profileName').textContent = currentFarmer.name;
-    document.getElementById('profilePhone').textContent = currentFarmer.phone;
-    document.getElementById('profileDistrict').textContent = currentFarmer.district || '--';
-    document.getElementById('profileEpa').textContent = currentFarmer.epa || '--';
-    document.getElementById('profileVillage').textContent = currentFarmer.village || '--';
-    document.getElementById('profileGender').textContent = currentFarmer.gender || '--';
-    document.getElementById('profileHousehold').textContent = currentFarmer.household_size || '--';
-    document.getElementById('profileHouseholdType').textContent = formatHouseholdType(currentFarmer.household_type);
-    
-    // Recent activity
-    updateRecentActivity();
+    try {
+        // Home tab
+        const welcomeName = document.getElementById('welcomeName');
+        const welcomeDistrict = document.getElementById('welcomeDistrict');
+        if (welcomeName) welcomeName.textContent = `Welcome, ${currentFarmer.name || 'Farmer'}!`;
+        if (welcomeDistrict) welcomeDistrict.textContent = `${currentFarmer.district || 'Unknown'} - ${currentFarmer.epa || ''}`;
+        
+        // Stats
+        const totalLand = document.getElementById('totalLand');
+        const totalReceipts = document.getElementById('totalReceipts');
+        const totalLoans = document.getElementById('totalLoans');
+        if (totalLand) totalLand.textContent = currentFarmer.totalLand || '0';
+        if (totalReceipts) totalReceipts.textContent = currentFarmer.receipts?.length || '0';
+        if (totalLoans) totalLoans.textContent = currentFarmer.loans?.active || '0';
+        
+        // Profile tab
+        const profileName = document.getElementById('profileName');
+        const profilePhone = document.getElementById('profilePhone');
+        const profileDistrict = document.getElementById('profileDistrict');
+        const profileEpa = document.getElementById('profileEpa');
+        const profileVillage = document.getElementById('profileVillage');
+        const profileGender = document.getElementById('profileGender');
+        const profileHousehold = document.getElementById('profileHousehold');
+        const profileHouseholdType = document.getElementById('profileHouseholdType');
+        
+        if (profileName) profileName.textContent = currentFarmer.name || '--';
+        if (profilePhone) profilePhone.textContent = currentFarmer.phone || '--';
+        if (profileDistrict) profileDistrict.textContent = currentFarmer.district || '--';
+        if (profileEpa) profileEpa.textContent = currentFarmer.epa || '--';
+        if (profileVillage) profileVillage.textContent = currentFarmer.village || '--';
+        if (profileGender) profileGender.textContent = currentFarmer.gender || '--';
+        if (profileHousehold) profileHousehold.textContent = currentFarmer.household_size || '--';
+        if (profileHouseholdType) profileHouseholdType.textContent = formatHouseholdType(currentFarmer.household_type);
+        
+        // Recent activity
+        updateRecentActivity();
+    } catch (error) {
+        console.error('Error updating UI:', error);
+    }
 }
 
 async function loadReceipts() {
