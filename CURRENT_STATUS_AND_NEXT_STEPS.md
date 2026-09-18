@@ -235,7 +235,7 @@ pm2 restart nzeru-server
 1. Airtel sends test USSD request through VPN
 2. Verify request reaches your server
 3. Verify response goes back through VPN
-4. Test full USSD flow (*384# menu navigation)
+4. Test full USSD flow (*413# menu navigation)
 
 ---
 

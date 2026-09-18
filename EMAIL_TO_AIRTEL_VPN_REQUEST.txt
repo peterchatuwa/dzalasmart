@@ -5,14 +5,14 @@
 
 TO: [Airtel USSD Integration Team Email]
 CC: [Airtel Technical Support / Account Manager]
-SUBJECT: USSD Integration VPN Configuration Request - Nzeru za Alimi (*384#)
+SUBJECT: USSD Integration VPN Configuration Request - Nzeru za Alimi (*413#)
 
 --------------------------------------------------------------------------------
 
 Dear Airtel USSD Integration Team,
 
 We are in the process of setting up USSD integration for our service "Nzeru za 
-Alimi" (Smart Farming Platform) using short code *384#.
+Alimi" (Smart Farming Platform) using short code *413#.
 
 We understand that Airtel requires VPN connectivity for all USSD integrations 
 for security purposes. To proceed with the setup, we kindly request the 
@@ -80,7 +80,7 @@ USSD API Endpoint:          https://api.zammunda.com/ussd
 VPN Capabilities:           We can support IPSec (StrongSwan), OpenVPN, 
                             WireGuard, or any standard VPN protocol.
 
-USSD Service Code:          *384#
+USSD Service Code:          *413#
 Service Name:               Nzeru za Alimi (Smart Farming Platform)
 
 
@@ -157,7 +157,7 @@ Phone: [Your Phone Number]
 
 ────────────────────────────────────────────────────────────────────────────
 Service: Nzeru za Alimi (Smart Farming Platform)
-USSD Code: *384#
+USSD Code: *413#
 Server: api.zammunda.com (37.60.252.211)
 Date: September 17, 2026
 ────────────────────────────────────────────────────────────────────────────

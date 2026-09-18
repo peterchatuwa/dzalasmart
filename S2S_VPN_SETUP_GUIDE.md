@@ -383,7 +383,7 @@ ping -I 10.8.0.1 -c 4 172.26.166.100
 ```bash
 # From your server, test local endpoint
 curl -X POST http://localhost:3000/ussd \
-  -d "sessionId=test123&serviceCode=*384#&phoneNumber=%2B265888000001&text="
+  -d "sessionId=test123&serviceCode=*413#&phoneNumber=%2B265888000001&text="
 
 # Ask Airtel to test from their side
 # They should send test USSD request through VPN

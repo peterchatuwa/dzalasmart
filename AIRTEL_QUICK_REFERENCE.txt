@@ -21,7 +21,7 @@
 
    Request Parameters:
      • sessionId:       (Airtel provides)
-     • serviceCode:     (e.g., *384#)
+     • serviceCode:     (e.g., *413#)
      • phoneNumber:     (User's number, e.g., +265888123456)
      • text:            (User's input)
 

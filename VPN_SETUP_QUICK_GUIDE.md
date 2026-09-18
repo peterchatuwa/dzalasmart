@@ -163,7 +163,7 @@ ping <airtel-vpn-gateway-ip>
 
 # 5. Test USSD endpoint accessibility
 curl -X POST http://localhost:3000/ussd \
-  -d "sessionId=test&serviceCode=*384#&phoneNumber=+265888000001&text="
+  -d "sessionId=test&serviceCode=*413#&phoneNumber=+265888000001&text="
 ```
 
 ---

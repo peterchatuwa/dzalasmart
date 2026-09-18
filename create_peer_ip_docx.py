@@ -189,7 +189,7 @@ def create_peer_ip_document():
     
     params = [
         ('sessionId', 'Session identifier (provided by Airtel)', 'String', 'Required'),
-        ('serviceCode', 'USSD short code (e.g., *384#)', 'String', 'Required'),
+        ('serviceCode', 'USSD short code (e.g., *413#)', 'String', 'Required'),
         ('phoneNumber', 'User\'s phone number (E.164 format)', 'String', 'Required'),
         ('text', 'User\'s input text', 'String', 'Optional')
     ]
@@ -336,7 +336,7 @@ def create_peer_ip_document():
     doc.add_paragraph('Connection Flow Diagram:')
     
     flow = [
-        '1. User dials *384# on their mobile phone',
+        '1. User dials *413# on their mobile phone',
         '2. Request reaches Airtel Mobile Network',
         '3. Airtel USSD Gateway (SOURCE) processes the request',
         '   Internal Gateway IPs: 172.26.166.100-103, 172.26.166.41-43, etc.',
@@ -402,7 +402,7 @@ def create_peer_ip_document():
     p.add_run('Command: ').bold = True
     
     test_cmd = '''curl -X POST https://api.zammunda.com/ussd \\
-  -d "sessionId=test123&serviceCode=*384#&phoneNumber=%2B265888000001&text="'''
+  -d "sessionId=test123&serviceCode=*413#&phoneNumber=%2B265888000001&text="'''
     code_p = doc.add_paragraph(test_cmd)
     code_p.paragraph_format.left_indent = Inches(0.5)
     for run in code_p.runs:

@@ -5,14 +5,14 @@
 
 TO: [Airtel USSD Integration Team Email]
 CC: [Airtel Technical Support / Account Manager]
-SUBJECT: Site-to-Site (S2S) VPN Configuration Request - USSD Integration (*384#)
+SUBJECT: Site-to-Site (S2S) VPN Configuration Request - USSD Integration (*413#)
 
 --------------------------------------------------------------------------------
 
 Dear Airtel USSD Integration Team,
 
 We are setting up USSD integration for our service "Nzeru za Alimi" (Smart 
-Farming Platform) using short code *384#.
+Farming Platform) using short code *413#.
 
 We understand that Airtel requires a **Site-to-Site (S2S) VPN** connection 
 between our server and Airtel's USSD gateway for secure USSD traffic routing.
@@ -141,7 +141,7 @@ Network Capabilities:
    • Static IP: Yes (37.60.252.211)
 
 USSD Service Details:
-   • Service Code: *384#
+   • Service Code: *413#
    • Service Name: Nzeru za Alimi (Smart Farming Platform)
    • Expected Traffic: Low to medium volume
    • Availability: 24/7
@@ -279,7 +279,7 @@ Server: api.zammunda.com (37.60.252.211)
 
 ────────────────────────────────────────────────────────────────────────────
 Service: Nzeru za Alimi - Smart Farming Platform
-USSD Code: *384#
+USSD Code: *413#
 VPN Type: Site-to-Site (S2S) VPN
 Our VPN Endpoint: 37.60.252.211 (api.zammunda.com)
 Date: September 17, 2026
@@ -306,7 +306,7 @@ ATTACHMENTS (Optional):
 3. Replace [Your Phone Number] with your actual phone number
 4. Add Airtel USSD Integration Team email address in "To:" field
 5. CC: Airtel technical support and your account manager
-6. Subject: "Site-to-Site (S2S) VPN Configuration Request - USSD (*384#)"
+6. Subject: "Site-to-Site (S2S) VPN Configuration Request - USSD (*413#)"
 7. Attach any relevant documents
 8. Send and keep a copy for records
 9. Follow up after 2-3 business days if no response

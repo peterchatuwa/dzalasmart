@@ -173,7 +173,7 @@ Please provide the Pre-Shared Key so we can:
 
 Service Details:
 - Service: Nzeru za Alimi (Smart Farming Platform)
-- USSD Code: *384#
+- USSD Code: *413#
 - API Endpoint: https://api.zammunda.com/ussd
 
 Thank you for your support.
@@ -264,7 +264,7 @@ pm2 restart nzeru-server
    - Verify response goes back
 
 3. **Full USSD Flow:**
-   - Test dialing *384#
+   - Test dialing *413#
    - Test menu navigation
    - Test farmer registration
    - Test full workflows

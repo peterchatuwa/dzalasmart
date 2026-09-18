@@ -96,7 +96,7 @@ Airtel should configure their firewall to:
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                          │
 │  [User's Phone]                                                         │
-│       ↓ Dials *384#                                                     │
+│       ↓ Dials *413#                                                     │
 │       ↓                                                                  │
 │  [Airtel Mobile Network]                                                │
 │       ↓                                                                  │
@@ -228,7 +228,7 @@ Before going live, Airtel can test connectivity:
 
 2. USSD endpoint test (POST):
    curl -X POST https://api.zammunda.com/ussd \
-     -d "sessionId=test123&serviceCode=*384#&phoneNumber=%2B265888000001&text="
+     -d "sessionId=test123&serviceCode=*413#&phoneNumber=%2B265888000001&text="
    
    Should return:
    CON Enter your PIN:

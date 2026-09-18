@@ -203,7 +203,7 @@ Subject: USSD Integration VPN Configuration Request - Nzeru za Alimi
 
 Dear Airtel USSD Integration Team,
 
-We are setting up USSD integration for service code *384# (Nzeru za Alimi 
+We are setting up USSD integration for service code *413# (Nzeru za Alimi 
 - Smart Farming Platform) and understand that VPN connectivity is required.
 
 Please provide the following VPN configuration details:
@@ -263,7 +263,7 @@ Once you receive Airtel's VPN details, I can help you:
 
 ```
 [User Phone] 
-    ↓ *384#
+    ↓ *413#
 [Airtel Mobile Network]
     ↓
 [Airtel USSD Gateway] 172.26.x.x
