@@ -1,9 +1,10 @@
-import { Preferences } from '@capacitor/preferences';
-
 // Configuration
 const API_URL = 'https://api.zammunda.com';
 let currentFarmer = null;
 let authToken = null;
+
+// Get Capacitor Preferences plugin from global
+const { Preferences } = window.Capacitor?.Plugins || {};
 
 // Wait for Capacitor to be ready
 async function initializeApp() {
@@ -11,7 +12,7 @@ async function initializeApp() {
     
     try {
         // Check for saved session
-        const session = await Preferences.get({ key: 'farmer_session' });
+        const session = Preferences ? await Preferences.get({ key: 'farmer_session' }) : { value: null };
         
         setTimeout(async () => {
             hideLoading();
@@ -96,10 +97,12 @@ async function handleLogin(e) {
             
             // Save session
             try {
-                await Preferences.set({
-                    key: 'farmer_session',
-                    value: JSON.stringify({ token: authToken, farmer: currentFarmer })
-                });
+                if (Preferences) {
+                    await Preferences.set({
+                        key: 'farmer_session',
+                        value: JSON.stringify({ token: authToken, farmer: currentFarmer })
+                    });
+                }
             } catch (prefError) {
                 console.warn('Could not save session:', prefError);
             }
@@ -123,7 +126,9 @@ async function handleLogin(e) {
 async function handleLogout() {
     if (confirm('Are you sure you want to logout?')) {
         try {
-            await Preferences.remove({ key: 'farmer_session' });
+            if (Preferences) {
+                await Preferences.remove({ key: 'farmer_session' });
+            }
         } catch (error) {
             console.warn('Could not clear session:', error);
         }
