@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════════════
+  PROBLEM: You're installing the OLD APK with the OLD code
+═══════════════════════════════════════════════════════════════
+
+The error in your logcat shows the OLD app.js is still being used:
+  "Failed to resolve module specifier \"@capacitor/preferences\""
+
+This means the Android build is using CACHED web files, not the 
+latest ones from GitHub.
+
+═══════════════════════════════════════════════════════════════
+  SOLUTION: Sync the new web files to Android assets
+═══════════════════════════════════════════════════════════════
+
+Run this in PowerShell from the dzalasmart folder:
+
+cd C:\Users\peter\Projects\dzalasmart
+
+# 1. Pull latest code
+git pull origin cursor/comprehensive-improvements-7360
+
+# 2. Copy the fixed web files to Android assets
+Copy-Item farmer-app\www\* -Destination farmer-app\android\app\src\main\assets\public\ -Recurse -Force
+
+# 3. Verify the fix is in place
+Get-Content farmer-app\android\app\src\main\assets\public\app.js | Select-String "window.Capacitor"
+
+You should see: "const { Preferences } = window.Capacitor?.Plugins || {};"
+
+# 4. Clean and rebuild in Android Studio
+cd farmer-app\android
+Remove-Item -Recurse -Force build, app\build, .gradle\caches -ErrorAction SilentlyContinue
+
+Then in Android Studio:
+  - File -> Invalidate Caches / Restart
+  - Build -> Clean Project
+  - Build -> Rebuild Project
+  - Build -> Build APK(s)
+
+# 5. Install the NEW APK
+adb install -r app\build\outputs\apk\debug\app-debug.apk
+
+═══════════════════════════════════════════════════════════════
+  OR: Use the automated script
+═══════════════════════════════════════════════════════════════
+
+I've created a PowerShell script that does steps 1-3 automatically:
+
+cd C:\Users\peter\Projects\dzalasmart
+.\SYNC_AND_BUILD.ps1
+
+Then follow the on-screen instructions for Android Studio.
+
+═══════════════════════════════════════════════════════════════
