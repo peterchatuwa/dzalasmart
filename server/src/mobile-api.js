@@ -23,10 +23,7 @@ async function saveMobileFarmer(db, data) {
   } = data;
 
   // Check if farmer already exists
-  const existing = await db.one(
-    'SELECT id FROM farmers WHERE phone = $1',
-    [phone]
-  ).catch(() => null);
+  const existing = await db.prepare('SELECT id FROM farmers WHERE phone = ?').get(phone);
 
   if (existing) {
     return {
@@ -59,32 +56,31 @@ async function saveMobileFarmer(db, data) {
   const dobTimestamp = dateOfBirth ? new Date(dateOfBirth).getTime() : null;
 
   // Insert new farmer
-  await db.none(
+  await db.prepare(
     `INSERT INTO farmers (
       id, code, name, phone, pin_hash, district, epa, region, village,
       gender, date_of_birth, household_size, household_type, livestock,
       registration_source, status, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
-    [
-      farmerId,
-      farmerCode,
-      fullName,
-      phone,
-      defaultPin,
-      district,
-      epa || null,
-      region,
-      village || null,
-      gender || null,
-      dobTimestamp,
-      householdSize || null,
-      householdType || null,
-      livestock || null,
-      'mobile_app',
-      'active',
-      now,
-      now
-    ]
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    farmerId,
+    farmerCode,
+    fullName,
+    phone,
+    defaultPin,
+    district,
+    epa || null,
+    region,
+    village || null,
+    gender || null,
+    dobTimestamp,
+    householdSize || null,
+    householdType || null,
+    livestock || null,
+    'mobile_app',
+    'active',
+    now,
+    now
   );
 
   // Store photo if provided (base64)
@@ -116,10 +112,7 @@ async function saveMobileParcel(db, data) {
   } = data;
 
   // Find farmer by phone
-  const farmer = await db.one(
-    'SELECT id FROM farmers WHERE phone = $1',
-    [farmerPhone]
-  ).catch(() => null);
+  const farmer = await db.prepare('SELECT id FROM farmers WHERE phone = ?').get(farmerPhone);
 
   if (!farmer) {
     return {
@@ -142,27 +135,26 @@ async function saveMobileParcel(db, data) {
   const waterAccess = waterAccessMap[waterSource] || 'rainfed_only';
 
   // Insert parcel
-  await db.none(
+  await db.prepare(
     `INSERT INTO farm_land_parcels (
       id, farmer_id, parcel_name, hectares, tenure_type, 
       lat, lon, accuracy_m, soil_type, water_access,
       active, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-    [
-      parcelId,
-      farmer.id,
-      name,
-      size,
-      tenure || 'customary',
-      location?.latitude || null,
-      location?.longitude || null,
-      location?.accuracy || null,
-      soilType || null,
-      waterAccess,
-      1, // active
-      now,
-      now
-    ]
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    parcelId,
+    farmer.id,
+    name,
+    size,
+    tenure || 'customary',
+    location?.latitude || null,
+    location?.longitude || null,
+    location?.accuracy || null,
+    soilType || null,
+    waterAccess,
+    1, // active
+    now,
+    now
   );
 
   return {
@@ -193,10 +185,7 @@ async function saveMobileCrop(db, data) {
   } = data;
 
   // Find farmer by phone
-  const farmer = await db.one(
-    'SELECT id FROM farmers WHERE phone = $1',
-    [farmerPhone]
-  ).catch(() => null);
+  const farmer = await db.prepare('SELECT id FROM farmers WHERE phone = ?').get(farmerPhone);
 
   if (!farmer) {
     return {
@@ -206,10 +195,9 @@ async function saveMobileCrop(db, data) {
   }
 
   // Find parcel by name and farmer
-  const parcel = await db.one(
-    'SELECT id FROM farm_land_parcels WHERE farmer_id = $1 AND parcel_name = $2',
-    [farmer.id, parcelName]
-  ).catch(() => null);
+  const parcel = await db.prepare(
+    'SELECT id FROM farm_land_parcels WHERE farmer_id = ? AND parcel_name = ?'
+  ).get(farmer.id, parcelName);
 
   if (!parcel) {
     return {
@@ -237,19 +225,18 @@ async function saveMobileCrop(db, data) {
     notes
   ].filter(Boolean).join('. ');
 
-  await db.none(
+  await db.prepare(
     `INSERT INTO parcel_crop_history (
       id, parcel_id, crop, season, yield_kg, notes, created_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [
-      historyId,
-      parcel.id,
-      cropType,
-      season,
-      expectedYield || null,
-      notesText || null,
-      now
-    ]
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    historyId,
+    parcel.id,
+    cropType,
+    season,
+    expectedYield || null,
+    notesText || null,
+    now
   );
 
   return {
@@ -288,7 +275,7 @@ async function getMobileStats(db, filters = {}) {
     : '';
 
   // Get counts
-  const stats = await db.one(
+  const stats = await db.prepare(
     `SELECT
       COUNT(DISTINCT f.id) as farmers_count,
       COUNT(DISTINCT p.id) as parcels_count,
@@ -298,12 +285,11 @@ async function getMobileStats(db, filters = {}) {
     FROM farmers f
     LEFT JOIN farm_land_parcels p ON p.farmer_id = f.id
     LEFT JOIN parcel_crop_history c ON c.parcel_id = p.id
-    ${whereClause}`,
-    params
-  );
+    ${whereClause}`
+  ).get(...params);
 
   // Get crop breakdown
-  const cropBreakdown = await db.any(
+  const cropBreakdown = await db.prepare(
     `SELECT
       c.crop,
       COUNT(*) as count,
@@ -313,9 +299,8 @@ async function getMobileStats(db, filters = {}) {
     JOIN farmers f ON f.id = p.farmer_id
     ${whereClause}
     GROUP BY c.crop
-    ORDER BY count DESC`,
-    params
-  );
+    ORDER BY count DESC`
+  ).all(...params);
 
   return {
     farmers_count: parseInt(stats.farmers_count),
@@ -331,7 +316,7 @@ async function getMobileStats(db, filters = {}) {
  * Get recent mobile submissions for monitoring
  */
 async function getRecentMobileSubmissions(db, limit = 50) {
-  const farmers = await db.any(
+  const farmers = await db.prepare(
     `SELECT 
       id, phone, name, district, epa,
       created_at as timestamp,
@@ -339,11 +324,10 @@ async function getRecentMobileSubmissions(db, limit = 50) {
     FROM farmers
     WHERE registration_source = 'mobile_app'
     ORDER BY created_at DESC
-    LIMIT $1`,
-    [Math.floor(limit / 3)]
-  );
+    LIMIT ?`
+  ).all(Math.floor(limit / 3));
 
-  const parcels = await db.any(
+  const parcels = await db.prepare(
     `SELECT
       p.id, f.phone, p.parcel_name as name, p.hectares,
       p.created_at as timestamp,
@@ -351,11 +335,10 @@ async function getRecentMobileSubmissions(db, limit = 50) {
     FROM farm_land_parcels p
     JOIN farmers f ON f.id = p.farmer_id
     ORDER BY p.created_at DESC
-    LIMIT $1`,
-    [Math.floor(limit / 3)]
-  );
+    LIMIT ?`
+  ).all(Math.floor(limit / 3));
 
-  const crops = await db.any(
+  const crops = await db.prepare(
     `SELECT
       c.id, f.phone, c.crop, c.yield_kg,
       c.created_at as timestamp,
@@ -364,9 +347,8 @@ async function getRecentMobileSubmissions(db, limit = 50) {
     JOIN farm_land_parcels p ON p.id = c.parcel_id
     JOIN farmers f ON f.id = p.farmer_id
     ORDER BY c.created_at DESC
-    LIMIT $1`,
-    [Math.floor(limit / 3)]
-  );
+    LIMIT ?`
+  ).all(Math.floor(limit / 3));
 
   // Combine and sort by timestamp
   const all = [...farmers, ...parcels, ...crops]
