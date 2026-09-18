@@ -1,4 +1,4 @@
-package com.zammunda.nzeru;
+package com.zammunda.nzeru.farmer;
 
 import com.getcapacitor.BridgeActivity;
 
