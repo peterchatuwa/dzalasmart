@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nzeru za Alimi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">🌾</div>
+            <h2>Nzeru za Alimi</h2>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen" style="display:none;">
+        <div class="login-container">
+            <div class="logo-section">
+                <div class="app-logo">🌾</div>
+                <h1>Nzeru za Alimi</h1>
+                <p class="tagline">Agricultural Management System</p>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginPhone">Phone Number</label>
+                    <input type="tel" id="loginPhone" placeholder="+265..." required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPin">PIN</label>
+                    <input type="password" id="loginPin" placeholder="Enter PIN" maxlength="4" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+
+            <div class="help-section">
+                <p>Need help? Contact your extension officer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="screen" style="display:none;">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-content">
+                <h1 class="app-title">Nzeru za Alimi</h1>
+                <button id="logoutBtn" class="icon-btn">🚪</button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="home">🏠 Home</button>
+            <button class="tab-btn" data-tab="profile">👤 Profile</button>
+            <button class="tab-btn" data-tab="receipts">📄 Receipts</button>
+            <button class="tab-btn" data-tab="market">💰 Market</button>
+            <button class="tab-btn" data-tab="advisor">💬 Advisor</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Home Tab -->
+            <div id="homeTab" class="tab-pane active">
+                <div class="welcome-card">
+                    <h2 id="welcomeName">Welcome!</h2>
+                    <p id="welcomeDistrict"></p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🌾</div>
+                        <div class="stat-value" id="totalLand">--</div>
+                        <div class="stat-label">Hectares</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-value" id="totalReceipts">--</div>
+                        <div class="stat-label">Receipts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-value" id="totalLoans">--</div>
+                        <div class="stat-label">Loans</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivity" class="activity-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="switchTab('receipts')">
+                            📄 View Receipts
+                        </button>
+                        <button class="action-btn" onclick="switchTab('market')">
+                            💰 Check Prices
+                        </button>
+                        <button class="action-btn" onclick="switchTab('advisor')">
+                            💬 Ask Advisor
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profileTab" class="tab-pane">
+                <div class="profile-header">
+                    <div class="profile-avatar">👤</div>
+                    <h2 id="profileName"></h2>
+                    <p id="profilePhone"></p>
+                </div>
+
+                <div class="section">
+                    <h3>Personal Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>District</label>
+                            <span id="profileDistrict">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>EPA</label>
+                            <span id="profileEpa">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Village</label>
+                            <span id="profileVillage">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Gender</label>
+                            <span id="profileGender">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Household Size</label>
+                            <span id="profileHousehold">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Household Type</label>
+                            <span id="profileHouseholdType">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Farm Details</h3>
+                    <div id="farmDetails" class="farm-details"></div>
+                </div>
+
+                <button class="btn-secondary" onclick="showEditProfile()">Edit Profile</button>
+            </div>
+
+            <!-- Receipts Tab -->
+            <div id="receiptsTab" class="tab-pane">
+                <div class="section">
+                    <h3>My Warehouse Receipts</h3>
+                    <div id="receiptsList" class="receipts-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Loans</h3>
+                    <div id="loansList" class="loans-list"></div>
+                </div>
+            </div>
+
+            <!-- Market Tab -->
+            <div id="marketTab" class="tab-pane">
+                <div class="section">
+                    <h3>Market Prices</h3>
+                    <p class="section-subtitle">Prices in your district</p>
+                    <div id="marketPrices" class="market-prices"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Price Floors</h3>
+                    <div id="priceFloors" class="price-floors"></div>
+                </div>
+            </div>
+
+            <!-- Advisor Tab -->
+            <div id="advisorTab" class="tab-pane">
+                <div class="advisor-header">
+                    <h3>🌱 Agricultural Advisor</h3>
+                    <p>Ask questions about farming, crops, and markets</p>
+                </div>
+
+                <div class="advisor-topics">
+                    <button class="topic-chip" onclick="askAdvisor('weather')">☀️ Weather</button>
+                    <button class="topic-chip" onclick="askAdvisor('fertilizer')">🌱 Fertilizer</button>
+                    <button class="topic-chip" onclick="askAdvisor('irrigation')">💧 Irrigation</button>
+                    <button class="topic-chip" onclick="askAdvisor('pests')">🐛 Pests</button>
+                    <button class="topic-chip" onclick="askAdvisor('storage')">📦 Storage</button>
+                    <button class="topic-chip" onclick="askAdvisor('market')">💰 Market</button>
+                </div>
+
+                <div id="chatContainer" class="chat-container"></div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Ask a question..." class="chat-input">
+                    <button onclick="sendMessage()" class="btn-send">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button onclick="closeEditProfile()" class="close-btn">×</button>
+            </div>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label>Village</label>
+                    <input type="text" id="editVillage">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="editGender">
+                        <option value="">Select...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="editDob">
+                </div>
+                <div class="form-group">
+                    <label>Household Size</label>
+                    <input type="number" id="editHouseholdSize" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Household Type</label>
+                    <select id="editHouseholdType">
+                        <option value="">Select...</option>
+                        <option value="single">Single</option>
+                        <option value="married_no_children">Married (No Children)</option>
+                        <option value="married_with_children">Married (With Children)</option>
+                        <option value="single_parent">Single Parent</option>
+                        <option value="extended_family">Extended Family</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Livestock</label>
+                    <input type="text" id="editLivestock" placeholder="e.g., chickens, goats">
+                </div>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js" type="module"></script>
+</body>
+</html>
