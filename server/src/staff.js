@@ -1,11 +1,17 @@
 import { hashPin, pinMatches, signStaffToken } from "./auth.js";
 import { HttpError, assertPin, normalizePhone, publicStaff } from "./util.js";
 
-const STAFF_ROLES = {
+const STAFF_ROLE_LABELS = {
   extension: "Extension officer",
   cooperative: "Cooperative manager",
   ministry: "Ministry official",
   fum: "Farmers Union director",
+  system_admin: "System Administrator",
+  ngo: "NGO/Donor",
+  financial_institution: "Financial Institution",
+  input_supplier: "Input Supplier",
+  mechanisation_supplier: "Mechanisation Supplier",
+  buyer: "Buyer/Off-taker",
 };
 
 export const DEMO_STAFF = [
@@ -92,7 +98,7 @@ export const DEMO_STAFF = [
 ];
 
 export function roleLabel(role) {
-  return STAFF_ROLES[role] || role;
+  return STAFF_ROLE_LABELS[role] || role;
 }
 
 export async function loginStaff(db, input, jwtSecret) {
