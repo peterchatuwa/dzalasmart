@@ -9,9 +9,9 @@ if (-not $env:JAVA_HOME) {
     Write-Host "Setting JAVA_HOME..." -ForegroundColor Yellow
     $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
     $env:PATH = "$env:PATH;$env:JAVA_HOME\bin"
-    Write-Host "✓ JAVA_HOME set to: $env:JAVA_HOME" -ForegroundColor Green
+    Write-Host "JAVA_HOME set to: $env:JAVA_HOME" -ForegroundColor Green
 } else {
-    Write-Host "✓ JAVA_HOME already set: $env:JAVA_HOME" -ForegroundColor Green
+    Write-Host "JAVA_HOME already set: $env:JAVA_HOME" -ForegroundColor Green
 }
 Write-Host ""
 
@@ -27,7 +27,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Clean failed" -ForegroundColor Red
     exit 1
 }
-Write-Host "✓ Clean completed" -ForegroundColor Green
+Write-Host "Clean completed" -ForegroundColor Green
 Write-Host ""
 
 # Build debug APK
@@ -38,7 +38,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Build failed" -ForegroundColor Red
     exit 1
 }
-Write-Host "✓ Build completed successfully!" -ForegroundColor Green
+Write-Host "Build completed successfully!" -ForegroundColor Green
 Write-Host ""
 
 # Show APK location
@@ -46,8 +46,8 @@ Write-Host "[3/3] APK Location:" -ForegroundColor Yellow
 $apkPath = "app\build\outputs\apk\debug\app-debug.apk"
 if (Test-Path $apkPath) {
     $apkSize = (Get-Item $apkPath).Length / 1MB
-    Write-Host "✓ APK created: $apkPath" -ForegroundColor Green
-    Write-Host "  Size: $([math]::Round($apkSize, 2)) MB" -ForegroundColor Gray
+    Write-Host "APK created: $apkPath" -ForegroundColor Green
+    Write-Host "Size: $([math]::Round($apkSize, 2)) MB" -ForegroundColor Gray
     Write-Host ""
     
     # Install prompt
@@ -56,13 +56,13 @@ if (Test-Path $apkPath) {
     Write-Host "  adb install -r $apkPath" -ForegroundColor White
     Write-Host ""
     Write-Host "To install now, press Enter (or Ctrl+C to cancel)" -ForegroundColor Yellow
-    Read-Host
+    $null = Read-Host
     
     Write-Host "Installing APK..." -ForegroundColor Yellow
     adb install -r $apkPath
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "✓ APK installed successfully!" -ForegroundColor Green
+        Write-Host "APK installed successfully!" -ForegroundColor Green
         Write-Host ""
         Write-Host "========================================" -ForegroundColor Cyan
         Write-Host "Open the app on your device and monitor logs with:" -ForegroundColor Cyan
