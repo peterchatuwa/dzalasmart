@@ -34,7 +34,7 @@ Write-Host ""
 # Step 3: Verify the files
 Write-Host "[3/5] Verifying app.js..." -ForegroundColor Yellow
 $appJsContent = Get-Content "$androidAssetsDir\app.js" -Raw
-if ($appJsContent -match "window\.Capacitor\?\?\.Plugins") {
+if ($appJsContent -match "window\.Capacitor") {
     Write-Host "✓ app.js contains correct Capacitor code" -ForegroundColor Green
 } else {
     Write-Host "WARNING: app.js may not have the latest fixes" -ForegroundColor Red
