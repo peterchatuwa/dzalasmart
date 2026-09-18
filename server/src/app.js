@@ -41,6 +41,13 @@ import {
   getBuyerContracts,
   getBuyerDashboard,
 } from "./buyers.js";
+import {
+  saveMobileFarmer,
+  saveMobileParcel,
+  saveMobileCrop,
+  getMobileStats,
+  getRecentMobileSubmissions,
+} from "./mobile-api.js";
 import { APP_NAME, APP_SLUG } from "./brand.js";
 import {
   listInputs,
@@ -1435,6 +1442,71 @@ export function createApp(db, options = {}) {
         ...(await withReceipts(db, await farmerStatus(db, row))),
         plot: await getFarmerPlot(db, row),
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ==========================================
+  // MOBILE APP API ENDPOINTS
+  // ==========================================
+
+  app.post("/api/mobile/farmers", apiLimiter, async (req, res, next) => {
+    try {
+      const result = await saveMobileFarmer(db, req.body);
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/mobile/parcels", apiLimiter, async (req, res, next) => {
+    try {
+      const result = await saveMobileParcel(db, req.body);
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/mobile/crops", apiLimiter, async (req, res, next) => {
+    try {
+      const result = await saveMobileCrop(db, req.body);
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/mobile/stats", apiLimiter, async (req, res, next) => {
+    try {
+      const stats = await getMobileStats(db, {
+        district: req.query.district,
+        epa: req.query.epa
+      });
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/mobile/submissions", requireStaff, async (req, res, next) => {
+    try {
+      const limit = parseInt(req.query.limit || '50');
+      const submissions = await getRecentMobileSubmissions(db, limit);
+      res.json(submissions);
     } catch (error) {
       next(error);
     }

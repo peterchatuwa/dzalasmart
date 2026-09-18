@@ -1,0 +1,329 @@
+================================================================================
+              EMAIL TO AIRTEL - SITE-TO-SITE (S2S) VPN REQUEST
+                        USSD Integration: Nzeru za Alimi
+================================================================================
+
+TO: [Airtel USSD Integration Team Email]
+CC: [Airtel Technical Support / Account Manager]
+SUBJECT: Site-to-Site (S2S) VPN Configuration Request - USSD Integration (*384#)
+
+--------------------------------------------------------------------------------
+
+Dear Airtel USSD Integration Team,
+
+We are setting up USSD integration for our service "Nzeru za Alimi" (Smart 
+Farming Platform) using short code *384#.
+
+We understand that Airtel requires a **Site-to-Site (S2S) VPN** connection 
+between our server and Airtel's USSD gateway for secure USSD traffic routing.
+
+We are ready to configure the S2S VPN on our side and need the required 
+configuration details from Airtel to establish the permanent VPN tunnel.
+
+
+🔒 VPN TYPE CONFIRMATION:
+────────────────────────────────────────────────────────────────────────────
+
+VPN Type Required:      Site-to-Site (S2S) VPN
+VPN Purpose:            Permanent encrypted tunnel for USSD traffic
+Our VPN Endpoint:       37.60.252.211 (api.zammunda.com)
+Our VPN Role:           VPN Gateway (Site 2)
+Airtel VPN Role:        VPN Concentrator (Site 1)
+
+
+📋 REQUIRED S2S VPN CONFIGURATION INFORMATION:
+────────────────────────────────────────────────────────────────────────────
+
+Please provide the following Site-to-Site VPN configuration details:
+
+
+1. AIRTEL VPN GATEWAY (REMOTE ENDPOINT)
+   • Public IP address of Airtel's VPN concentrator/gateway
+   • VPN gateway hostname (if applicable)
+   • VPN concentrator vendor/model information
+
+
+2. VPN PROTOCOL & VERSION
+   • IPSec with IKEv1 or IKEv2? (we support both)
+   • OpenVPN? (we can support if required)
+   • Other protocol? (please specify)
+
+
+3. AUTHENTICATION METHOD
+   • Pre-shared Key (PSK) - please provide the key
+   • OR Digital Certificates:
+     - CA Certificate (Certificate Authority)
+     - Airtel's gateway certificate
+     - Certificate requirements for our server
+
+
+4. PHASE 1 (IKE) ENCRYPTION SETTINGS
+   Required for tunnel establishment:
+   
+   • IKE Version: (IKEv1 or IKEv2)
+   • Encryption Algorithm: (e.g., AES-256-CBC, AES-128-GCM, 3DES)
+   • Hash/Integrity Algorithm: (e.g., SHA256, SHA1, MD5)
+   • Diffie-Hellman Group: (e.g., Group 14/modp2048, Group 19, Group 20)
+   • IKE Lifetime: (e.g., 28800 seconds / 8 hours)
+   • Perfect Forward Secrecy (PFS): (Enabled/Disabled)
+
+
+5. PHASE 2 (IPSEC/ESP) ENCRYPTION SETTINGS
+   Required for data encryption:
+   
+   • ESP Encryption Algorithm: (e.g., AES-256-CBC, AES-128-GCM)
+   • ESP Hash Algorithm: (e.g., SHA256, SHA1)
+   • PFS Group: (e.g., Group 14/modp2048)
+   • IPSec Lifetime: (e.g., 3600 seconds / 1 hour)
+   • Encapsulation Mode: (Tunnel or Transport)
+
+
+6. NETWORK CONFIGURATION
+   
+   • Remote Subnet (Airtel's side):
+     - Internal network range (e.g., 172.26.0.0/16)
+     - USSD gateway IPs that will access our server
+   
+   • Local Subnet (Our side):
+     - What subnet should we use for the VPN? (e.g., 10.8.0.0/24)
+     - Or will Airtel assign us a subnet?
+   
+   • VPN Tunnel Addressing:
+     - Local VPN tunnel IP (our side)
+     - Remote VPN tunnel IP (Airtel's side)
+
+
+7. ADVANCED SETTINGS
+   
+   • MTU (Maximum Transmission Unit): (e.g., 1400 bytes)
+   • Dead Peer Detection (DPD):
+     - DPD delay (e.g., 30 seconds)
+     - DPD timeout (e.g., 120 seconds)
+     - DPD action (restart/clear/hold)
+   • NAT Traversal: (Enabled/Disabled)
+   • Compression: (Enabled/Disabled)
+
+
+8. ROUTING REQUIREMENTS
+   
+   • Static routes to configure on our side
+   • Should we use BGP for dynamic routing?
+   • Gateway IP addresses for routing
+
+
+9. VPN IDENTITIES
+   
+   • Left ID (Our VPN identity string): 
+     - Should we use: @nzeru-vpn-gateway or @api.zammunda.com?
+   • Right ID (Airtel's VPN identity string):
+     - What identity should we configure for Airtel's gateway?
+
+
+🖥️ OUR SERVER DETAILS (LOCAL S2S VPN ENDPOINT):
+────────────────────────────────────────────────────────────────────────────
+
+Public IP Address:          37.60.252.211
+Domain Name:                api.zammunda.com
+Server Location:            Malawi
+Operating System:           Ubuntu Linux 22.04 LTS
+USSD API Endpoint:          https://api.zammunda.com/ussd (post-VPN)
+
+VPN Software Capabilities:
+   • StrongSwan (IPSec/IKEv1/IKEv2) ✓ Ready
+   • OpenVPN ✓ Can configure if required
+   • WireGuard ✓ Can configure if required
+   • Any standard VPN protocol ✓ Supported
+
+Network Capabilities:
+   • IP Forwarding: Will enable
+   • NAT Traversal: Supported
+   • Firewall: UFW/iptables (will configure as required)
+   • Static IP: Yes (37.60.252.211)
+
+USSD Service Details:
+   • Service Code: *384#
+   • Service Name: Nzeru za Alimi (Smart Farming Platform)
+   • Expected Traffic: Low to medium volume
+   • Availability: 24/7
+
+
+📊 S2S VPN ARCHITECTURE UNDERSTANDING:
+────────────────────────────────────────────────────────────────────────────
+
+Our understanding of the S2S VPN setup:
+
+┌───────────────────────┐         ┌───────────────────────┐
+│   AIRTEL SIDE         │         │   OUR SIDE            │
+│   (Site 1)            │         │   (Site 2)            │
+│                       │         │                       │
+│  VPN Concentrator  ◄──┼─────────┼──► VPN Gateway        │
+│  IP: ?.?.?.?          │  S2S VPN│  IP: 37.60.252.211    │
+│  Subnet: 172.26/16    │  TUNNEL │  Subnet: 10.8.0/24    │
+│                       │◄═══════►│                       │
+│  USSD Gateway         │ Encrypted│  USSD API Server     │
+│  172.26.x.x           │         │  api.zammunda.com     │
+└───────────────────────┘         └───────────────────────┘
+
+Traffic Flow:
+1. Airtel USSD Gateway (172.26.x.x) sends USSD request
+2. Traffic enters S2S VPN tunnel (encrypted)
+3. Traffic exits at our VPS (37.60.252.211)
+4. Routed to our USSD application
+5. Response follows reverse path through VPN
+
+Is this understanding correct?
+
+
+📞 PROJECT CONTACTS:
+────────────────────────────────────────────────────────────────────────────
+
+Technical Lead:             Peter Chatuwa
+Email:                      peter.chatuwa@zammunda.com
+Phone:                      [Your Phone Number]
+Organization:               Zammunda / Nzeru za Alimi
+Availability:               Monday-Friday, 8 AM - 6 PM CAT
+
+
+⏱️ TIMELINE & AVAILABILITY:
+────────────────────────────────────────────────────────────────────────────
+
+We are ready to implement the S2S VPN immediately upon receiving the 
+configuration details. Our estimated timeline:
+
+• S2S VPN configuration:      1-2 days after receiving details
+• VPN tunnel testing:          1 day
+• USSD integration testing:    1-2 days
+• Production readiness:        Within 5-7 days of receiving VPN config
+
+Please provide:
+1. Estimated timeline for providing S2S VPN configuration
+2. Airtel's technical contact for VPN setup support
+3. VPN testing procedures and validation criteria
+4. Escalation contact in case of VPN connectivity issues
+
+
+❓ ADDITIONAL S2S VPN QUESTIONS:
+────────────────────────────────────────────────────────────────────────────
+
+1. Does Airtel provide a reference S2S VPN configuration document/template?
+2. Are there redundant VPN gateways for high availability/failover?
+3. What is the expected S2S VPN uptime SLA?
+4. What are the VPN bandwidth/throughput expectations?
+5. Are there any S2S VPN setup fees or recurring costs?
+6. Can we schedule a technical call to review the S2S VPN setup?
+7. Is there a staging/test VPN environment available before production?
+8. What is the VPN monitoring and support process?
+9. Who handles VPN troubleshooting (Airtel team contact)?
+10. What is the procedure for VPN maintenance windows?
+
+
+🔧 TECHNICAL CAPABILITIES CONFIRMATION:
+────────────────────────────────────────────────────────────────────────────
+
+We confirm that our infrastructure can support:
+
+✓ Always-on S2S VPN tunnel (24/7 operation)
+✓ IPSec with IKEv1/IKEv2 protocols
+✓ OpenVPN (if Airtel prefers)
+✓ Pre-shared Key or Certificate-based authentication
+✓ Industry-standard encryption (AES-256, SHA256)
+✓ Dead Peer Detection and automatic reconnection
+✓ NAT Traversal (if required)
+✓ MTU adjustment for VPN overhead
+✓ Static routing or BGP (as required)
+✓ VPN traffic monitoring and logging
+✓ 99.5% uptime commitment on our endpoint
+
+
+📄 NEXT STEPS AFTER VPN SETUP:
+────────────────────────────────────────────────────────────────────────────
+
+Once S2S VPN is established and tested:
+
+1. Update PCR (Policy Change Request) form with S2S VPN details
+2. Submit updated technical documentation
+3. Perform end-to-end USSD testing through VPN
+4. Complete security and compliance verification
+5. Schedule production go-live
+
+
+🙏 REQUEST FOR PROMPT RESPONSE:
+────────────────────────────────────────────────────────────────────────────
+
+Could you please:
+
+1. Acknowledge receipt of this S2S VPN configuration request
+2. Provide the complete S2S VPN configuration package
+3. Assign a dedicated technical contact for VPN setup support
+4. Provide estimated timeline for VPN configuration delivery
+5. Schedule a technical call if needed to clarify any requirements
+
+We are committed to completing this integration and are ready to begin S2S 
+VPN configuration immediately upon receiving the necessary details.
+
+Thank you for your support. We look forward to establishing the S2S VPN 
+connection and launching our USSD service on Airtel's network.
+
+
+Best regards,
+
+Peter Chatuwa
+Technical Lead - Infrastructure & Integration
+Nzeru za Alimi (Smart Farming Platform)
+Zammunda
+
+Email: peter.chatuwa@zammunda.com
+Phone: [Your Phone Number]
+Server: api.zammunda.com (37.60.252.211)
+
+
+────────────────────────────────────────────────────────────────────────────
+Service: Nzeru za Alimi - Smart Farming Platform
+USSD Code: *384#
+VPN Type: Site-to-Site (S2S) VPN
+Our VPN Endpoint: 37.60.252.211 (api.zammunda.com)
+Date: September 17, 2026
+────────────────────────────────────────────────────────────────────────────
+
+
+ATTACHMENTS (Optional):
+□ Network topology diagram
+□ Server infrastructure overview
+□ Organization/company documentation
+□ Draft PCR form (will be completed after VPN setup)
+
+
+================================================================================
+                            END OF EMAIL
+================================================================================
+
+
+📧 SENDING INSTRUCTIONS:
+────────────────────────────────────────────────────────────────────────────
+
+1. Copy the email content above (from "Dear Airtel..." to signature)
+2. Paste into your email client
+3. Replace [Your Phone Number] with your actual phone number
+4. Add Airtel USSD Integration Team email address in "To:" field
+5. CC: Airtel technical support and your account manager
+6. Subject: "Site-to-Site (S2S) VPN Configuration Request - USSD (*384#)"
+7. Attach any relevant documents
+8. Send and keep a copy for records
+9. Follow up after 2-3 business days if no response
+10. Request acknowledgment and timeline in follow-up
+
+
+✅ KEY POINTS EMPHASIZED IN EMAIL:
+────────────────────────────────────────────────────────────────────────────
+
+✓ Clearly states "Site-to-Site (S2S) VPN" requirement
+✓ Provides comprehensive list of required configuration details
+✓ Shows technical competence and readiness
+✓ Includes our server details and capabilities
+✓ Demonstrates understanding of S2S VPN architecture
+✓ Requests specific technical parameters
+✓ Shows urgency and readiness to implement
+✓ Asks for support contacts and documentation
+
+
+================================================================================

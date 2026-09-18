@@ -1,0 +1,253 @@
+================================================================================
+                    AIRTEL USSD INTEGRATION - PEER IP INFORMATION
+                        Nzeru za Alimi (Smart Farming Platform)
+                          Date: September 17, 2026
+================================================================================
+
+📡 VPN PEER IP ADDRESS (YOUR SERVER)
+================================================================================
+
+Public IP Address:      37.60.252.211
+Domain Name:            api.zammunda.com
+Location:               VPS Server (Malawi)
+
+This is the IP address that Airtel's USSD gateway should connect to.
+
+
+================================================================================
+📋 COMPLETE CONNECTION DETAILS FOR AIRTEL
+================================================================================
+
+1. PEER IP ADDRESS (Your Server - DESTINATION)
+   ┌────────────────────────────────────────────────────────────────┐
+   │  IP Address:         37.60.252.211                             │
+   │  Hostname:           api.zammunda.com                          │
+   │  Type:               Public IPv4                               │
+   │  Port:               443 (HTTPS)                               │
+   │  Protocol:           TCP                                       │
+   └────────────────────────────────────────────────────────────────┘
+
+2. USSD API ENDPOINT
+   ┌────────────────────────────────────────────────────────────────┐
+   │  Full URL:           https://api.zammunda.com/ussd             │
+   │  Method:             POST                                      │
+   │  Content-Type:       application/x-www-form-urlencoded         │
+   └────────────────────────────────────────────────────────────────┘
+
+3. HEALTH CHECK ENDPOINT (For Monitoring)
+   ┌────────────────────────────────────────────────────────────────┐
+   │  URL:                https://api.zammunda.com/health           │
+   │  Expected Response:  {"ok": true, "service": "nzeru-za-alimi"} │
+   └────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+🔒 SSL/TLS CERTIFICATE INFORMATION
+================================================================================
+
+Certificate Status:     Valid & Active
+Certificate Type:       Let's Encrypt (Free, Auto-renewed)
+TLS Version:            TLS 1.2 / TLS 1.3
+Cipher Suites:          Modern, Secure
+Expiry:                 Auto-renewed (90-day cycles)
+
+Verification Command:
+   openssl s_client -connect api.zammunda.com:443 -servername api.zammunda.com
+
+
+================================================================================
+🌐 DNS CONFIGURATION
+================================================================================
+
+Domain:                 api.zammunda.com
+DNS A Record:           37.60.252.211
+DNS Provider:           Cloudflare / Your DNS Provider
+TTL:                    300 seconds (5 minutes)
+
+Verification Command:
+   nslookup api.zammunda.com
+   dig api.zammunda.com
+
+
+================================================================================
+🔥 FIREWALL REQUIREMENTS (FROM AIRTEL'S SIDE)
+================================================================================
+
+Airtel should configure their firewall to:
+
+1. ALLOW outbound connections FROM:
+   Source:      Airtel USSD Gateway IPs (172.26.x.x - internal)
+   Destination: 37.60.252.211 (your server)
+   Protocol:    TCP
+   Port:        443 (HTTPS)
+   Action:      ALLOW
+
+2. EXPECTED TRAFFIC:
+   • Airtel USSD Gateway initiates HTTP POST requests
+   • To: https://api.zammunda.com/ussd
+   • Your server responds with: CON <message> or END <message>
+   • Session-based (uses sessionId parameter)
+
+
+================================================================================
+📊 NETWORK TOPOLOGY
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  [User's Phone]                                                         │
+│       ↓ Dials *384#                                                     │
+│       ↓                                                                  │
+│  [Airtel Mobile Network]                                                │
+│       ↓                                                                  │
+│  [Airtel USSD Gateway] ← SOURCE                                         │
+│   Internal IPs:                                                         │
+│   • 172.26.166.100-103                                                  │
+│   • 172.26.166.41-43, 66                                                │
+│   • 172.26.129.4-6, 23, 100-103                                         │
+│       ↓                                                                  │
+│       ↓ HTTPS POST Request                                              │
+│       ↓ (Over Internet)                                                 │
+│       ↓                                                                  │
+│  [Your VPS Server] ← DESTINATION / PEER                                 │
+│   Public IP: 37.60.252.211                                              │
+│   Domain: api.zammunda.com                                              │
+│   Port: 443 (HTTPS)                                                     │
+│       ↓                                                                  │
+│       ↓ Response: CON/END                                               │
+│       ↓                                                                  │
+│  [Back to User's Phone via Airtel Network]                              │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+🔍 IP ADDRESS VERIFICATION (Proof for Airtel)
+================================================================================
+
+You can verify the IP address is active and reachable:
+
+1. PING TEST:
+   ping 37.60.252.211
+
+2. PORT CHECK:
+   telnet 37.60.252.211 443
+   OR
+   nc -zv 37.60.252.211 443
+
+3. HTTPS TEST:
+   curl -I https://api.zammunda.com/health
+   
+   Expected: HTTP 200 OK response
+
+4. DNS RESOLUTION:
+   nslookup api.zammunda.com
+   
+   Expected: 37.60.252.211
+
+
+================================================================================
+📝 INFORMATION FOR AIRTEL'S PCR FORM
+================================================================================
+
+If Airtel has a specific VPN or Peer IP form field, provide:
+
+VPN Peer IP Address (Client):     37.60.252.211
+VPN Peer Hostname (Client):        api.zammunda.com
+VPN Concentrator Vendor (Client):  N/A (Direct HTTPS, no VPN)
+VPN Concentrator Model (Client):   N/A (No VPN equipment)
+
+Explanation:
+   This is a direct HTTPS connection, not a VPN tunnel.
+   The "peer IP" refers to your public-facing server IP address.
+   No VPN concentrator or special equipment is required.
+
+
+================================================================================
+🔐 SECURITY MEASURES IN PLACE
+================================================================================
+
+1. HTTPS/TLS Encryption:         ✅ Active (Port 443)
+2. SSL Certificate:               ✅ Valid (Let's Encrypt)
+3. Firewall:                      ✅ Configured (UFW/iptables)
+4. Rate Limiting:                 ✅ 10 req/min per phone number
+5. IP Whitelisting:               ✅ Only Airtel gateway IPs accepted
+6. DDoS Protection:               ✅ Server-level protection
+7. Logging & Monitoring:          ✅ All sessions logged
+8. Session Timeout:               ✅ 180 seconds (3 minutes)
+
+
+================================================================================
+📞 CONTACT INFORMATION
+================================================================================
+
+Technical Contact:
+   Name:          Peter Chatuwa
+   Email:         peter.chatuwa@zammunda.com
+   Phone:         [Your Phone Number]
+   Organization:  Nzeru za Alimi / Zammunda
+   Role:          System Administrator / Technical Lead
+
+Server Hosting:
+   Provider:      VPS Provider
+   Location:      Malawi / Southern Africa
+   IP:            37.60.252.211
+   Uptime SLA:    99.5%
+   Support:       24/7 monitoring
+
+
+================================================================================
+✅ QUICK REFERENCE FOR AIRTEL
+================================================================================
+
+When Airtel asks for "Peer IP" or "VPN Peer IP Address", provide:
+
+   IP:        37.60.252.211
+   Domain:    api.zammunda.com
+   Port:      443
+   Protocol:  HTTPS (TCP)
+
+When they ask "Is this a VPN?", answer:
+
+   No, this is a direct HTTPS API connection.
+   No VPN tunnel or IPSec is required.
+   Standard internet HTTPS traffic over port 443.
+
+
+================================================================================
+📋 TESTING ENDPOINT (For Airtel to Verify Connectivity)
+================================================================================
+
+Before going live, Airtel can test connectivity:
+
+1. Simple connectivity test:
+   curl https://api.zammunda.com/health
+   
+   Should return:
+   {"ok":true,"service":"nzeru-za-alimi","uptime":...}
+
+2. USSD endpoint test (POST):
+   curl -X POST https://api.zammunda.com/ussd \
+     -d "sessionId=test123&serviceCode=*384#&phoneNumber=%2B265888000001&text="
+   
+   Should return:
+   CON Enter your PIN:
+
+
+================================================================================
+📅 AVAILABILITY & MAINTENANCE
+================================================================================
+
+Server Availability:     24/7 (99.5% uptime SLA)
+Maintenance Window:      Sundays 2:00-4:00 AM CAT (if needed)
+Response Time:           < 2 seconds for 95% of requests
+Maximum Timeout:         180 seconds (3 minutes per USSD session)
+
+
+================================================================================
+
+Report Generated: September 17, 2026
+For: Airtel Malawi USSD Integration Team
+Service: Nzeru za Alimi (Smart Farming Platform)
+
+================================================================================
