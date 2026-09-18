@@ -2,7 +2,7 @@
 // Handles data collection from Nzeru Farmer mobile app
 
 import crypto from "crypto";
-import bcrypt from "bcrypt";
+import { hashPin } from "./auth.js";
 
 /**
  * Process and save farmer data from mobile app
