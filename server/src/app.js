@@ -465,11 +465,10 @@ export function createApp(db, options = {}) {
         ORDER BY recorded_at DESC
       `).all(req.farmer.district);
       
-      // Get government floor prices
+      // Get government floor prices (using existing table structure)
       const floors = await db.prepare(`
-        SELECT crop, floor_price, season
+        SELECT crop, price_per_kg as floor_price, updated_at
         FROM price_floors
-        WHERE season = (SELECT MAX(season) FROM price_floors)
         ORDER BY crop
       `).all();
       
@@ -506,11 +505,12 @@ export function createApp(db, options = {}) {
         advice = 'For specific agricultural advice, contact your local extension officer or visit our service center. You can also use the USSD code *413# for quick information.';
       }
       
-      // Log the query
+      // Log the query (generate ID for PostgreSQL)
+      const { randomUUID } = await import('crypto');
       await db.prepare(`
-        INSERT INTO advisor_queries (farmer_id, query, response, created_at)
-        VALUES (?, ?, ?, datetime('now'))
-      `).run(req.farmer.id, query, advice);
+        INSERT INTO advisor_queries (id, farmer_id, query, response, created_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `).run(randomUUID(), req.farmer.id, query, advice);
       
       res.json({ advice });
     } catch (error) {
