@@ -440,6 +440,84 @@ export function createApp(db, options = {}) {
     }
   });
 
+  app.get("/api/farmers/me/receipts", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const receipts = await db.prepare(`
+        SELECT id, code, crop, weight_kg, moisture_pct, price_per_kg, 
+               asset_value, loan_cap, loan_disbursed, disbursed_at, created_at
+        FROM warehouse_receipts 
+        WHERE farmer_id = ?
+        ORDER BY created_at DESC
+      `).all(req.farmer.id);
+      res.json(receipts);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/market", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      // Get market prices for the farmer's district
+      const prices = await db.prepare(`
+        SELECT crop, price, district, recorded_at
+        FROM market_prices
+        WHERE district = ?
+        ORDER BY recorded_at DESC
+      `).all(req.farmer.district);
+      
+      // Get government floor prices
+      const floors = await db.prepare(`
+        SELECT crop, floor_price, season
+        FROM price_floors
+        WHERE season = (SELECT MAX(season) FROM price_floors)
+        ORDER BY crop
+      `).all();
+      
+      res.json({ prices, floors });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/farmers/advisor", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const { query } = req.body;
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+      
+      // Simple rule-based advisor responses
+      let advice = '';
+      const q = query.toLowerCase();
+      
+      if (q.includes('weather') || q.includes('rain') || q.includes('forecast')) {
+        advice = 'Based on current forecasts, expect moderate rainfall this week. This is good for planting season. Make sure your fields are prepared for planting.';
+      } else if (q.includes('fertilizer') || q.includes('manure') || q.includes('nutrient')) {
+        advice = 'For maize, use NPK 23:21:0+4S at planting (2-3 bags per hectare), and top-dress with Urea 46%N 4-6 weeks after planting. Always apply after rain.';
+      } else if (q.includes('irrigation') || q.includes('water')) {
+        advice = 'For dry spells, water crops early morning or late evening to reduce evaporation. Focus on critical growth stages like flowering and grain filling.';
+      } else if (q.includes('pest') || q.includes('disease') || q.includes('insect')) {
+        advice = 'Common pests include armyworm and aphids. Scout your fields regularly. Use integrated pest management: remove infected plants, use biopesticides, and only use chemicals as a last resort.';
+      } else if (q.includes('storage') || q.includes('store') || q.includes('harvest')) {
+        advice = 'Dry your grain to 12-13% moisture before storage. Use hermetic bags or metal silos to prevent pest damage. Store in cool, dry places away from direct sunlight.';
+      } else if (q.includes('market') || q.includes('sell') || q.includes('price')) {
+        advice = 'Check current market prices in the Market tab. Consider storing if prices are low and you can wait. Warehouse receipts can help you get better prices later and access credit.';
+      } else {
+        advice = 'For specific agricultural advice, contact your local extension officer or visit our service center. You can also use the USSD code *413# for quick information.';
+      }
+      
+      // Log the query
+      await db.prepare(`
+        INSERT INTO advisor_queries (farmer_id, query, response, created_at)
+        VALUES (?, ?, ?, datetime('now'))
+      `).run(req.farmer.id, query, advice);
+      
+      res.json({ advice });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/farmers/me/status", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
       const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);

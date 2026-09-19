@@ -148,7 +148,9 @@ async function loadFarmerData() {
         });
         
         if (statusResponse.ok) {
-            currentFarmer = await statusResponse.json();
+            const data = await statusResponse.json();
+            // API returns { farmer: {...} }, extract the farmer object
+            currentFarmer = data.farmer || data;
             updateUI();
         }
         
