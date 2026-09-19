@@ -7,7 +7,7 @@ echo "========================================="
 echo ""
 
 # VPS Details
-VPS_IP="41.70.108.118"
+VPS_IP="37.60.252.211"
 VPS_USER="root"
 APP_DIR="/opt/nzeru-za-alimi"
 

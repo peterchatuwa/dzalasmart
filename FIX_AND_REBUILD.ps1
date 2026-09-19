@@ -4,7 +4,7 @@ Write-Host "Farmer App - Fix and Rebuild" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$VPS_IP = "41.70.108.118"
+$VPS_IP = "37.60.252.211"
 $VPS_USER = "root"
 $VPS_PASS = "Malawi12"
 
