@@ -1,127 +1,163 @@
-
-  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <link href="/images/PageStyle.css" rel="stylesheet" type="text/css" />
+    <link href="/css/Style.css" rel="stylesheet" type="text/css" />
+    <title>Market Info</title>
+    <script type="text/javascript" src="/umbraco_client/ui/jquery.js"></script>
+    <script
+      type="text/javascript"
+      src="http://ajax.microsoft.com/ajax/jquery.validate/1.5.5/jquery.validate.min.js"
+    ></script>
+    <script type="text/javascript" src="/scripts/ucomment/jquery.form.js"></script>
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(["_setAccount", "UA-26879606-1"]);
+      _gaq.push(["_trackPageview"]);
 
-<head><link href="/images/PageStyle.css" rel="stylesheet" type="text/css" /><link href="/css/Style.css" rel="stylesheet" type="text/css" /><title>
-	Market Info
-</title>
-   <script type="text/javascript" src="/umbraco_client/ui/jquery.js"></script> 
-  <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.validate/1.5.5/jquery.validate.min.js"></script>
-  <script type="text/javascript" src="/scripts/ucomment/jquery.form.js"></script>
-  <script type="text/javascript">
+      (function () {
+        var ga = document.createElement("script");
+        ga.type = "text/javascript";
+        ga.async = true;
+        ga.src =
+          ("https:" == document.location.protocol ? "https://ssl" : "http://www") + ".google-analytics.com/ga.js";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </head>
 
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-26879606-1']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-</head>
-
-<body>
-  <form method="post" action="/market-info.aspx" id="ctl01">
-<div class="aspNetHidden">
-<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
-<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
-<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
-<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="EFV0kfcD5t55aQZAjRzmUpmudz/clphfekoz9YsAo5e1pwHpD7siyd6PbOpnI358vgQesPW1qVOAz8kTQ7q3vAGZK3faXl7KrUh6jI6A7APnjUfctcemp4vZDvxXHUfvZq6Ut9oc+mOyPdZOw2X0Xf1UObbbBVjM9hy099r0+8GmiBkMnwhvV3dpizJ7qDCngdNnKa8fAF6DumxtVF/3e7rTj3eOh9bj8AP8ztHrZSVwwRa8kLqZEpLN9Q5QRjceXTxpUPQX1QFQ+nBFfCk5bRwFS6NDI81NA3GOsqAhLuNnAKLcfv53soicY5Ov7D6sY4yH2KpZPpsn01upcv5tq6RqaJO8ZCQfnH/zkE2TuWcsj/lrBnkAjjmxCIvHvvneO15YrXnWQ2MQFKyvE6x5snrg+h6qVXh7by7MEwdORp+OcpjKDKAQtbaAJ2BDDZJO3Z5oryzVeAwY9jAyUUjZtCmqtGIhED4gb9GPRSvNo0y6Oby4bwD+BjcqYNd2g068RCHaMWFm1goHuSGLyJ1enm954mINPyUerMbNYJEmQHDAD2eAOvpSJGrohK5Qr3uGXT48dOiCVX9iGiC4/kB/ZQ2J0Q8c2yFNqv/CcdYuq5j04Ly4R0WKvqUBsN4QorVw2QlZHnS89qcdvjXmCph9ank51yqyBaVn0cGBY8H/SDRr85AbXaSo1e90Cd6KX0nVa92D+xM27nso7IPr6TxzGUnrzTjSPSK/APcI3bcAYZO//CD0TKsXLac5LdbCgZHg4PTQGIusm1FzDa8It1Jse63oCr6QOPud21zOGwUJnHKQlCW+6BuoJiaXayi1q7X9KxEw/fRbCLZmJWlwoyQPGlASqaynPKBescEokqmjuOvTXZbYteFNmlc+HlAAEFhmF0v0ZS5KhYcopwEmmIpOaG9xWKCioOC5nz9z8kpH7nkk6lslUgXHQJGZ1UMZZFL9u/86K3JBUKl974mXKCPMRk1ikg+THK14h9WD33z6ZGAxeD+Qx3C7D0cr+ChPGL9Tqgjcau2R5d0V+YnbBwVHeZSJw1ZT30uEuxflrqP7ePpMrjkT6QnjAp+/PQXiylhnFzy9KqYyNqUBJkBqBoTNAUIyu6ipwuWb3jZ5aj5WDr1Mqck1K/ImfUrEBT/UqdWQk+dfUJlq2d//wlVa9PeATV1SFi2ojAmcIYFmR5tORWZXBqJo5NfTjWrPSFUjlLiPpB/lGF371IDWoBVdHS5zag2SAWm5PAedqLDEmg/eLPdbOZfEBBEkm244FYpdewYyb4/KQaHjXpUu7aT1VIL9BvZE6JSgwUe+joff9JyzG1cxpIthEccq+Pa0uoyANn6gX0SVJa8wsQ1V06FXGviApWJKnQTeFLJpX05XIIqTLtT8xb320YmI3Gqo5tZiUgvd90JVbj61q9a04aKc3wHr+Qtqg04GzZZNbMfc0GzfF5xY7O+hWMTigpWLQWK6EIzMlc2P6069585+ZymPpRcBWt6EWQ3rZZPR23Pint2Ioamr/g21xeV3JFS00uZPr5YDA6pEMVDqKXOjYJfjMEzfdUZRM+Ue5cJqcYHKEr0faHe2MldgzcPHeaaOg3ehfTI9Yy6woMQAf36GM03wYBF7E2wTYkZ8S6qMoYNwfLQ0r7l4nB6Vg4UwkNV9zYbiti81RxD64dv4qTPNctWe8DBEs+4OTfD6b9dr4ASp3blikwrcHkhZjRc5duE7eRuZnJzdkBc2h1KDOjrXsyOzgffHjUJr05Yu2QLc+gqI9rzOR5y0Em5ZRuUY+JNMJvnqfWyKKC4K2EMjAAgdCnljvcetm9tGmpF+ojbFzKxvq8SpQAijkQzJCNEsQnhAFYg/FTfQom9Er3hGiJYoz/zXHO/ACIYQZQKA+oSdEFINATv5eYFLNVc2C6goQuO37ldl5Gux" />
-</div>
-
-<script type="text/javascript">
-//<![CDATA[
-var theForm = document.forms['ctl01'];
-if (!theForm) {
-    theForm = document.ctl01;
-}
-function __doPostBack(eventTarget, eventArgument) {
-    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
-        theForm.__EVENTTARGET.value = eventTarget;
-        theForm.__EVENTARGUMENT.value = eventArgument;
-        theForm.submit();
-    }
-}
-//]]>
-</script>
-
-
-    <div class="content">
-      <div id="bottomlink">
-          <ul><li><a href="/market-info.aspx" class="selected">MARKET INFO</a></li><li><a href="/bid-volume-only.aspx">BID VOLUME ONLY</a></li><li><a href="/offer-volume-only.aspx">OFFER VOLUME ONLY</a></li><li><a href="/warehouse-receipts.aspx">WAREHOUSE RECEIPTS</a></li><li><a href="/how-to-trade.aspx">HOW TO TRADE</a></li><li><a href="/about-ace.aspx">ABOUT ACE</a></li><li><a href="/activities.aspx">ACTIVITIES</a></li><li><a href="/media.aspx">MEDIA</a></li><li><a href="/my-page.aspx">MY PAGE</a></li></ul><a id="ContentPlaceHolderDefault_LoginStatus1" href="javascript:__doPostBack(&#39;ctl00$ctl00$ctl00$ContentPlaceHolderDefault$LoginStatus1$ctl02&#39;,&#39;&#39;)">Login</a>
+  <body>
+    <form method="post" action="/market-info.aspx" id="ctl01">
+      <div class="aspNetHidden">
+        <input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+        <input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+        <input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+        <input
+          type="hidden"
+          name="__VIEWSTATE"
+          id="__VIEWSTATE"
+          value="EFV0kfcD5t55aQZAjRzmUpmudz/clphfekoz9YsAo5e1pwHpD7siyd6PbOpnI358vgQesPW1qVOAz8kTQ7q3vAGZK3faXl7KrUh6jI6A7APnjUfctcemp4vZDvxXHUfvZq6Ut9oc+mOyPdZOw2X0Xf1UObbbBVjM9hy099r0+8GmiBkMnwhvV3dpizJ7qDCngdNnKa8fAF6DumxtVF/3e7rTj3eOh9bj8AP8ztHrZSVwwRa8kLqZEpLN9Q5QRjceXTxpUPQX1QFQ+nBFfCk5bRwFS6NDI81NA3GOsqAhLuNnAKLcfv53soicY5Ov7D6sY4yH2KpZPpsn01upcv5tq6RqaJO8ZCQfnH/zkE2TuWcsj/lrBnkAjjmxCIvHvvneO15YrXnWQ2MQFKyvE6x5snrg+h6qVXh7by7MEwdORp+OcpjKDKAQtbaAJ2BDDZJO3Z5oryzVeAwY9jAyUUjZtCmqtGIhED4gb9GPRSvNo0y6Oby4bwD+BjcqYNd2g068RCHaMWFm1goHuSGLyJ1enm954mINPyUerMbNYJEmQHDAD2eAOvpSJGrohK5Qr3uGXT48dOiCVX9iGiC4/kB/ZQ2J0Q8c2yFNqv/CcdYuq5j04Ly4R0WKvqUBsN4QorVw2QlZHnS89qcdvjXmCph9ank51yqyBaVn0cGBY8H/SDRr85AbXaSo1e90Cd6KX0nVa92D+xM27nso7IPr6TxzGUnrzTjSPSK/APcI3bcAYZO//CD0TKsXLac5LdbCgZHg4PTQGIusm1FzDa8It1Jse63oCr6QOPud21zOGwUJnHKQlCW+6BuoJiaXayi1q7X9KxEw/fRbCLZmJWlwoyQPGlASqaynPKBescEokqmjuOvTXZbYteFNmlc+HlAAEFhmF0v0ZS5KhYcopwEmmIpOaG9xWKCioOC5nz9z8kpH7nkk6lslUgXHQJGZ1UMZZFL9u/86K3JBUKl974mXKCPMRk1ikg+THK14h9WD33z6ZGAxeD+Qx3C7D0cr+ChPGL9Tqgjcau2R5d0V+YnbBwVHeZSJw1ZT30uEuxflrqP7ePpMrjkT6QnjAp+/PQXiylhnFzy9KqYyNqUBJkBqBoTNAUIyu6ipwuWb3jZ5aj5WDr1Mqck1K/ImfUrEBT/UqdWQk+dfUJlq2d//wlVa9PeATV1SFi2ojAmcIYFmR5tORWZXBqJo5NfTjWrPSFUjlLiPpB/lGF371IDWoBVdHS5zag2SAWm5PAedqLDEmg/eLPdbOZfEBBEkm244FYpdewYyb4/KQaHjXpUu7aT1VIL9BvZE6JSgwUe+joff9JyzG1cxpIthEccq+Pa0uoyANn6gX0SVJa8wsQ1V06FXGviApWJKnQTeFLJpX05XIIqTLtT8xb320YmI3Gqo5tZiUgvd90JVbj61q9a04aKc3wHr+Qtqg04GzZZNbMfc0GzfF5xY7O+hWMTigpWLQWK6EIzMlc2P6069585+ZymPpRcBWt6EWQ3rZZPR23Pint2Ioamr/g21xeV3JFS00uZPr5YDA6pEMVDqKXOjYJfjMEzfdUZRM+Ue5cJqcYHKEr0faHe2MldgzcPHeaaOg3ehfTI9Yy6woMQAf36GM03wYBF7E2wTYkZ8S6qMoYNwfLQ0r7l4nB6Vg4UwkNV9zYbiti81RxD64dv4qTPNctWe8DBEs+4OTfD6b9dr4ASp3blikwrcHkhZjRc5duE7eRuZnJzdkBc2h1KDOjrXsyOzgffHjUJr05Yu2QLc+gqI9rzOR5y0Em5ZRuUY+JNMJvnqfWyKKC4K2EMjAAgdCnljvcetm9tGmpF+ojbFzKxvq8SpQAijkQzJCNEsQnhAFYg/FTfQom9Er3hGiJYoz/zXHO/ACIYQZQKA+oSdEFINATv5eYFLNVc2C6goQuO37ldl5Gux"
+        />
       </div>
-      <div class="header" id="header">
-        <img border="0" src="/media/3623/new_top3_copy.jpg" /><a href="/"><img src="/images/logo.jpg" alt="ACE logo" border="0"/></a>
-      </div>
-      <div id="nav">
-          <ul><li><a href="/market-info/screen-for-projection.aspx" target="_Blank">Screen for Projection</a></li><li><a href="/market-info/daily-trade-reports.aspx">Daily Trade Reports</a></li><li><a href="/market-info/year-contracts.aspx">Year Contracts</a></li><li><a href="/market-info/rural-market-prices.aspx">Rural Market Prices</a></li><li><a href="/market-info/forward-price.aspx">Forward Price</a></li><li><a href="/market-info/spot-price-display.aspx">Spot Price Display</a></li><li><a href="/market-info/trade-graph.aspx">Trade Graph</a></li><li><a href="/market-info/rural-markets.aspx">Rural Markets</a></li></ul>
-      </div>
-      <div class="main_content">
-          
-            <div class="sd_right">
+
+      <script type="text/javascript">
+        //<![CDATA[
+        var theForm = document.forms["ctl01"];
+        if (!theForm) {
+          theForm = document.ctl01;
+        }
+        function __doPostBack(eventTarget, eventArgument) {
+          if (!theForm.onsubmit || theForm.onsubmit() != false) {
+            theForm.__EVENTTARGET.value = eventTarget;
+            theForm.__EVENTARGUMENT.value = eventArgument;
+            theForm.submit();
+          }
+        }
+        //]]>
+      </script>
+
+      <div class="content">
+        <div id="bottomlink">
+          <ul>
+            <li><a href="/market-info.aspx" class="selected">MARKET INFO</a></li>
+            <li><a href="/bid-volume-only.aspx">BID VOLUME ONLY</a></li>
+            <li><a href="/offer-volume-only.aspx">OFFER VOLUME ONLY</a></li>
+            <li><a href="/warehouse-receipts.aspx">WAREHOUSE RECEIPTS</a></li>
+            <li><a href="/how-to-trade.aspx">HOW TO TRADE</a></li>
+            <li><a href="/about-ace.aspx">ABOUT ACE</a></li>
+            <li><a href="/activities.aspx">ACTIVITIES</a></li>
+            <li><a href="/media.aspx">MEDIA</a></li>
+            <li><a href="/my-page.aspx">MY PAGE</a></li>
+          </ul>
+          <a
+            id="ContentPlaceHolderDefault_LoginStatus1"
+            href="javascript:__doPostBack(&#39;ctl00$ctl00$ctl00$ContentPlaceHolderDefault$LoginStatus1$ctl02&#39;,&#39;&#39;)"
+            >Login</a
+          >
+        </div>
+        <div class="header" id="header">
+          <img border="0" src="/media/3623/new_top3_copy.jpg" /><a href="/"
+            ><img src="/images/logo.jpg" alt="ACE logo" border="0"
+          /></a>
+        </div>
+        <div id="nav">
+          <ul>
+            <li><a href="/market-info/screen-for-projection.aspx" target="_Blank">Screen for Projection</a></li>
+            <li><a href="/market-info/daily-trade-reports.aspx">Daily Trade Reports</a></li>
+            <li><a href="/market-info/year-contracts.aspx">Year Contracts</a></li>
+            <li><a href="/market-info/rural-market-prices.aspx">Rural Market Prices</a></li>
+            <li><a href="/market-info/forward-price.aspx">Forward Price</a></li>
+            <li><a href="/market-info/spot-price-display.aspx">Spot Price Display</a></li>
+            <li><a href="/market-info/trade-graph.aspx">Trade Graph</a></li>
+            <li><a href="/market-info/rural-markets.aspx">Rural Markets</a></li>
+          </ul>
+        </div>
+        <div class="main_content">
+          <div class="sd_right"></div>
+          <div class="sd_left_sub">
+            <div class="text_padding_main">
+              <p>
+                Select group:<select
+                  name="ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCommodityGrp"
+                  onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCommodityGrp\&#39;,\&#39;\&#39;)&#39;, 0)"
+                  id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_ddlCommodityGrp"
+                >
+                  <option selected="selected" value="%%">Select</option>
+                  <option value="BVO-BVO">BVO-BVO</option>
+                  <option value="Grain">Grain</option>
+                  <option value="Inputs">Farm Inputs</option>
+                  <option value="Processed">Processed</option>
+                  <option value="Pulses">Pulses</option>
+                  <option value="Regumes">Legumes</option>
+                  <option value="Seed">Seed</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Trees">Trees</option>
+                  <option value="Tuber">Tuber</option>
+                  <option value="Vegetables">Vegetable</option>
+                </select>
+                &nbsp;Select currency:
+                <select
+                  name="ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCurrency"
+                  onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCurrency\&#39;,\&#39;\&#39;)&#39;, 0)"
+                  id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_ddlCurrency"
+                >
+                  <option value="0.0000">ANY</option>
+                  <option value="0.0000">KPW</option>
+                  <option selected="selected" value="480.0000">MWK</option>
+                  <option value="1.0000">USD</option>
+                </select>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input
+                  type="submit"
+                  name="ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$btnPlaceBidOrOffer"
+                  value="Place new bid or offer"
+                  id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_btnPlaceBidOrOffer"
+                />
+              </p>
+              <div></div>
+
+              <span id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_lblMessage"></span>
+            </div>
           </div>
-    <div class="sd_left_sub">      
-  <div class="text_padding_main">
-   
-
-
-
-
-
-        <p>
-            Select group:<select name="ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCommodityGrp" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCommodityGrp\&#39;,\&#39;\&#39;)&#39;, 0)" id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_ddlCommodityGrp">
-	<option selected="selected" value="%%">Select</option>
-	<option value="BVO-BVO">BVO-BVO</option>
-	<option value="Grain">Grain</option>
-	<option value="Inputs">Farm Inputs</option>
-	<option value="Processed">Processed</option>
-	<option value="Pulses">Pulses</option>
-	<option value="Regumes">Legumes</option>
-	<option value="Seed">Seed</option>
-	<option value="Transport">Transport</option>
-	<option value="Trees">Trees</option>
-	<option value="Tuber">Tuber</option>
-	<option value="Vegetables">Vegetable</option>
-
-</select>
-            &nbsp;Select currency:
-            <select name="ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCurrency" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$ddlCurrency\&#39;,\&#39;\&#39;)&#39;, 0)" id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_ddlCurrency">
-	<option value="0.0000">ANY</option>
-	<option value="0.0000">KPW</option>
-	<option selected="selected" value="480.0000">MWK</option>
-	<option value="1.0000">USD</option>
-
-</select>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <input type="submit" name="ctl00$ctl00$ctl00$ContentPlaceHolderDefault$BaseMasterContent$ctl00$Tradelist_4$btnPlaceBidOrOffer" value="Place new bid or offer" id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_btnPlaceBidOrOffer" />
-        </p>
-        <div>
-
-</div>
-    
-<span id="ContentPlaceHolderDefault_BaseMasterContent_ctl00_Tradelist_4_lblMessage"></span>
-
-  </div>
-  </div>
-
-      </div>
-      <div class="footer">
-        <div class="padding">
-            <strong>Agricultural Commodity Exchange for Africa&nbsp;</strong>| Po Box 40139 
-          | Lilongwe 4 | Kanengo &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Email</strong> : ace@aceafrica.org &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Phone</strong>:&nbsp;Int 
-            + 265 (0) 1 710304 &nbsp;&nbsp;<strong>Fax</strong>:&nbsp;Int + 
-            265 (0) 1 710258 
+        </div>
+        <div class="footer">
+          <div class="padding">
+            <strong>Agricultural Commodity Exchange for Africa&nbsp;</strong>| Po Box 40139 | Lilongwe 4 | Kanengo
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong
+              >Email</strong
+            >
+            : ace@aceafrica.org
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Phone</strong>:&nbsp;Int
+            + 265 (0) 1 710304 &nbsp;&nbsp;<strong>Fax</strong>:&nbsp;Int + 265 (0) 1 710258
+          </div>
         </div>
       </div>
-     </div>
-  
-<div class="aspNetHidden">
 
-	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="CA0B0334" />
-	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
-</div></form>
-</body>
+      <div class="aspNetHidden">
+        <input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="CA0B0334" />
+        <input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
+      </div>
+    </form>
+  </body>
 </html>

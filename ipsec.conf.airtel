@@ -1,0 +1,83 @@
+# /etc/ipsec.conf
+# Nzeru za Alimi - Airtel Malawi USSD S2S VPN
+# Configuration based on Airtel's official VPN specifications
+# Date: September 18, 2026
+
+config setup
+    charondebug="ike 2, knl 2, cfg 2, net 2, esp 2"
+    uniqueids=never
+    strictcrlpolicy=no
+
+# Connection to Airtel Malawi VPN Gateway
+conn airtel-ussd-s2s
+    # Connection Type
+    type=tunnel
+    auto=start
+    
+    # IKE Version (Airtel Specification: IKEv2)
+    keyexchange=ikev2
+    
+    # Dead Peer Detection
+    dpdaction=restart
+    dpddelay=30s
+    dpdtimeout=120s
+    
+    # ============================================================
+    # LOCAL (YOUR VPS) CONFIGURATION
+    # ============================================================
+    left=37.60.252.211                  # Your VPS public IP
+    leftsubnet=10.8.0.0/24              # Your VPN subnet
+    leftid=@nzeru-vpn-gateway           # Your VPN identifier
+    leftfirewall=yes                    # Enable firewall integration
+    
+    # ============================================================
+    # REMOTE (AIRTEL) CONFIGURATION
+    # ============================================================
+    right=41.78.57.35                   # Airtel VPN Gateway IP (Malawi)
+    rightsubnet=172.26.0.0/16           # Airtel internal network
+    rightid=@airtel-vpn-gateway         # Airtel VPN identifier
+    
+    # ============================================================
+    # AUTHENTICATION METHOD
+    # ============================================================
+    authby=secret                       # Pre-Shared Key authentication
+    
+    # ============================================================
+    # PHASE 1 (IKE) PARAMETERS
+    # Per Airtel Specifications:
+    # - IKE Version: IKEv2
+    # - Encryption: AES-256
+    # - Hashing: SHA2 (SHA-256)
+    # - DH Group: Group 5 (modp1536)
+    # - Lifetime: 28800 seconds (8 hours)
+    # ============================================================
+    ike=aes256-sha256-modp1536!
+    ikelifetime=28800s
+    
+    # ============================================================
+    # PHASE 2 (IPSEC/ESP) PARAMETERS
+    # Per Airtel Specifications:
+    # - Encryption: AES-256
+    # - Authentication: ESP-SHA2-HMAC (SHA-256)
+    # - PFS: Enabled with Group 5
+    # - Lifetime: 3600 seconds (1 hour)
+    # - Transform Set: esp-aes esp-sha2-hmac
+    # ============================================================
+    esp=aes256-sha256-modp1536!
+    lifetime=3600s
+    
+    # ============================================================
+    # CONNECTION SETTINGS
+    # ============================================================
+    keyingtries=%forever                # Keep trying to establish connection
+    compress=no                         # No compression
+    rekey=yes                           # Automatic rekeying
+    margintime=540s                     # Rekey 9 minutes before expiry
+    
+    # ============================================================
+    # PERFECT FORWARD SECRECY
+    # Enabled as per Airtel specifications
+    # ============================================================
+    # PFS is implicitly enabled by specifying DH group in ESP
+
+# End of configuration

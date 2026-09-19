@@ -1,0 +1,239 @@
+================================================================================
+                  SITE-TO-SITE (S2S) VPN - QUICK REFERENCE
+                     Airtel USSD Integration Setup
+================================================================================
+
+🎯 WHAT IS S2S VPN?
+═══════════════════════════════════════════════════════════════════════════
+
+Site-to-Site VPN = Permanent encrypted tunnel between two networks
+
+    NOT a user-based VPN (like VPN apps on phones)
+    ✓ Always-on tunnel between Airtel's network and your VPS
+    ✓ Transparent to applications (USSD app doesn't need changes)
+    ✓ All traffic automatically encrypted and routed through tunnel
+
+
+📊 NETWORK DIAGRAM
+═══════════════════════════════════════════════════════════════════════════
+
+BEFORE (Current - NOT ALLOWED):
+────────────────────────────────────────────────────────────────────────────
+
+[Airtel Gateway] ──────► Internet ──────► [Your VPS:443]
+  172.26.x.x                            37.60.252.211
+                      ✗ Direct HTTPS
+                      ✗ Not Secure Enough
+                      ✗ Rejected by Airtel
+
+
+AFTER (Required - S2S VPN):
+────────────────────────────────────────────────────────────────────────────
+
+┌──────────────────────┐                    ┌─────────────────────────┐
+│  AIRTEL NETWORK      │                    │  YOUR VPS               │
+│  (Site 1)            │                    │  (Site 2)               │
+│                      │                    │                         │
+│ ┌──────────────────┐ │                    │ ┌─────────────────────┐ │
+│ │ USSD Gateway     │ │                    │ │ VPN Gateway         │ │
+│ │ 172.26.x.x       │ │                    │ │ (StrongSwan)        │ │
+│ └────────┬─────────┘ │                    │ └──────────┬──────────┘ │
+│          │           │                    │            │            │
+│ ┌────────▼─────────┐ │                    │ ┌──────────▼──────────┐ │
+│ │ VPN Concentrator │◄┼════════════════════┼►│ Public IP           │ │
+│ │ Public IP: ???   │ │   S2S VPN TUNNEL   │ │ 37.60.252.211       │ │
+│ └──────────────────┘ │   (Always On)      │ └──────────┬──────────┘ │
+│                      │   (Encrypted)      │            │            │
+│ Subnet: 172.26/16    │◄══════════════════►│ ┌──────────▼──────────┐ │
+│                      │   AES-256/IPSec    │ │ USSD Application    │ │
+└──────────────────────┘                    │ │ api.zammunda.com    │ │
+                                            │ └─────────────────────┘ │
+                                            │ Subnet: 10.8.0/24       │
+                                            └─────────────────────────┘
+
+Traffic Flow:
+1. Airtel USSD sends request → Enters VPN tunnel → Exits at your VPS
+2. Your USSD app responds → Enters VPN tunnel → Exits at Airtel
+3. All traffic encrypted with AES-256
+4. No direct internet connection - only through secure VPN
+
+
+🔑 KEY COMPONENTS
+═══════════════════════════════════════════════════════════════════════════
+
+Component               Airtel (Site 1)         You (Site 2)
+─────────────────────── ─────────────────────── ───────────────────────
+VPN Gateway IP          ?.?.?.?                 37.60.252.211 ✓
+(Public IP)             (Need from Airtel)      (Already have)
+
+VPN Software            Cisco/Fortinet/etc.     StrongSwan/OpenVPN
+                        (Airtel has)            (Will install)
+
+Internal Subnet         172.26.0.0/16           10.8.0.0/24
+                        (Airtel's network)      (Your VPN subnet)
+
+Authentication          PSK or Certificate      PSK or Certificate
+                        (Airtel provides)       (Configure from Airtel)
+
+Encryption              AES-256 + SHA256        AES-256 + SHA256
+                        (Airtel specifies)      (Match Airtel's)
+
+
+📋 WHAT YOU NEED FROM AIRTEL
+═══════════════════════════════════════════════════════════════════════════
+
+CRITICAL INFORMATION:
+─────────────────────────────────────────────────────────────────────────────
+
+1. Airtel VPN Gateway Public IP:          ?.?.?.?
+   (The IP address your VPN will connect to)
+
+2. Pre-Shared Key (PSK):                  xxxxxxxxxxxxx
+   (Secret password for VPN authentication)
+   OR
+   Certificate Files:                     ca.crt, airtel.crt, airtel.key
+   (For certificate-based authentication)
+
+3. Encryption Settings:
+   • IKE Version:                         IKEv1 or IKEv2?
+   • IKE Encryption:                      AES-256-CBC or AES-128?
+   • IKE Hash:                            SHA256 or SHA1?
+   • DH Group:                            Group 14? Group 19?
+   • IPSec Encryption:                    AES-256-CBC or AES-128?
+   • IPSec Hash:                          SHA256 or SHA1?
+
+4. Network Configuration:
+   • Airtel's Internal Subnet:            172.26.0.0/16
+   • Your VPN Subnet:                     10.8.0.0/24 (or Airtel assigns?)
+   • MTU Size:                            1400? 1500?
+
+5. Support Contact:
+   • Technical Contact Name:              _________________
+   • Technical Contact Email:             _________________
+   • Technical Contact Phone:             _________________
+
+
+⚙️ WHAT YOU WILL DO (After receiving Airtel's config)
+═══════════════════════════════════════════════════════════════════════════
+
+Step 1: Install VPN Software
+────────────────────────────────────────────────────────────────────────────
+$ sudo apt install strongswan strongswan-pki -y
+
+Step 2: Configure VPN
+────────────────────────────────────────────────────────────────────────────
+Edit: /etc/ipsec.conf (with Airtel's settings)
+Edit: /etc/ipsec.secrets (with Airtel's PSK)
+
+Step 3: Enable IP Forwarding
+────────────────────────────────────────────────────────────────────────────
+$ sudo sysctl -w net.ipv4.ip_forward=1
+
+Step 4: Configure Firewall
+────────────────────────────────────────────────────────────────────────────
+$ sudo ufw allow 500/udp    # IKE
+$ sudo ufw allow 4500/udp   # NAT-T
+
+Step 5: Start VPN
+────────────────────────────────────────────────────────────────────────────
+$ sudo ipsec restart
+$ sudo ipsec up airtel-ussd-s2s
+
+Step 6: Test VPN
+────────────────────────────────────────────────────────────────────────────
+$ sudo ipsec status         # Check tunnel is up
+$ ping 172.26.166.100       # Ping Airtel's gateway
+
+Step 7: Update USSD App
+────────────────────────────────────────────────────────────────────────────
+Update IP whitelist in server/src/app.js to allow 172.26.0.0/16
+
+Step 8: Test USSD
+────────────────────────────────────────────────────────────────────────────
+Ask Airtel to send test USSD request through VPN
+
+
+🧪 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════════════
+
+[ ] VPN tunnel shows "ESTABLISHED" status
+[ ] Can ping Airtel's VPN gateway (172.26.x.x)
+[ ] Airtel can ping your VPS through VPN
+[ ] VPN traffic visible in logs
+[ ] USSD test request succeeds through VPN
+[ ] USSD response received by Airtel
+[ ] No packet loss or timeouts
+[ ] VPN reconnects automatically if dropped
+[ ] Firewall rules working correctly
+[ ] Application receives requests from VPN IPs
+
+
+⏱️ TIMELINE
+═══════════════════════════════════════════════════════════════════════════
+
+Week 1:     Email Airtel → Wait for S2S VPN config (3-7 days)
+Week 2:     Install & configure S2S VPN (1-2 days)
+Week 2-3:   Test VPN connectivity (1-2 days)
+Week 3:     USSD testing through VPN (1-2 days)
+Week 4:     Production go-live
+
+
+🚨 IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════════════
+
+✓ S2S VPN is REQUIRED - cannot proceed without it
+✓ Your USSD application code stays the same
+✓ VPN operates at network layer (transparent to app)
+✓ Must use Airtel's exact encryption settings
+✓ PSK must be kept secret (never commit to git)
+✓ VPN must be always-on (24/7)
+✓ Monitor VPN logs daily
+✓ Have Airtel's support contact ready
+
+
+📞 IMMEDIATE ACTION
+═══════════════════════════════════════════════════════════════════════════
+
+RIGHT NOW:
+────────────────────────────────────────────────────────────────────────────
+1. Open: /workspace/EMAIL_TO_AIRTEL_S2S_VPN_REQUEST.txt
+2. Copy the email template
+3. Add your phone number
+4. Send to Airtel USSD integration team
+5. CC your account manager
+6. Request acknowledgment and timeline
+7. Follow up after 2-3 days if no response
+
+
+WHILE WAITING:
+────────────────────────────────────────────────────────────────────────────
+1. Backup your VPS configuration
+2. Ensure root/sudo access
+3. Check disk space (>5GB free recommended)
+4. Document current network setup
+5. Review S2S VPN setup guide
+
+
+📄 REFERENCE DOCUMENTS
+═══════════════════════════════════════════════════════════════════════════
+
+Comprehensive Guide:    /workspace/S2S_VPN_SETUP_GUIDE.md
+Email Template:         /workspace/EMAIL_TO_AIRTEL_S2S_VPN_REQUEST.txt
+This Quick Ref:         /workspace/S2S_VPN_QUICK_REFERENCE.txt
+General VPN Options:    /workspace/AIRTEL_VPN_OPTIONS.md
+
+
+═══════════════════════════════════════════════════════════════════════════
+                            STATUS SUMMARY
+═══════════════════════════════════════════════════════════════════════════
+
+Current Status:         Waiting for Airtel S2S VPN configuration
+Your VPS Ready:         ✓ Yes (37.60.252.211)
+USSD App Ready:         ✓ Yes (https://api.zammunda.com/ussd)
+VPN Software:           ✗ Not installed (waiting for Airtel's protocol)
+VPN Configuration:      ✗ Pending from Airtel
+Blocking Issue:         Need Airtel's S2S VPN config details
+
+Next Critical Step:     EMAIL AIRTEL TODAY
+
+═══════════════════════════════════════════════════════════════════════════

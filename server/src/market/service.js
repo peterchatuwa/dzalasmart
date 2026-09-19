@@ -5,7 +5,13 @@ import { fetchUlimi, ULIMI_URL, parseUlimiHtml } from "./collectors/ulimi.js";
 import { fetchAce, ACE_BID_URL, parseAceHtml } from "./collectors/ace.js";
 import { fetchNamis, NAMIS_WFP_URL, parseNamisCsv } from "./collectors/namis.js";
 import { fmtMoney, relativeUpdatedLabel } from "./normalize.js";
-import { nearestWarehouseHub, warehouseHub, ensureTradingCentre, listLocationTree, listTradingCentres } from "./locations.js";
+import {
+  nearestWarehouseHub,
+  warehouseHub,
+  ensureTradingCentre,
+  listLocationTree,
+  listTradingCentres,
+} from "./locations.js";
 import {
   insertObservations,
   listCommodities,
@@ -384,31 +390,29 @@ export async function marketPayload(db, options = {}) {
   await refreshMarketCache(db);
   const district = options.district || null;
   const hub = district ? nearestWarehouseHub(district) : null;
-  const observations = db
-    ? await listLatestPrices(db, { district })
-    : [];
+  const observations = db ? await listLatestPrices(db, { district }) : [];
   const tableRows = observations.length
     ? rowsFromObservations(observations)
     : rowsFromObservations(
-      marketView(district).rows.map((row) => ({
-        commodity: row.crop,
-        market: row.warehouse || hub,
-        district: row.hub,
-        buyPricePerKg: row.pricePerKg,
-        sellPricePerKg: row.sellPricePerKg,
-        buyPrice: row.price,
-        sellPrice: row.sellPricePerKg ? `${fmtMoney(row.sellPricePerKg)}/kg` : null,
-        source: "LocalBuyEx",
-        sourceSlug: "localbuy",
-        priceKind: "market",
-        grade: row.grade,
-        fetchedAt: cache.at,
-        updatedLabel: relativeUpdatedLabel(cache.at),
-      }))
-    );
+        marketView(district).rows.map((row) => ({
+          commodity: row.crop,
+          market: row.warehouse || hub,
+          district: row.hub,
+          buyPricePerKg: row.pricePerKg,
+          sellPricePerKg: row.sellPricePerKg,
+          buyPrice: row.price,
+          sellPrice: row.sellPricePerKg ? `${fmtMoney(row.sellPricePerKg)}/kg` : null,
+          source: "LocalBuyEx",
+          sourceSlug: "localbuy",
+          priceKind: "market",
+          grade: row.grade,
+          fetchedAt: cache.at,
+          updatedLabel: relativeUpdatedLabel(cache.at),
+        }))
+      );
 
   return {
-    ...(getMarketMeta(district)),
+    ...getMarketMeta(district),
     note: district
       ? `Prices near ${district}${hub ? ` · nearest warehouse ${hub}` : ""}.`
       : "Log in or pass your district to see prices near you.",
@@ -468,9 +472,10 @@ export async function marketSourcesComparePayload(db, filters = {}) {
 }
 
 export async function marketOpportunitiesPayload(db, filters = {}) {
-  const commodity = filters.commodity || filters.commoditySlug
-    ? (await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug))?.slug
-    : undefined;
+  const commodity =
+    filters.commodity || filters.commoditySlug
+      ? (await resolveCompareCommodity(db, filters.commodity || filters.commoditySlug))?.slug
+      : undefined;
   const opportunities = await findMarketOpportunities(db, {
     commoditySlug: commodity,
     loadKg: filters.loadKg ? Number(filters.loadKg) : undefined,

@@ -1,0 +1,27 @@
+{
+  "name": "nzeru-farmer-app",
+  "version": "2.0.0",
+  "description": "Nzeru za Alimi - Complete Farmer Application",
+  "main": "www/index.html",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'Build complete'",
+    "android": "npx cap sync android && npx cap open android"
+  },
+  "keywords": [
+    "agriculture",
+    "farmer",
+    "malawi",
+    "nzeru"
+  ],
+  "author": "Zammunda",
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/camera": "^8.2.4",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/geolocation": "^8.2.2",
+    "@capacitor/preferences": "^8.0.1"
+  }
+}

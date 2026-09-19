@@ -39,21 +39,29 @@ function mapEventRow(row) {
 }
 
 export async function listFarmerAlerts(db, farmerId) {
-  const rows = await db.prepare(`
+  const rows = await db
+    .prepare(
+      `
     SELECT * FROM market_price_alerts
     WHERE farmer_id = ?
     ORDER BY active DESC, updated_at DESC
-  `).all(farmerId);
+  `
+    )
+    .all(farmerId);
   return rows.map(mapAlertRow);
 }
 
 export async function listFarmerAlertEvents(db, farmerId, limit = 20) {
-  const rows = await db.prepare(`
+  const rows = await db
+    .prepare(
+      `
     SELECT * FROM market_price_alert_events
     WHERE farmer_id = ?
     ORDER BY triggered_at DESC
     LIMIT ?
-  `).all(farmerId, Math.min(100, Math.max(1, limit)));
+  `
+    )
+    .all(farmerId, Math.min(100, Math.max(1, limit)));
   return rows.map(mapEventRow);
 }
 
@@ -62,7 +70,9 @@ export async function createFarmerAlert(db, farmer, input = {}) {
   if (!commodity) throw HttpError(400, "Unknown commodity");
   const district = String(input.district || farmer.district || "").trim();
   if (!district) throw HttpError(400, "District is required");
-  const direction = String(input.direction || "").trim().toLowerCase();
+  const direction = String(input.direction || "")
+    .trim()
+    .toLowerCase();
   if (!["above", "below"].includes(direction)) {
     throw HttpError(400, "Direction must be above or below");
   }
@@ -72,29 +82,37 @@ export async function createFarmerAlert(db, farmer, input = {}) {
   }
   const now = Date.now();
   const id = crypto.randomUUID();
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO market_price_alerts (
       id, farmer_id, commodity_slug, district, location_slug,
       direction, threshold_per_kg, active, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-  `).run(
-    id,
-    farmer.id,
-    commodity.slug,
-    district,
-    String(input.locationSlug || input.location || "").trim() || null,
-    direction,
-    threshold,
-    now,
-    now,
-  );
+  `
+    )
+    .run(
+      id,
+      farmer.id,
+      commodity.slug,
+      district,
+      String(input.locationSlug || input.location || "").trim() || null,
+      direction,
+      threshold,
+      now,
+      now
+    );
   return mapAlertRow(await db.prepare("SELECT * FROM market_price_alerts WHERE id = ?").get(id));
 }
 
 export async function deleteFarmerAlert(db, farmerId, alertId) {
-  const row = await db.prepare(`
+  const row = await db
+    .prepare(
+      `
     SELECT * FROM market_price_alerts WHERE id = ? AND farmer_id = ?
-  `).get(alertId, farmerId);
+  `
+    )
+    .get(alertId, farmerId);
   if (!row) throw HttpError(404, "Alert not found");
   await db.prepare("DELETE FROM market_price_alerts WHERE id = ?").run(alertId);
   return { ok: true, id: alertId };
@@ -127,9 +145,13 @@ function buildAlertMessage(alert, observation) {
 }
 
 export async function evaluateMarketAlerts(db) {
-  const alerts = await db.prepare(`
+  const alerts = await db
+    .prepare(
+      `
     SELECT * FROM market_price_alerts WHERE active = 1
-  `).all();
+  `
+    )
+    .all();
   const triggered = [];
   const now = Date.now();
 
@@ -140,30 +162,38 @@ export async function evaluateMarketAlerts(db) {
 
     const message = buildAlertMessage(alert, observation);
     const eventId = crypto.randomUUID();
-    await db.prepare(`
+    await db
+      .prepare(
+        `
       INSERT INTO market_price_alert_events (
         id, alert_id, farmer_id, commodity_slug, district, location_slug,
         direction, threshold_per_kg, observed_price_per_kg, source_slug, message, triggered_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      eventId,
-      alert.id,
-      alert.farmer_id,
-      alert.commodity_slug,
-      alert.district,
-      alert.location_slug,
-      alert.direction,
-      alert.threshold_per_kg,
-      observation.buyPricePerKg,
-      observation.sourceSlug || null,
-      message,
-      now,
-    );
-    await db.prepare(`
+    `
+      )
+      .run(
+        eventId,
+        alert.id,
+        alert.farmer_id,
+        alert.commodity_slug,
+        alert.district,
+        alert.location_slug,
+        alert.direction,
+        alert.threshold_per_kg,
+        observation.buyPricePerKg,
+        observation.sourceSlug || null,
+        message,
+        now
+      );
+    await db
+      .prepare(
+        `
       UPDATE market_price_alerts
       SET last_triggered_at = ?, updated_at = ?
       WHERE id = ?
-    `).run(now, now, alert.id);
+    `
+      )
+      .run(now, now, alert.id);
     triggered.push(mapEventRow(await db.prepare("SELECT * FROM market_price_alert_events WHERE id = ?").get(eventId)));
   }
 
@@ -182,19 +212,27 @@ export async function marketAlertsPayload(db, farmer) {
 }
 
 export async function staffMarketAlertsPayload(db) {
-  const summary = await db.prepare(`
+  const summary = await db
+    .prepare(
+      `
     SELECT
       COUNT(*) FILTER (WHERE active = 1) AS active_alerts,
       COUNT(DISTINCT farmer_id) FILTER (WHERE active = 1) AS farmers_with_alerts
     FROM market_price_alerts
-  `).get();
-  const recent = await db.prepare(`
+  `
+    )
+    .get();
+  const recent = await db
+    .prepare(
+      `
     SELECT e.*, f.name AS farmer_name, f.phone AS farmer_phone
     FROM market_price_alert_events e
     JOIN farmers f ON f.id = e.farmer_id
     ORDER BY e.triggered_at DESC
     LIMIT 20
-  `).all();
+  `
+    )
+    .all();
   return {
     activeAlerts: Number(summary?.active_alerts) || 0,
     farmersWithAlerts: Number(summary?.farmers_with_alerts) || 0,

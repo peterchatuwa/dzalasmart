@@ -8,8 +8,7 @@ export const ACE_OFFER_URL = `${ACE_BASE}/offer-volume-only.aspx`;
 const BVO_ROW_RE =
   /<tr[^>]*>\s*(?:<td[^>]*>[\s\S]*?<\/td>\s*)*?<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td[^>]*>([\d,]+(?:\.\d+)?)<\/td>/gi;
 
-const PLAIN_BVO_RE =
-  /([A-Za-z][A-Za-z ]{2,30})\s+(?:Grade\s+[A-Z]\s+)?([A-Za-z ]+)?\s*MWK\s*([\d,]+(?:\.\d+)?)/gi;
+const PLAIN_BVO_RE = /([A-Za-z][A-Za-z ]{2,30})\s+(?:Grade\s+[A-Z]\s+)?([A-Za-z ]+)?\s*MWK\s*([\d,]+(?:\.\d+)?)/gi;
 
 function normalizeLocation(raw) {
   const value = String(raw || "").trim();
@@ -47,7 +46,9 @@ export function parseAceHtml(html, side = "bid") {
   }
 
   if (!rows.length) {
-    const text = String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const text = String(html || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ");
     while ((match = PLAIN_BVO_RE.exec(text)) !== null) {
       pushAceRow(rows, seen, match[1], match[2], match[3]);
     }
@@ -71,10 +72,7 @@ async function fetchAcePage(url, side) {
 }
 
 export async function fetchAce() {
-  const [bids, offers] = await Promise.all([
-    fetchAcePage(ACE_BID_URL, "bid"),
-    fetchAcePage(ACE_OFFER_URL, "offer"),
-  ]);
+  const [bids, offers] = await Promise.all([fetchAcePage(ACE_BID_URL, "bid"), fetchAcePage(ACE_OFFER_URL, "offer")]);
   const merged = new Map();
   for (const row of [...bids, ...offers]) {
     const key = `${row.commoditySlug}:${row.location.toLowerCase()}`;

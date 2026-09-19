@@ -61,7 +61,9 @@ function normalizeDistrict(admin2) {
 }
 
 export function parseNamisCsv(csvText, now = Date.now()) {
-  const lines = String(csvText || "").split(/\r?\n/).filter(Boolean);
+  const lines = String(csvText || "")
+    .split(/\r?\n/)
+    .filter(Boolean);
   if (lines.length <= 1) return [];
   const header = parseCsvLine(lines[0]).map((cell) => cell.trim().toLowerCase());
   const idx = Object.fromEntries(header.map((name, index) => [name, index]));
@@ -73,7 +75,9 @@ export function parseNamisCsv(csvText, now = Date.now()) {
     const dateText = cells[idx.date];
     const observedAt = Date.parse(`${dateText}T00:00:00Z`);
     if (!Number.isFinite(observedAt) || observedAt < cutoff) continue;
-    const unit = String(cells[idx.unit] || "").trim().toUpperCase();
+    const unit = String(cells[idx.unit] || "")
+      .trim()
+      .toUpperCase();
     if (unit !== "KG") continue;
     const priceType = String(cells[idx.pricetype] || "").trim();
     if (priceType && !/retail/i.test(priceType)) continue;
@@ -93,7 +97,10 @@ export function parseNamisCsv(csvText, now = Date.now()) {
         crop: commodity.name,
         commoditySlug: commodity.slug,
         district,
-        region: String(cells[idx.admin1] || "").replace(/\s+Region$/i, " Region").trim() || null,
+        region:
+          String(cells[idx.admin1] || "")
+            .replace(/\s+Region$/i, " Region")
+            .trim() || null,
         market,
         buyPricePerKg: price,
         sellPricePerKg: null,

@@ -57,7 +57,10 @@ try {
     const placeholders = cols.map((_, i) => `$${i + 1}`).join(", ");
     const insert = `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})`;
     for (const row of rows) {
-      await client.query(insert, cols.map((col) => row[col]));
+      await client.query(
+        insert,
+        cols.map((col) => row[col])
+      );
     }
     console.log(`${table}: migrated ${rows.length} row(s)`);
   }

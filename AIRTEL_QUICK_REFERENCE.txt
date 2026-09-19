@@ -1,0 +1,62 @@
+================================================================================
+                    AIRTEL USSD INTEGRATION - QUICK REFERENCE
+                        Nzeru za Alimi (Smart Farming Platform)
+================================================================================
+
+🎯 PEER IP ADDRESS (YOUR SERVER TO CONNECT TO)
+═══════════════════════════════════════════════════════════════════════════
+
+   IP ADDRESS:          37.60.252.211
+   DOMAIN:              api.zammunda.com
+   PORT:                443 (HTTPS)
+   PROTOCOL:            TCP
+
+
+📡 API ENDPOINT DETAILS
+═══════════════════════════════════════════════════════════════════════════
+
+   USSD Endpoint:       https://api.zammunda.com/ussd
+   Method:              POST
+   Content-Type:        application/x-www-form-urlencoded
+
+   Request Parameters:
+     • sessionId:       (Airtel provides)
+     • serviceCode:     (e.g., *413#)
+     • phoneNumber:     (User's number, e.g., +265888123456)
+     • text:            (User's input)
+
+   Response Format:
+     • CON <message>    (Continue session - show menu)
+     • END <message>    (End session - final message)
+
+
+🔒 SECURITY
+═══════════════════════════════════════════════════════════════════════════
+
+   SSL Certificate:     Valid (Let's Encrypt, auto-renewed)
+   TLS Version:         1.2 / 1.3
+   IP Whitelisting:     Only Airtel gateway IPs accepted
+   Rate Limiting:       Active
+
+
+✅ CONNECTIVITY TEST
+═══════════════════════════════════════════════════════════════════════════
+
+   Health Check:
+   curl https://api.zammunda.com/health
+
+   Expected Response:
+   {"ok":true,"service":"nzeru-za-alimi"}
+
+
+📞 CONTACT
+═══════════════════════════════════════════════════════════════════════════
+
+   Name:                Peter Chatuwa
+   Email:               peter.chatuwa@zammunda.com
+   Phone:               [Your Number]
+
+
+================================================================================
+                    COPY THIS INFORMATION TO AIRTEL
+================================================================================

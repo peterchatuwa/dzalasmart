@@ -16,7 +16,10 @@ const HEADER_ALIASES = {
 };
 
 function normalizeHeader(cell) {
-  return String(cell || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  return String(cell || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
 }
 
 function headerIndex(headerRow) {
@@ -71,17 +74,20 @@ export function parseMarketCsv(text) {
 
   const firstCells = splitCsvLine(lines[0]);
   const looksLikeHeader = firstCells.some((cell) =>
-    ["commodity", "crop", "buy", "buy_price_per_kg", "district"].includes(normalizeHeader(cell)));
-  const idx = looksLikeHeader ? headerIndex(firstCells) : {
-    commodity: 0,
-    district: 1,
-    buy: 2,
-    sell: 3,
-    priceKind: 4,
-    unit: 5,
-    observedAt: 6,
-    notes: 7,
-  };
+    ["commodity", "crop", "buy", "buy_price_per_kg", "district"].includes(normalizeHeader(cell))
+  );
+  const idx = looksLikeHeader
+    ? headerIndex(firstCells)
+    : {
+        commodity: 0,
+        district: 1,
+        buy: 2,
+        sell: 3,
+        priceKind: 4,
+        unit: 5,
+        observedAt: 6,
+        notes: 7,
+      };
   const start = looksLikeHeader ? 1 : 0;
   const rows = [];
 
@@ -106,7 +112,7 @@ export function parseMarketCsv(text) {
       sellPricePerKg: sellRaw != null ? toPricePerKg(sellRaw, unit) : null,
       rawUnit: unit,
       rawAmount: buyRaw,
-      priceKind: idx.priceKind != null ? (cells[idx.priceKind] || "market") : null,
+      priceKind: idx.priceKind != null ? cells[idx.priceKind] || "market" : null,
       observedAt: parseObservedAt(idx.observedAt != null ? cells[idx.observedAt] : null),
       notes: idx.notes != null ? cells[idx.notes] || null : null,
     });
@@ -119,15 +125,17 @@ export function parseMarketCsv(text) {
 const IMPORTABLE_SOURCES = new Set(["admarc", "nfra", "ace", "namis", "worldbank", "manual"]);
 
 export async function importMarketCsv(db, staff, input = {}) {
-  const sourceSlug = String(input.sourceSlug || input.source || "manual").trim().toLowerCase();
+  const sourceSlug = String(input.sourceSlug || input.source || "manual")
+    .trim()
+    .toLowerCase();
   if (!IMPORTABLE_SOURCES.has(sourceSlug)) {
     throw HttpError(400, "Imports must target ADMARC, NFRA, ACE, NAMIS, World Bank, or manual");
   }
   const sourceId = await sourceIdBySlug(db, sourceSlug);
   if (!sourceId) throw HttpError(400, "Unknown market source");
 
-  const defaultPriceKind = input.priceKind
-    || (sourceSlug === "admarc" || sourceSlug === "nfra" ? "procurement" : "reference");
+  const defaultPriceKind =
+    input.priceKind || (sourceSlug === "admarc" || sourceSlug === "nfra" ? "procurement" : "reference");
   const parsed = parseMarketCsv(input.csv || input.text || "");
   const observationRows = [];
 

@@ -1,0 +1,146 @@
+================================================================================
+                    AIRTEL VPN - QUICK REFERENCE CARD
+                         Nzeru za Alimi USSD Integration
+================================================================================
+
+📊 VPN CONFIGURATION (EXTRACTED FROM AIRTEL'S DOCUMENT)
+═══════════════════════════════════════════════════════════════════════════
+
+Your VPS IP:              37.60.252.211
+Airtel Gateway IP:        41.78.57.35
+VPN Type:                 Site-to-Site IPSec with IKEv2
+Encryption:               AES-256 + SHA-256 + DH Group 5
+
+
+⚠️  MISSING: PRE-SHARED KEY (PSK)
+═══════════════════════════════════════════════════════════════════════════
+
+The Excel document did NOT contain the PSK.
+You MUST get this from Airtel before deploying VPN.
+
+
+🚀 TO DEPLOY VPN (AFTER YOU GET PSK)
+═══════════════════════════════════════════════════════════════════════════
+
+cd /workspace
+./deploy-vpn-to-vps.sh
+
+The script will:
+  1. Ask for PSK
+  2. Install VPN software on VPS
+  3. Configure firewall
+  4. Deploy VPN config
+  5. Start tunnel
+  6. Test connectivity
+
+Time: ~5 minutes
+
+
+📞 TO GET PSK FROM AIRTEL
+═══════════════════════════════════════════════════════════════════════════
+
+Email Airtel:
+
+"Hi Airtel Team,
+
+We have your VPN config document and are ready to deploy.
+Please provide the Pre-Shared Key (PSK) for:
+
+Client IP: 37.60.252.211
+Gateway IP: 41.78.57.35
+
+Thank you!"
+
+
+✅ VERIFICATION (AFTER DEPLOYMENT)
+═══════════════════════════════════════════════════════════════════════════
+
+ssh root@37.60.252.211
+/root/check-vpn.sh
+
+Look for: "ESTABLISHED" status
+
+
+📁 FILES GENERATED
+═══════════════════════════════════════════════════════════════════════════
+
+Configuration:
+  • ipsec.conf.airtel         - IPSec config (ready)
+  • ipsec.secrets.airtel       - PSK file (needs PSK)
+  • deploy-vpn-to-vps.sh       - Deployment script
+
+Documentation:
+  • AIRTEL_VPN_CONFIG_EXTRACTED.md  - Full technical details
+  • VPN_DEPLOYMENT_READY.md         - Complete guide
+  • QUICK_VPN_REFERENCE.txt         - This file
+
+
+🎯 WHAT HAPPENS AFTER VPN IS WORKING
+═══════════════════════════════════════════════════════════════════════════
+
+1. Update USSD app IP whitelist (server/src/app.js)
+2. Allow 172.26.0.0/16 (Airtel's network)
+3. Deploy updated app
+4. Test USSD with Airtel
+5. Go live!
+
+
+📊 STATUS SUMMARY
+═══════════════════════════════════════════════════════════════════════════
+
+✅ VPN config extracted from Excel
+✅ IPSec files generated
+✅ Deployment script ready
+✅ Monitoring tools prepared
+⏳ Waiting for PSK from Airtel
+⏳ Ready to deploy once PSK received
+
+
+🚨 IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════════════
+
+• PSK is a SECRET - never commit to git
+• Treat PSK like a password
+• Store PSK in password manager
+• After deployment, file is at: /etc/ipsec.secrets (600 permissions)
+
+
+⏱️ TIMELINE
+═══════════════════════════════════════════════════════════════════════════
+
+Get PSK from Airtel:      1-2 days (their response time)
+Deploy VPN:               5 minutes
+Test connectivity:        10 minutes
+Update USSD app:          5 minutes
+End-to-end testing:       30 minutes
+
+TOTAL: ~1 hour of work + waiting for PSK
+
+
+📞 SUPPORT COMMANDS
+═══════════════════════════════════════════════════════════════════════════
+
+Check VPN status:         /root/check-vpn.sh
+Restart VPN:              /root/restart-vpn.sh
+View live logs:           tail -f /var/log/syslog | grep charon
+Manual tunnel start:      ipsec up airtel-ussd-s2s
+Manual tunnel stop:       ipsec down airtel-ussd-s2s
+Full status:              ipsec statusall
+
+
+🎉 BOTTOM LINE
+═══════════════════════════════════════════════════════════════════════════
+
+Everything is READY TO GO!
+
+Just need PSK from Airtel, then:
+  1. Run deploy script (5 minutes)
+  2. VPN connects automatically
+  3. Test and go live
+
+YOU'RE 95% DONE! 🚀
+
+
+================================================================================
+                            END OF QUICK REFERENCE
+================================================================================

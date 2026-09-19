@@ -1,0 +1,8 @@
+{
+  "appId": "com.zammunda.nzeru.farmer",
+  "appName": "Nzeru za Alimi",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
