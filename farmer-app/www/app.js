@@ -518,6 +518,662 @@ function showMainApp() {
     document.getElementById('mainApp').style.display = 'block';
 }
 
+// ============================================
+// FARM TAB FUNCTIONS
+// ============================================
+
+// Parcels Management
+async function loadParcels() {
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/parcels`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        displayParcels(data.parcels || []);
+    } catch (error) {
+        console.error('Failed to load parcels:', error);
+    }
+}
+
+function displayParcels(parcels) {
+    const container = document.getElementById('parcelsList');
+    if (!parcels.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏞️</div><p>No land parcels added yet</p></div>';
+        return;
+    }
+    
+    container.innerHTML = parcels.map(p => `
+        <div class="card-item">
+            <div class="card-item-header">
+                <span class="card-item-title">${p.parcel_name}</span>
+                <span class="card-item-badge ${p.status === 'active' ? '' : 'inactive'}">${p.status || 'active'}</span>
+            </div>
+            <div class="card-item-details">
+                <div>📐 Size: ${p.area_hectares} hectares</div>
+                <div>🏷️ Ownership: ${p.ownership_type}</div>
+                ${p.soil_type ? `<div>🌱 Soil: ${p.soil_type}</div>` : ''}
+                ${p.water_source ? `<div>💧 Water: ${p.water_source}</div>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+window.showAddParcel = function() {
+    document.getElementById('addParcelModal').classList.add('show');
+    document.getElementById('parcelName').value = '';
+    document.getElementById('parcelSize').value = '';
+    document.getElementById('parcelOwnership').value = '';
+    document.getElementById('parcelSoilType').value = '';
+    document.getElementById('parcelWaterSource').value = '';
+    document.getElementById('gpsStatus').textContent = '';
+};
+
+window.closeAddParcel = function() {
+    document.getElementById('addParcelModal').classList.remove('show');
+};
+
+let capturedGPS = null;
+window.captureGPS = async function() {
+    const statusEl = document.getElementById('gpsStatus');
+    statusEl.textContent = '📍 Capturing GPS...';
+    
+    try {
+        const { Geolocation } = window.Capacitor?.Plugins || {};
+        if (!Geolocation) {
+            statusEl.textContent = '❌ GPS not available';
+            return;
+        }
+        
+        const position = await Geolocation.getCurrentPosition();
+        capturedGPS = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        };
+        statusEl.textContent = `✅ GPS captured: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+    } catch (error) {
+        statusEl.textContent = '❌ Failed to capture GPS';
+        console.error('GPS error:', error);
+    }
+};
+
+document.getElementById('addParcelForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        parcel_name: document.getElementById('parcelName').value,
+        area_hectares: parseFloat(document.getElementById('parcelSize').value),
+        ownership_type: document.getElementById('parcelOwnership').value,
+        soil_type: document.getElementById('parcelSoilType').value,
+        water_source: document.getElementById('parcelWaterSource').value,
+        ...(capturedGPS && capturedGPS)
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/parcels`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showToast('✅ Parcel added successfully', 'success');
+            closeAddParcel();
+            loadParcels();
+            capturedGPS = null;
+        } else {
+            showToast('❌ Failed to add parcel', 'error');
+        }
+    } catch (error) {
+        showToast('❌ Network error', 'error');
+        console.error('Add parcel error:', error);
+    }
+});
+
+// Seasons Management
+async function loadSeasons() {
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        displaySeasons(data.seasons || []);
+        populateSeasonSelect(data.seasons || []);
+    } catch (error) {
+        console.error('Failed to load seasons:', error);
+    }
+}
+
+function displaySeasons(seasons) {
+    const container = document.getElementById('seasonsList');
+    if (!seasons.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🌾</div><p>No production seasons yet</p></div>';
+        return;
+    }
+    
+    container.innerHTML = seasons.map(s => `
+        <div class="card-item">
+            <div class="card-item-header">
+                <span class="card-item-title">${s.crop} - ${s.season_name}</span>
+                <span class="card-item-badge ${s.status === 'active' ? '' : 'inactive'}">${s.status || 'active'}</span>
+            </div>
+            <div class="card-item-details">
+                <div>📐 Area: ${s.area_hectares} hectares</div>
+                ${s.variety ? `<div>🌱 Variety: ${s.variety}</div>` : ''}
+                ${s.planting_date ? `<div>📅 Planted: ${new Date(s.planting_date).toLocaleDateString()}</div>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function populateSeasonSelect(seasons) {
+    const select = document.getElementById('activeSeasonSelect');
+    select.innerHTML = '<option value="">-- Select a season --</option>' +
+        seasons.filter(s => s.status === 'active').map(s => 
+            `<option value="${s.id}">${s.crop} - ${s.season_name}</option>`
+        ).join('');
+}
+
+window.showAddSeason = async function() {
+    // First load parcels to populate dropdown
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/parcels`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        const select = document.getElementById('seasonParcel');
+        select.innerHTML = '<option value="">Select parcel...</option>' +
+            (data.parcels || []).map(p => `<option value="${p.id}">${p.parcel_name} (${p.area_hectares}ha)</option>`).join('');
+    } catch (error) {
+        console.error('Failed to load parcels:', error);
+    }
+    
+    document.getElementById('addSeasonModal').classList.add('show');
+    document.getElementById('seasonCrop').value = '';
+    document.getElementById('seasonVariety').value = '';
+    document.getElementById('seasonArea').value = '';
+};
+
+window.closeAddSeason = function() {
+    document.getElementById('addSeasonModal').classList.remove('show');
+};
+
+document.getElementById('addSeasonForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        parcel_id: document.getElementById('seasonParcel').value,
+        crop: document.getElementById('seasonCrop').value,
+        variety: document.getElementById('seasonVariety').value,
+        area_hectares: parseFloat(document.getElementById('seasonArea').value),
+        season_name: document.getElementById('seasonName').value
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showToast('✅ Season started successfully', 'success');
+            closeAddSeason();
+            loadSeasons();
+        } else {
+            showToast('❌ Failed to start season', 'error');
+        }
+    } catch (error) {
+        showToast('❌ Network error', 'error');
+        console.error('Add season error:', error);
+    }
+});
+
+// Household Management
+async function loadHousehold() {
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/household`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        displayHousehold(data.members || []);
+    } catch (error) {
+        console.error('Failed to load household:', error);
+    }
+}
+
+function displayHousehold(members) {
+    const container = document.getElementById('householdList');
+    if (!members.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👨‍👩‍👧‍👦</div><p>No household members added yet</p></div>';
+        return;
+    }
+    
+    container.innerHTML = members.map(m => `
+        <div class="card-item">
+            <div class="card-item-header">
+                <span class="card-item-title">${m.name}</span>
+            </div>
+            <div class="card-item-details">
+                <div>🔗 Relationship: ${m.relationship}</div>
+                ${m.age ? `<div>🎂 Age: ${m.age}</div>` : ''}
+                ${m.gender ? `<div>👤 Gender: ${m.gender}</div>` : ''}
+                ${m.involved_in_farming ? '<div>🌾 Involved in farming</div>' : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+window.showAddMember = function() {
+    document.getElementById('addMemberModal').classList.add('show');
+    document.getElementById('memberName').value = '';
+    document.getElementById('memberRelationship').value = '';
+    document.getElementById('memberAge').value = '';
+    document.getElementById('memberGender').value = '';
+    document.getElementById('memberFarming').checked = false;
+};
+
+window.closeAddMember = function() {
+    document.getElementById('addMemberModal').classList.remove('show');
+};
+
+document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        name: document.getElementById('memberName').value,
+        relationship: document.getElementById('memberRelationship').value,
+        age: parseInt(document.getElementById('memberAge').value) || null,
+        gender: document.getElementById('memberGender').value || null,
+        involved_in_farming: document.getElementById('memberFarming').checked
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/household`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showToast('✅ Member added successfully', 'success');
+            closeAddMember();
+            loadHousehold();
+        } else {
+            showToast('❌ Failed to add member', 'error');
+        }
+    } catch (error) {
+        showToast('❌ Network error', 'error');
+        console.error('Add member error:', error);
+    }
+});
+
+// ============================================
+// PRODUCTION TAB FUNCTIONS
+// ============================================
+
+let currentSeasonId = null;
+
+window.loadSeasonDetails = async function() {
+    currentSeasonId = document.getElementById('activeSeasonSelect').value;
+    
+    if (!currentSeasonId) {
+        document.getElementById('seasonDetailsContainer').style.display = 'none';
+        return;
+    }
+    
+    document.getElementById('seasonDetailsContainer').style.display = 'block';
+    await loadActivities();
+    await loadMonitoring();
+    await loadCosts();
+    updateSeasonStats();
+};
+
+async function updateSeasonStats() {
+    // Calculate days since planting
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        const season = (data.seasons || []).find(s => s.id === currentSeasonId);
+        
+        if (season && season.planting_date) {
+            const days = Math.floor((new Date() - new Date(season.planting_date)) / (1000 * 60 * 60 * 24));
+            document.getElementById('daysSincePlanting').textContent = days;
+        } else {
+            document.getElementById('daysSincePlanting').textContent = '--';
+        }
+    } catch (error) {
+        console.error('Failed to update stats:', error);
+    }
+}
+
+// Sub-tabs switching
+document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const subtab = btn.dataset.subtab;
+        
+        document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.sub-tab-pane').forEach(p => p.classList.remove('active'));
+        
+        btn.classList.add('active');
+        document.getElementById(subtab + 'Subtab').classList.add('active');
+    });
+});
+
+// Activities
+async function loadActivities() {
+    if (!currentSeasonId) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons/${currentSeasonId}/activities`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        displayActivities(data.activities || []);
+        document.getElementById('seasonActivities').textContent = (data.activities || []).length;
+    } catch (error) {
+        console.error('Failed to load activities:', error);
+    }
+}
+
+function displayActivities(activities) {
+    const container = document.getElementById('activitiesList');
+    if (!activities.length) {
+        container.innerHTML = '<div class="empty-state"><p>No activities logged yet</p></div>';
+        return;
+    }
+    
+    container.innerHTML = activities.map(a => `
+        <div class="timeline-item">
+            <div class="timeline-date">${new Date(a.activity_date).toLocaleDateString()}</div>
+            <div class="timeline-content">
+                <div class="timeline-title">${formatActivityType(a.activity_type)}</div>
+                ${a.description ? `<div class="timeline-description">${a.description}</div>` : ''}
+                <div class="timeline-meta">
+                    ${a.labor_hours ? `<span>⏱️ ${a.labor_hours}h</span>` : ''}
+                    ${a.cost_mwk ? `<span>💰 MWK ${a.cost_mwk.toLocaleString()}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function formatActivityType(type) {
+    const types = {
+        'land_prep': 'Land Preparation',
+        'planting': 'Planting',
+        'weeding': 'Weeding',
+        'fertilizing': 'Fertilizing',
+        'spraying': 'Spraying',
+        'irrigation': 'Irrigation',
+        'monitoring': 'Monitoring',
+        'harvesting': 'Harvesting'
+    };
+    return types[type] || type;
+}
+
+window.showLogActivity = function() {
+    document.getElementById('logActivityModal').classList.add('show');
+    document.getElementById('activityDate').value = new Date().toISOString().split('T')[0];
+};
+
+window.closeLogActivity = function() {
+    document.getElementById('logActivityModal').classList.remove('show');
+};
+
+document.getElementById('logActivityForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        activity_date: document.getElementById('activityDate').value,
+        activity_type: document.getElementById('activityType').value,
+        description: document.getElementById('activityDescription').value || null,
+        labor_hours: parseFloat(document.getElementById('activityLaborHours').value) || null,
+        cost_mwk: parseFloat(document.getElementById('activityCost').value) || null
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons/${currentSeasonId}/activities`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showToast('✅ Activity logged', 'success');
+            closeLogActivity();
+            loadActivities();
+            loadCosts();
+        } else {
+            showToast('❌ Failed to log activity', 'error');
+        }
+    } catch (error) {
+        showToast('❌ Network error', 'error');
+    }
+});
+
+// Monitoring
+async function loadMonitoring() {
+    if (!currentSeasonId) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons/${currentSeasonId}/monitoring`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        displayMonitoring(data.records || []);
+    } catch (error) {
+        console.error('Failed to load monitoring:', error);
+    }
+}
+
+function displayMonitoring(records) {
+    const container = document.getElementById('monitoringList');
+    if (!records.length) {
+        container.innerHTML = '<div class="empty-state"><p>No monitoring records yet</p></div>';
+        return;
+    }
+    
+    container.innerHTML = records.map(r => `
+        <div class="timeline-item">
+            <div class="timeline-date">${new Date(r.observation_date).toLocaleDateString()}</div>
+            <div class="timeline-content">
+                <div class="timeline-title">${r.crop_stage || 'Observation'}</div>
+                ${r.crop_health ? `<div class="timeline-description">Health: ${r.crop_health}</div>` : ''}
+                ${r.pests_observed ? `<div class="timeline-description">🐛 Pests: ${r.pests_observed}</div>` : ''}
+                ${r.diseases_observed ? `<div class="timeline-description">🦠 Diseases: ${r.diseases_observed}</div>` : ''}
+                ${r.notes ? `<div class="timeline-description">${r.notes}</div>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+window.showRecordMonitoring = function() {
+    document.getElementById('recordMonitoringModal').classList.add('show');
+    document.getElementById('monitoringDate').value = new Date().toISOString().split('T')[0];
+};
+
+window.closeRecordMonitoring = function() {
+    document.getElementById('recordMonitoringModal').classList.remove('show');
+};
+
+document.getElementById('recordMonitoringForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        observation_date: document.getElementById('monitoringDate').value,
+        crop_stage: document.getElementById('monitoringStage').value || null,
+        crop_health: document.getElementById('monitoringHealth').value || null,
+        pests_observed: document.getElementById('monitoringPests').value || null,
+        diseases_observed: document.getElementById('monitoringDiseases').value || null,
+        action_taken: document.getElementById('monitoringAction').value || null,
+        notes: document.getElementById('monitoringNotes').value || null
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons/${currentSeasonId}/monitoring`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showToast('✅ Monitoring recorded', 'success');
+            closeRecordMonitoring();
+            loadMonitoring();
+        } else {
+            showToast('❌ Failed to record monitoring', 'error');
+        }
+    } catch (error) {
+        showToast('❌ Network error', 'error');
+    }
+});
+
+// Costs
+async function loadCosts() {
+    if (!currentSeasonId) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons/${currentSeasonId}/costs`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        displayCostSummary(data.summary || {});
+        displayCosts(data.costs || []);
+    } catch (error) {
+        console.error('Failed to load costs:', error);
+    }
+}
+
+function displayCostSummary(summary) {
+    const container = document.getElementById('costSummary');
+    container.innerHTML = `
+        <div class="cost-summary-row">
+            <span class="cost-summary-label">Land Prep</span>
+            <span class="cost-summary-value">MWK ${(summary.land_preparation || 0).toLocaleString()}</span>
+        </div>
+        <div class="cost-summary-row">
+            <span class="cost-summary-label">Seeds</span>
+            <span class="cost-summary-value">MWK ${(summary.seeds || 0).toLocaleString()}</span>
+        </div>
+        <div class="cost-summary-row">
+            <span class="cost-summary-label">Fertilizers</span>
+            <span class="cost-summary-value">MWK ${(summary.fertilizers || 0).toLocaleString()}</span>
+        </div>
+        <div class="cost-summary-row">
+            <span class="cost-summary-label">Labor</span>
+            <span class="cost-summary-value">MWK ${(summary.labor || 0).toLocaleString()}</span>
+        </div>
+        <div class="cost-summary-row cost-summary-total">
+            <span class="cost-summary-label">Total Costs</span>
+            <span class="cost-summary-value">MWK ${(summary.total || 0).toLocaleString()}</span>
+        </div>
+    `;
+    document.getElementById('seasonTotalCosts').textContent = `MWK ${(summary.total || 0).toLocaleString()}`;
+}
+
+function displayCosts(costs) {
+    const container = document.getElementById('costsList');
+    if (!costs.length) {
+        container.innerHTML = '<div class="empty-state"><p>No costs recorded yet</p></div>';
+        return;
+    }
+    
+    container.innerHTML = costs.map(c => `
+        <div class="timeline-item">
+            <div class="timeline-date">${new Date(c.cost_date).toLocaleDateString()}</div>
+            <div class="timeline-content">
+                <div class="timeline-title">${c.description}</div>
+                <div class="timeline-description">Category: ${c.category_name}</div>
+                <div class="timeline-meta">
+                    <span>💰 MWK ${c.amount.toLocaleString()}</span>
+                    ${c.payment_method ? `<span>💳 ${c.payment_method}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.showAddCost = function() {
+    document.getElementById('addCostModal').classList.add('show');
+    document.getElementById('costDate').value = new Date().toISOString().split('T')[0];
+};
+
+window.closeAddCost = function() {
+    document.getElementById('addCostModal').classList.remove('show');
+};
+
+document.getElementById('addCostForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        cost_date: document.getElementById('costDate').value,
+        cost_category_id: document.getElementById('costCategory').value,
+        description: document.getElementById('costDescription').value,
+        amount: parseFloat(document.getElementById('costAmount').value),
+        payment_method: document.getElementById('costPayment').value || null,
+        production_stage: document.getElementById('costStage').value || null
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons/${currentSeasonId}/costs`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showToast('✅ Cost recorded', 'success');
+            closeAddCost();
+            loadCosts();
+        } else {
+            showToast('❌ Failed to record cost', 'error');
+        }
+    } catch (error) {
+        showToast('❌ Network error', 'error');
+    }
+});
+
+// Load farm data when switching to farm tab
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+    });
+    
+    event.target.classList.add('active');
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    
+    if (tabName === 'farm') {
+        loadParcels();
+        loadSeasons();
+        loadHousehold();
+    } else if (tabName === 'production') {
+        loadSeasons();
+    }
+}
+
 // Export for HTML onclick handlers
 window.switchTab = switchTab;
 window.showEditProfile = showEditProfile;
