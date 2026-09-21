@@ -48,6 +48,23 @@ import {
   getMobileStats,
   getRecentMobileSubmissions,
 } from "./mobile-api.js";
+import {
+  addHouseholdMember,
+  listHouseholdMembers,
+  addLandParcel,
+  listLandParcels,
+  createProductionSeason,
+  listProductionSeasons,
+  logProductionActivity,
+  listProductionActivities,
+  recordPlantingDetails,
+  logDailyMonitoring,
+  getMonitoringHistory,
+  recordProductionCost,
+  getProductionCostSummary,
+  createOfftakeAgreement,
+  listOfftakeAgreements,
+} from "./production-management.js";
 import { APP_NAME, APP_SLUG } from "./brand.js";
 import {
   listInputs,
@@ -809,6 +826,155 @@ export function createApp(db, options = {}) {
         groups: await listGroups(db, { district, epa, type }),
         types: Object.values(GROUP_TYPES),
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ============================================================================
+  // Production Management Endpoints
+  // ============================================================================
+
+  // Household Members
+  app.post("/api/farmers/me/household", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const member = await addHouseholdMember(db, req.farmer.id, req.body || {});
+      res.status(201).json(member);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/household", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const members = await listHouseholdMembers(db, req.farmer.id);
+      res.json({ members });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Land Parcels
+  app.post("/api/farmers/me/parcels", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const parcel = await addLandParcel(db, req.farmer.id, req.body || {});
+      res.status(201).json(parcel);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/parcels", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const parcels = await listLandParcels(db, req.farmer.id);
+      res.json({ parcels });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Production Seasons
+  app.post("/api/farmers/me/seasons", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const season = await createProductionSeason(db, req.farmer.id, req.body || {});
+      res.status(201).json(season);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = req.query.status || null;
+      const seasons = await listProductionSeasons(db, req.farmer.id, status);
+      res.json({ seasons });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Production Activities
+  app.post("/api/farmers/me/seasons/:seasonId/activities", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const activity = await logProductionActivity(db, req.params.seasonId, req.body || {});
+      res.status(201).json(activity);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons/:seasonId/activities", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const activities = await listProductionActivities(db, req.params.seasonId);
+      res.json({ activities });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Planting Details
+  app.post("/api/farmers/me/seasons/:seasonId/planting", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const planting = await recordPlantingDetails(db, req.params.seasonId, req.body || {});
+      res.status(201).json(planting);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Daily Monitoring
+  app.post("/api/farmers/me/seasons/:seasonId/monitoring", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const monitoring = await logDailyMonitoring(db, req.params.seasonId, req.body || {});
+      res.status(201).json(monitoring);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons/:seasonId/monitoring", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const history = await getMonitoringHistory(db, req.params.seasonId);
+      res.json({ monitoring: history });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Production Costs
+  app.post("/api/farmers/me/seasons/:seasonId/costs", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const cost = await recordProductionCost(db, req.params.seasonId, req.body || {});
+      res.status(201).json(cost);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons/:seasonId/costs", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const summary = await getProductionCostSummary(db, req.params.seasonId);
+      res.json(summary);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Offtake Agreements
+  app.post("/api/farmers/me/agreements", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const agreement = await createOfftakeAgreement(db, req.farmer.id, req.body || {});
+      res.status(201).json(agreement);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/agreements", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = req.query.status || null;
+      const agreements = await listOfftakeAgreements(db, req.farmer.id, status);
+      res.json({ agreements });
     } catch (error) {
       next(error);
     }
