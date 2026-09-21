@@ -461,6 +461,12 @@ function switchTab(tabName) {
         loadReceipts();
     } else if (tabName === 'market') {
         loadMarketPrices();
+    } else if (tabName === 'farm') {
+        loadParcels();
+        loadSeasons();
+        loadHousehold();
+    } else if (tabName === 'production') {
+        loadSeasons();
     }
 }
 
@@ -1154,26 +1160,6 @@ document.getElementById('addCostForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Load farm data when switching to farm tab
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.remove('active');
-    });
-    
-    event.target.classList.add('active');
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    
-    if (tabName === 'farm') {
-        loadParcels();
-        loadSeasons();
-        loadHousehold();
-    } else if (tabName === 'production') {
-        loadSeasons();
-    }
-}
 
 // Export for HTML onclick handlers
 window.switchTab = switchTab;
