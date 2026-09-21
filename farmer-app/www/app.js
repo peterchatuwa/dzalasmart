@@ -445,6 +445,8 @@ function addChatMessage(text, sender) {
 
 // UI Helpers
 function switchTab(tabName) {
+    console.log('Switching to tab:', tabName);
+    
     // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabName);
@@ -454,7 +456,14 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.remove('active');
     });
-    document.getElementById(`${tabName}Tab`).classList.add('active');
+    
+    const targetTab = document.getElementById(`${tabName}Tab`);
+    if (targetTab) {
+        targetTab.classList.add('active');
+        console.log('Tab activated:', tabName);
+    } else {
+        console.error('Tab not found:', `${tabName}Tab`);
+    }
     
     // Load data for specific tabs
     if (tabName === 'receipts') {
@@ -462,6 +471,7 @@ function switchTab(tabName) {
     } else if (tabName === 'market') {
         loadMarketPrices();
     } else if (tabName === 'farm') {
+        console.log('Loading farm data...');
         loadParcels();
         loadSeasons();
         loadHousehold();
@@ -531,14 +541,35 @@ function showMainApp() {
 
 // Parcels Management
 async function loadParcels() {
+    console.log('Loading parcels...');
     try {
+        if (!authToken) {
+            console.error('No auth token available');
+            showToast('Please login first', 'error');
+            return;
+        }
+        
         const response = await fetch(`${API_BASE}/api/farmers/me/parcels`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        
+        console.log('Parcels response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Parcels API error:', response.status, errorText);
+            showToast(`Failed to load parcels: ${response.status}`, 'error');
+            displayParcels([]);
+            return;
+        }
+        
         const data = await response.json();
+        console.log('Parcels data:', data);
         displayParcels(data.parcels || []);
     } catch (error) {
         console.error('Failed to load parcels:', error);
+        showToast('Network error loading parcels', 'error');
+        displayParcels([]);
     }
 }
 
@@ -641,15 +672,35 @@ document.getElementById('addParcelForm').addEventListener('submit', async (e) =>
 
 // Seasons Management
 async function loadSeasons() {
+    console.log('Loading seasons...');
     try {
+        if (!authToken) {
+            console.error('No auth token available');
+            return;
+        }
+        
         const response = await fetch(`${API_BASE}/api/farmers/me/seasons`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        
+        console.log('Seasons response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Seasons API error:', response.status, errorText);
+            displaySeasons([]);
+            populateSeasonSelect([]);
+            return;
+        }
+        
         const data = await response.json();
+        console.log('Seasons data:', data);
         displaySeasons(data.seasons || []);
         populateSeasonSelect(data.seasons || []);
     } catch (error) {
         console.error('Failed to load seasons:', error);
+        displaySeasons([]);
+        populateSeasonSelect([]);
     }
 }
 
@@ -743,14 +794,32 @@ document.getElementById('addSeasonForm').addEventListener('submit', async (e) =>
 
 // Household Management
 async function loadHousehold() {
+    console.log('Loading household...');
     try {
+        if (!authToken) {
+            console.error('No auth token available');
+            return;
+        }
+        
         const response = await fetch(`${API_BASE}/api/farmers/me/household`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        
+        console.log('Household response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Household API error:', response.status, errorText);
+            displayHousehold([]);
+            return;
+        }
+        
         const data = await response.json();
+        console.log('Household data:', data);
         displayHousehold(data.members || []);
     } catch (error) {
         console.error('Failed to load household:', error);
+        displayHousehold([]);
     }
 }
 
