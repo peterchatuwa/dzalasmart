@@ -1,5 +1,6 @@
 // Configuration
 const API_URL = 'https://api.zammunda.com';
+const API_BASE = 'https://api.zammunda.com'; // For new endpoints
 let currentFarmer = null;
 let authToken = null;
 
