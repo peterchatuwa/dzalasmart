@@ -52,10 +52,10 @@ if ($?) {
         Write-Host "APK location: farmer-app/android/app/build/outputs/apk/debug/app-debug.apk" -ForegroundColor White
         Write-Host ""
         Write-Host "New Features Included:" -ForegroundColor Cyan
-        Write-Host "  🏡 Farm Tab - Manage land parcels, household members" -ForegroundColor White
-        Write-Host "  📊 Production Tab - Track activities, monitoring, costs" -ForegroundColor White
-        Write-Host "  💰 Cost Tracking - Record all production expenses" -ForegroundColor White
-        Write-Host "  🌾 Season Management - Track multiple production seasons" -ForegroundColor White
+        Write-Host "  * Farm Tab - Manage land parcels, household members" -ForegroundColor White
+        Write-Host "  * Production Tab - Track activities, monitoring, costs" -ForegroundColor White
+        Write-Host "  * Cost Tracking - Record all production expenses" -ForegroundColor White
+        Write-Host "  * Season Management - Track multiple production seasons" -ForegroundColor White
         Write-Host ""
     } else {
         Write-Host ""
