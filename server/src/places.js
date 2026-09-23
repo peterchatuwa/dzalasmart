@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+
+const OFFICIAL_PLACES = JSON.parse(readFileSync(new URL("../data/places.json", import.meta.url), "utf8"));
+
 export const REGION_DISTRICTS = {
   "Northern Region": ["Chitipa", "Karonga", "Rumphi", "Mzimba", "Nkhata Bay", "Likoma"],
   "Central Region": ["Kasungu", "Nkhotakota", "Ntchisi", "Dowa", "Salima", "Lilongwe", "Mchinji", "Dedza", "Ntcheu"],
@@ -62,7 +66,7 @@ export const ALERT_DISTRICTS = [
   "Nsanje",
 ];
 
-export const DISTRICT_EPAS = {
+const LEGACY_EPAS = {
   Chitipa: ["Misuku", "Kameme", "Bulambia", "Kavukuku", "Kalenje"],
   Karonga: ["Central", "North", "South", "Nyungwe", "Mpingu"],
   Rumphi: ["Mwazisi", "Mhuju", "Bolero", "Ntchenachena", "Katowo"],
@@ -93,6 +97,25 @@ export const DISTRICT_EPAS = {
   Phalombe: ["Naminjiwa", "Nkhulambe", "Phalombe Central", "Chitakale"],
 };
 
+function mergeEpas() {
+  const merged = {};
+  for (const [district, place] of Object.entries(OFFICIAL_PLACES)) {
+    merged[district] = Object.keys(place.epas || {});
+  }
+  for (const [district, epas] of Object.entries(LEGACY_EPAS)) {
+    const names = new Set(merged[district] || []);
+    for (const epa of epas) names.add(epa);
+    merged[district] = [...names].sort((left, right) => left.localeCompare(right));
+  }
+  return merged;
+}
+
+export const DISTRICT_EPAS = mergeEpas();
+
+export function sectionsFor(district, epa) {
+  return OFFICIAL_PLACES[district]?.epas?.[epa] || [];
+}
+
 export function regionForDistrict(district) {
   if (district === "Mzuzu") return "Northern Region";
   return Object.keys(REGION_DISTRICTS).find((region) => REGION_DISTRICTS[region].includes(district)) || null;
@@ -103,6 +126,7 @@ export function listDistricts() {
     districts.map((name) => ({
       name,
       region,
+      add: OFFICIAL_PLACES[name]?.add || null,
       epas: DISTRICT_EPAS[name] || [],
     }))
   );

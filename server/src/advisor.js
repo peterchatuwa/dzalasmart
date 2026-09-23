@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { APP_NAME } from "./brand.js";
 
 export const SOIL_TYPES = ["Sandy", "Sandy loam", "Loamy", "Clay loam", "Clay"];
@@ -60,6 +62,8 @@ export const CROP_INFO = {
 export const DISEASE_DB = [
   {
     name: "Fall Armyworm (on maize)",
+    crops: ["maize"],
+    lookFor: "Ragged holes or droppings in the maize whorl",
     keywords: [
       "ragged leaf",
       "ragged leaves",
@@ -80,6 +84,8 @@ export const DISEASE_DB = [
   },
   {
     name: "Maize Streak Virus",
+    crops: ["maize"],
+    lookFor: "Yellow streaks along the maize leaves",
     keywords: ["streak", "yellow streak", "stunt", "stunted maize", "yellow spots", "mawanga achikasu", "vibiriwiri"],
     chemical: "No direct chemical cure — control the leafhopper insect that spreads it with a recommended insecticide.",
     cultural:
@@ -87,6 +93,8 @@ export const DISEASE_DB = [
   },
   {
     name: "Groundnut Rosette Virus",
+    crops: ["groundnut"],
+    lookFor: "Yellow, stunted groundnut plants in a rosette",
     keywords: ["rosette", "yellowing groundnut", "mottle", "stunted groundnut"],
     chemical:
       "Control the aphid that spreads it with a systemic insecticide such as Imidacloprid, applied early in the season.",
@@ -95,6 +103,8 @@ export const DISEASE_DB = [
   },
   {
     name: "Bean Rust",
+    crops: ["bean"],
+    lookFor: "Orange or brown pustules on bean leaves",
     keywords: ["orange spot", "rust", "pustule", "brown spot bean", "bean leaf"],
     chemical: "A protectant fungicide such as Mancozeb or Chlorothalonil, applied at the first sign of spotting.",
     cultural:
@@ -102,6 +112,8 @@ export const DISEASE_DB = [
   },
   {
     name: "Cassava Mosaic Disease",
+    crops: ["cassava"],
+    lookFor: "Distorted cassava leaves with a mosaic pattern",
     keywords: ["mosaic", "cassava leaf", "distorted cassava"],
     chemical: "No chemical cure — the disease is managed by controlling the whitefly that spreads it.",
     cultural:
@@ -109,6 +121,8 @@ export const DISEASE_DB = [
   },
   {
     name: "Maize Stalk Borer",
+    crops: ["maize"],
+    lookFor: "Holes in the maize stem or a dead heart",
     keywords: [
       "stem hole",
       "tunnel",
@@ -129,6 +143,8 @@ export const DISEASE_DB = [
   },
   {
     name: "Aphids (general)",
+    crops: ["any"],
+    lookFor: "Sticky, curling leaves with clusters of tiny insects",
     keywords: ["sticky leaf", "curl", "tiny insect", "cluster of insect", "aphid"],
     chemical: "A neem-based biopesticide, or Imidacloprid for heavier infestations.",
     cultural:
@@ -301,6 +317,75 @@ export function matchDisease(text) {
   return bestScore > 0 ? best : null;
 }
 
+function cropKey(crop) {
+  const key = String(crop || "").toLowerCase();
+  if (key.includes("ground")) return "groundnut";
+  if (key.includes("maize") || key.includes("chimanga")) return "maize";
+  if (key.includes("soya") || key.includes("soy")) return "soya";
+  if (key.includes("rice")) return "rice";
+  if (key.includes("tobacco") || key.includes("fodya")) return "tobacco";
+  if (key.includes("cassava")) return "cassava";
+  if (key.includes("cotton")) return "cotton";
+  if (key.includes("bean")) return "bean";
+  return key;
+}
+
+export function diseasesForCrop(crop) {
+  const key = cropKey(crop);
+  return DISEASE_DB.filter((disease) => disease.crops?.includes(key) || disease.crops?.includes("any"));
+}
+
+export function matchDiseaseForCrop(text, crop) {
+  const t = String(text || "").toLowerCase();
+  let best = null;
+  let bestScore = 0;
+  for (const disease of diseasesForCrop(crop)) {
+    let score = disease.keywords.filter((keyword) => t.includes(keyword)).length;
+    if (disease.lookFor && t.includes(disease.lookFor.toLowerCase())) score += 3;
+    if (score > bestScore) {
+      bestScore = score;
+      best = disease;
+    }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+export function diagnosePhoto({ crop, note, sign, lang = "en" } = {}) {
+  const pool = diseasesForCrop(crop);
+  const chosen = pool.find((disease) => disease.name === sign || disease.lookFor === sign);
+  const match = chosen || matchDiseaseForCrop(`${sign || ""} ${note || ""}`, crop);
+  if (!match) {
+    const lines = pool.map((disease) => `• ${disease.lookFor}`);
+    const reply = pool.length
+      ? `Photo saved on this ${crop} field. Which of these matches the picture?\n${lines.join("\n")}`
+      : `Photo saved. There is no picture guide for ${crop} yet. Describe the leaf, stem, or pods.`;
+    return {
+      kind: "pest",
+      match: null,
+      choices: pool.map((disease) => ({ name: disease.name, lookFor: disease.lookFor })),
+      reply,
+    };
+  }
+  return { kind: "pest", match: match.name, choices: [], reply: buildPestReply(match, lang) };
+}
+
+const PHOTO_DIR = path.resolve(process.cwd(), "data", "pest-photos");
+
+export function decodePlantPhoto(image) {
+  const raw = String(image || "").replace(/^data:image\/\w+;base64,/, "").trim();
+  if (!raw) return null;
+  const buffer = Buffer.from(raw, "base64");
+  if (buffer.length < 32 || buffer.length > 2_500_000) return null;
+  return buffer;
+}
+
+export async function savePlantPhoto(id, buffer) {
+  await mkdir(PHOTO_DIR, { recursive: true });
+  const file = path.join(PHOTO_DIR, `${id}.jpg`);
+  await writeFile(file, buffer);
+  return file;
+}
+
 export function answerGeneralQuestion(text) {
   const t = String(text || "").toLowerCase();
   let best = null;
@@ -401,27 +486,73 @@ export function askAdvisor(input = {}) {
     return { lang, kind: "crop", crops, reply: buildCropReply(crops, soil, nutrient, lang) };
   }
 
+  if (/\bpests?\b|\bdiseases?\b|\binsects?\b|\btizilombo\b|\bmatenda\b/.test(lowered)) {
+    return { lang, kind: "unknown", reply: copy.noMatch };
+  }
+
   return { lang, kind: "unknown", reply: topic === "pest" ? copy.noMatch : copy.fallback };
+}
+
+export function attachGrowingContext(result, crops) {
+  const rows = (crops || []).filter((crop) => crop && crop.crop);
+  if (!result || !rows.length) return result;
+  const list = rows
+    .map((crop) => {
+      const place = crop.parcelName ? ` on ${crop.parcelName}` : "";
+      const day = Number.isFinite(Number(crop.ageDays)) ? ` (day ${crop.ageDays})` : "";
+      return `${crop.crop}${place}${day}`;
+    })
+    .join("; ");
+  const due = [];
+  for (const crop of rows) {
+    for (const action of crop.dueActions || []) due.push(`${crop.crop}: ${action}`);
+  }
+  const actionLine = due.length ? `\nToday's actions: ${due.join("; ")}.` : "";
+  const reply = result.reply ? `You are growing ${list}.\n${result.reply}${actionLine}` : `You are growing ${list}.${actionLine}`;
+  return { ...result, growing: rows, reply };
 }
 
 export async function logPestReport(db, farmer, input = {}) {
   const row = {
-    id: crypto.randomUUID(),
+    id: input.id || crypto.randomUUID(),
     farmer_id: farmer.id,
     symptoms: String(input.symptoms || "").slice(0, 500),
     match_name: input.matchName || null,
     channel: input.channel || "mobile",
     created_at: Date.now(),
+    season_id: input.seasonId || null,
+    parcel_id: input.parcelId || null,
+    crop: input.crop || null,
+    photo_path: input.photoPath || null,
   };
   await db
     .prepare(
       `
-    INSERT INTO pest_reports (id, farmer_id, symptoms, match_name, channel, created_at)
-    VALUES (@id, @farmer_id, @symptoms, @match_name, @channel, @created_at)
+    INSERT INTO pest_reports (
+      id, farmer_id, symptoms, match_name, channel, created_at, season_id, parcel_id, crop, photo_path
+    )
+    VALUES (
+      @id, @farmer_id, @symptoms, @match_name, @channel, @created_at, @season_id, @parcel_id, @crop, @photo_path
+    )
   `
     )
     .run(row);
   return row;
+}
+
+export async function latestPestForSeason(db, farmerId, seasonId) {
+  if (!farmerId || !seasonId) return null;
+  return db
+    .prepare(
+      `
+    SELECT match_name, crop, season_id, created_at
+    FROM pest_reports
+    WHERE farmer_id = ? AND season_id = ? AND match_name IS NOT NULL
+    ORDER BY created_at DESC
+    LIMIT 1
+  `
+    )
+    .get(farmerId, seasonId);
 }
 
 export async function listPestReports(db) {
@@ -448,5 +579,8 @@ export async function listPestReports(db) {
     matchName: row.match_name,
     channel: row.channel,
     createdAt: row.created_at,
+    crop: row.crop || null,
+    seasonId: row.season_id || null,
+    hasPhoto: Boolean(row.photo_path),
   }));
 }

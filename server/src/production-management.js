@@ -1,5 +1,51 @@
 import crypto from "crypto";
+import { plotHectares } from "./plots.js";
 import { HttpError } from "./util.js";
+
+function field(input, ...keys) {
+  for (const key of keys) {
+    const value = input?.[key];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return undefined;
+}
+
+function withParcelAliases(parcel) {
+  if (!parcel) return parcel;
+  return {
+    ...parcel,
+    area_hectares: parcel.area_hectares ?? parcel.size_hectares ?? null,
+  };
+}
+
+function withActivityAliases(activity) {
+  if (!activity) return activity;
+  const labor = Number(activity.labor_cost) || 0;
+  const materials = Number(activity.material_cost) || 0;
+  const equipment = Number(activity.equipment_cost) || 0;
+  return {
+    ...activity,
+    cost_mwk: activity.cost_mwk ?? labor + materials + equipment,
+  };
+}
+
+function withMonitoringAliases(record) {
+  if (!record) return record;
+  return {
+    ...record,
+    observation_date: record.observation_date || record.monitoring_date || null,
+    pests_observed: record.pests_observed || record.pest_observed || null,
+    diseases_observed: record.diseases_observed || record.disease_observed || null,
+  };
+}
+
+function withCostAliases(cost) {
+  if (!cost) return cost;
+  return {
+    ...cost,
+    amount: cost.amount ?? (Number(cost.total_cost) || 0),
+  };
+}
 
 // ============================================================================
 // HOUSEHOLD MANAGEMENT
@@ -14,7 +60,7 @@ export async function addHouseholdMember(db, farmerId, input) {
     age: input.age || null,
     gender: input.gender || null,
     education_level: input.educationLevel || null,
-    involved_in_farming: input.involvedInFarming || false,
+    involved_in_farming: Boolean(field(input, "involvedInFarming", "involved_in_farming")),
   };
 
   if (!member.name) throw HttpError(400, "Member name is required");
@@ -38,12 +84,28 @@ export async function addHouseholdMember(db, farmerId, input) {
 }
 
 export async function listHouseholdMembers(db, farmerId) {
-  return await db.prepare(`
+  const recorded = await db.prepare(`
     SELECT id, name, relationship, age, gender, education_level, involved_in_farming, created_at
     FROM household_members
     WHERE farmer_id = ?
     ORDER BY created_at ASC
   `).all(farmerId);
+  const registered = await db.prepare(`
+    SELECT id, name, relationship, age, gender, contributes_labor, created_at
+    FROM farmer_household_members
+    WHERE farmer_id = ?
+    ORDER BY created_at ASC
+  `).all(farmerId);
+
+  const seen = new Set((recorded || []).map((member) => member.id));
+  const fromRegistration = (registered || [])
+    .filter((member) => !seen.has(member.id))
+    .map((member) => ({
+      ...member,
+      involved_in_farming: Boolean(member.contributes_labor),
+    }));
+
+  return [...(recorded || []), ...fromRegistration];
 }
 
 // ============================================================================
@@ -54,17 +116,17 @@ export async function addLandParcel(db, farmerId, input) {
   const parcel = {
     id: crypto.randomUUID(),
     farmer_id: farmerId,
-    parcel_name: input.parcelName || `Parcel ${Date.now()}`,
-    size_hectares: parseFloat(input.sizeHectares),
-    ownership_type: String(input.ownershipType || "").trim(),
-    title_deed_number: input.titleDeedNumber || null,
-    gps_latitude: input.gpsLatitude || null,
-    gps_longitude: input.gpsLongitude || null,
+    parcel_name: field(input, "parcelName", "parcel_name") || `Parcel ${Date.now()}`,
+    size_hectares: parseFloat(field(input, "sizeHectares", "size_hectares", "areaHectares", "area_hectares")),
+    ownership_type: String(field(input, "ownershipType", "ownership_type") || "").trim(),
+    title_deed_number: field(input, "titleDeedNumber", "title_deed_number") || null,
+    gps_latitude: field(input, "gpsLatitude", "gps_latitude", "latitude") || null,
+    gps_longitude: field(input, "gpsLongitude", "gps_longitude", "longitude") || null,
     gps_accuracy: input.gpsAccuracy || null,
-    soil_type: input.soilType || null,
+    soil_type: field(input, "soilType", "soil_type") || null,
     soil_ph: input.soilPh || null,
     slope: input.slope || null,
-    water_source: input.waterSource || null,
+    water_source: field(input, "waterSource", "water_source") || null,
     distance_to_water_meters: input.distanceToWater || null,
     distance_to_home_meters: input.distanceToHome || null,
     previous_crop: input.previousCrop || null,
@@ -106,16 +168,56 @@ export async function addLandParcel(db, farmerId, input) {
     parcel.fallow_years
   );
 
-  return parcel;
+  return withParcelAliases(parcel);
+}
+
+function fromRegisteredParcel(row) {
+  return withParcelAliases({
+    ...row,
+    size_hectares: row.hectares,
+    area_hectares: row.hectares,
+    ownership_type: row.tenure_type || row.ownership_type || "owned",
+    water_source: row.water_access || row.irrigation_type || row.water_source || null,
+    gps_latitude: row.lat ?? row.gps_latitude,
+    gps_longitude: row.lon ?? row.gps_longitude,
+    status: row.active === 0 || row.active === false ? "inactive" : "active",
+  });
 }
 
 export async function listLandParcels(db, farmerId) {
-  return await db.prepare(`
+  const parcels = await db.prepare(`
     SELECT *
     FROM land_parcels
     WHERE farmer_id = ?
     ORDER BY created_at DESC
   `).all(farmerId);
+  const registered = await db.prepare(`
+    SELECT *
+    FROM farm_land_parcels
+    WHERE farmer_id = ?
+    ORDER BY created_at DESC
+  `).all(farmerId);
+
+  const seen = new Set((parcels || []).map((parcel) => parcel.id));
+  return [
+    ...(parcels || []).map(withParcelAliases),
+    ...(registered || []).filter((parcel) => !seen.has(parcel.id)).map(fromRegisteredParcel),
+  ];
+}
+
+export async function listLandParcelsForFarmer(db, farmer) {
+  const parcels = await listLandParcels(db, farmer.id);
+  if (parcels.length) return parcels;
+
+  const place = farmer.village || farmer.epa || farmer.district || "Home";
+  const hectares = await plotHectares(db, farmer.id);
+  await addLandParcel(db, farmer.id, {
+    parcelName: `${place} plot`,
+    sizeHectares: hectares > 0 ? hectares : 1,
+    ownershipType: "owned",
+    soilType: [farmer.soilType, farmer.nutrientStatus].filter(Boolean).join(" · ") || null,
+  });
+  return listLandParcels(db, farmer.id);
 }
 
 // ============================================================================
@@ -123,22 +225,44 @@ export async function listLandParcels(db, farmerId) {
 // ============================================================================
 
 export async function createProductionSeason(db, farmerId, input) {
-  const parcelExists = await db.prepare("SELECT id FROM land_parcels WHERE id = ? AND farmer_id = ?")
-    .get(input.parcelId, farmerId);
-  
-  if (!parcelExists) {
+  const parcelId = field(input, "parcelId", "parcel_id");
+  const inLand = await db.prepare("SELECT id FROM land_parcels WHERE id = ? AND farmer_id = ?")
+    .get(parcelId, farmerId);
+  const registered = await db.prepare("SELECT * FROM farm_land_parcels WHERE id = ? AND farmer_id = ?")
+    .get(parcelId, farmerId);
+
+  if (!inLand && !registered) {
     throw HttpError(404, "Land parcel not found");
+  }
+
+  if (!inLand && registered) {
+    await db.prepare(`
+      INSERT INTO land_parcels (
+        id, farmer_id, parcel_name, size_hectares, ownership_type,
+        gps_latitude, gps_longitude, soil_type, water_source
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      registered.id,
+      farmerId,
+      registered.parcel_name || "Plot",
+      registered.hectares,
+      registered.tenure_type || "owned",
+      registered.lat,
+      registered.lon,
+      registered.soil_type,
+      registered.water_access
+    );
   }
 
   const season = {
     id: crypto.randomUUID(),
     farmer_id: farmerId,
-    parcel_id: input.parcelId,
-    season_name: input.seasonName || "2025-2026",
+    parcel_id: parcelId,
+    season_name: field(input, "seasonName", "season_name") || "2025-2026",
     crop: String(input.crop || "").trim(),
     variety: input.variety || null,
-    area_hectares: parseFloat(input.areaHectares),
-    status: "planned",
+    area_hectares: parseFloat(field(input, "areaHectares", "area_hectares")),
+    status: "active",
   };
 
   if (!season.crop) throw HttpError(400, "Crop is required");
@@ -165,10 +289,14 @@ export async function createProductionSeason(db, farmerId, input) {
 
 export async function listProductionSeasons(db, farmerId, status = null) {
   let query = `
-    SELECT ps.*, lp.parcel_name, lp.size_hectares as parcel_size
+    SELECT ps.*,
+           COALESCE(lp.parcel_name, fp.parcel_name) AS parcel_name,
+           COALESCE(lp.size_hectares, fp.hectares) AS parcel_size
     FROM production_seasons ps
-    JOIN land_parcels lp ON ps.parcel_id = lp.id
+    LEFT JOIN land_parcels lp ON ps.parcel_id = lp.id
+    LEFT JOIN farm_land_parcels fp ON ps.parcel_id = fp.id
     WHERE ps.farmer_id = ?
+      AND (lp.id IS NOT NULL OR fp.id IS NOT NULL)
   `;
   const params = [farmerId];
 
@@ -179,7 +307,21 @@ export async function listProductionSeasons(db, farmerId, status = null) {
 
   query += " ORDER BY ps.created_at DESC";
 
-  return await db.prepare(query).all(...params);
+  const seasons = (await db.prepare(query).all(...params)) || [];
+  const history = await db.prepare(`
+    SELECT h.id, h.crop, h.season AS season_name, h.parcel_id,
+           p.hectares AS area_hectares, p.parcel_name, 'active' AS status
+    FROM parcel_crop_history h
+    JOIN farm_land_parcels p ON p.id = h.parcel_id
+    WHERE p.farmer_id = ?
+    ORDER BY h.created_at DESC
+  `).all(farmerId);
+
+  const seen = new Set(seasons.map((season) => season.id));
+  return [
+    ...seasons,
+    ...(history || []).filter((season) => !seen.has(season.id)),
+  ];
 }
 
 // ============================================================================
@@ -190,11 +332,11 @@ export async function logProductionActivity(db, seasonId, input) {
   const activity = {
     id: crypto.randomUUID(),
     season_id: seasonId,
-    activity_type: String(input.activityType || "").trim(),
-    activity_date: input.activityDate || new Date().toISOString().split('T')[0],
+    activity_type: String(field(input, "activityType", "activity_type") || "").trim(),
+    activity_date: field(input, "activityDate", "activity_date") || new Date().toISOString().split('T')[0],
     description: input.description || null,
-    labor_hours: input.laborHours || null,
-    labor_cost: input.laborCost || null,
+    labor_hours: field(input, "laborHours", "labor_hours") || null,
+    labor_cost: field(input, "laborCost", "labor_cost", "costMwk", "cost_mwk") || null,
     materials_used: input.materialsUsed ? JSON.stringify(input.materialsUsed) : null,
     material_cost: input.materialCost || null,
     equipment_used: input.equipmentUsed || null,
@@ -232,16 +374,17 @@ export async function logProductionActivity(db, seasonId, input) {
     activity.recorded_by
   );
 
-  return activity;
+  return withActivityAliases(activity);
 }
 
 export async function listProductionActivities(db, seasonId) {
-  return await db.prepare(`
+  const activities = await db.prepare(`
     SELECT *
     FROM production_activities
     WHERE season_id = ?
     ORDER BY activity_date DESC, created_at DESC
   `).all(seasonId);
+  return (activities || []).map(withActivityAliases);
 }
 
 // ============================================================================
@@ -304,12 +447,12 @@ export async function logDailyMonitoring(db, seasonId, input) {
   const monitoring = {
     id: crypto.randomUUID(),
     season_id: seasonId,
-    monitoring_date: input.monitoringDate || new Date().toISOString().split('T')[0],
-    crop_stage: input.cropStage || null,
-    crop_health: input.cropHealth || null,
-    pest_observed: input.pestObserved || null,
+    monitoring_date: field(input, "monitoringDate", "monitoring_date", "observationDate", "observation_date") || new Date().toISOString().split('T')[0],
+    crop_stage: field(input, "cropStage", "crop_stage") || null,
+    crop_health: field(input, "cropHealth", "crop_health") || null,
+    pest_observed: field(input, "pestObserved", "pest_observed", "pestsObserved", "pests_observed") || null,
     pest_severity: input.pestSeverity || null,
-    disease_observed: input.diseaseObserved || null,
+    disease_observed: field(input, "diseaseObserved", "disease_observed", "diseasesObserved", "diseases_observed") || null,
     disease_severity: input.diseaseSeverity || null,
     weed_pressure: input.weedPressure || null,
     soil_moisture: input.soilMoisture || null,
@@ -317,7 +460,7 @@ export async function logDailyMonitoring(db, seasonId, input) {
     temperature_max: input.temperatureMax || null,
     temperature_min: input.temperatureMin || null,
     photos: input.photos ? JSON.stringify(input.photos) : null,
-    action_taken: input.actionTaken || null,
+    action_taken: field(input, "actionTaken", "action_taken") || null,
     extension_visit: input.extensionVisit || false,
     extension_officer_id: input.extensionOfficerId || null,
     notes: input.notes || null,
@@ -353,16 +496,17 @@ export async function logDailyMonitoring(db, seasonId, input) {
     monitoring.notes
   );
 
-  return monitoring;
+  return withMonitoringAliases(monitoring);
 }
 
 export async function getMonitoringHistory(db, seasonId) {
-  return await db.prepare(`
+  const records = await db.prepare(`
     SELECT *
     FROM farm_monitoring
     WHERE season_id = ?
     ORDER BY monitoring_date DESC
   `).all(seasonId);
+  return (records || []).map(withMonitoringAliases);
 }
 
 // ============================================================================
@@ -373,17 +517,17 @@ export async function recordProductionCost(db, seasonId, input) {
   const cost = {
     id: crypto.randomUUID(),
     season_id: seasonId,
-    category_id: input.categoryId || null,
-    cost_date: input.costDate || new Date().toISOString().split('T')[0],
+    category_id: field(input, "categoryId", "category_id", "costCategoryId", "cost_category_id") || null,
+    cost_date: field(input, "costDate", "cost_date") || new Date().toISOString().split('T')[0],
     description: String(input.description || "").trim(),
     quantity: input.quantity || null,
     unit: input.unit || null,
     unit_cost: input.unitCost || null,
-    total_cost: parseFloat(input.totalCost),
-    payment_method: input.paymentMethod || null,
+    total_cost: parseFloat(field(input, "totalCost", "total_cost", "amount")),
+    payment_method: field(input, "paymentMethod", "payment_method") || null,
     paid_to: input.paidTo || null,
     receipt_number: input.receiptNumber || null,
-    stage: input.stage || null,
+    stage: field(input, "stage", "productionStage", "production_stage") || null,
     activity_id: input.activityId || null,
     notes: input.notes || null,
   };
@@ -430,12 +574,13 @@ export async function getProductionCostSummary(db, seasonId) {
     ORDER BY pc.cost_date DESC
   `).all(seasonId);
 
-  const totalCost = costs.reduce((sum, c) => sum + parseFloat(c.total_cost), 0);
+  const rows = costs || [];
+  const totalCost = rows.reduce((sum, c) => sum + parseFloat(c.total_cost), 0);
   
   const byCategory = {};
   const byStage = {};
 
-  costs.forEach(cost => {
+  rows.forEach(cost => {
     const cat = cost.category_name || "Other";
     byCategory[cat] = (byCategory[cat] || 0) + parseFloat(cost.total_cost);
 
@@ -443,8 +588,17 @@ export async function getProductionCostSummary(db, seasonId) {
     byStage[stage] = (byStage[stage] || 0) + parseFloat(cost.total_cost);
   });
 
+  const summary = {
+    land_preparation: byCategory["Land Preparation"] || 0,
+    seeds: byCategory["Seeds & Planting Materials"] || 0,
+    fertilizers: byCategory["Fertilizers"] || 0,
+    labor: byCategory["Labor"] || 0,
+    total: totalCost,
+  };
+
   return {
-    costs,
+    costs: rows.map(withCostAliases),
+    summary,
     totalCost,
     byCategory,
     byStage,

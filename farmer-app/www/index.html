@@ -173,13 +173,8 @@
             <div id="marketTab" class="tab-pane">
                 <div class="section">
                     <h3>Market Prices</h3>
-                    <p class="section-subtitle">Prices in your district</p>
+                    <p class="section-subtitle">Today's warehouse price, the official floor, and the district plan price for the field you select</p>
                     <div id="marketPrices" class="market-prices"></div>
-                </div>
-
-                <div class="section">
-                    <h3>Price Floors</h3>
-                    <div id="priceFloors" class="price-floors"></div>
                 </div>
             </div>
 
@@ -187,7 +182,7 @@
             <div id="advisorTab" class="tab-pane">
                 <div class="advisor-header">
                     <h3>🌱 Agricultural Advisor</h3>
-                    <p>Ask questions about farming, crops, and markets</p>
+                    <p id="advisorContext">Advice follows the crop you are growing</p>
                 </div>
 
                 <div class="advisor-topics">
@@ -202,6 +197,7 @@
                 <div id="chatContainer" class="chat-container"></div>
 
                 <div class="chat-input-area">
+                    <button type="button" onclick="photographPlant()" class="btn-send" id="photoPlant">📷</button>
                     <input type="text" id="chatInput" placeholder="Ask a question..." class="chat-input">
                     <button onclick="sendMessage()" class="btn-send">Send</button>
                 </div>
@@ -212,6 +208,23 @@
                 <div class="section">
                     <div class="section-header">
                         <h3>🏡 My Farm</h3>
+                    </div>
+                    <div class="welcome-card" id="farmProfileCard">
+                        <h2 id="farmFarmerName">My Farm</h2>
+                        <p id="farmLocation">Location loads after login</p>
+                        <p id="farmSoil"></p>
+                    </div>
+
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h4>Crop actions</h4>
+                        </div>
+                        <div id="careForecast" class="care-forecast"></div>
+                        <div class="form-group">
+                            <label for="fieldSelect">Field</label>
+                            <select id="fieldSelect"></select>
+                        </div>
+                        <div id="careTasks" class="cards-list"></div>
                     </div>
 
                     <!-- Land Parcels -->
@@ -435,6 +448,7 @@
                     <label>Area (Hectares)</label>
                     <input type="number" id="seasonArea" step="0.01" min="0.01" required>
                 </div>
+                <p id="seasonGuide" class="season-guide"></p>
                 <div class="form-group">
                     <label>Season Name</label>
                     <input type="text" id="seasonName" value="2025-2026" required>

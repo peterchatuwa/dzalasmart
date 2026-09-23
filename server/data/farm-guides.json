@@ -1,0 +1,2081 @@
+{
+  "margins": {
+    "maize": {
+      "Chitipa": {
+        "yieldKgHa": 2800.0,
+        "priceMwk": 850.0,
+        "costMwk": 2255500.0,
+        "marginMwk": 124500.0,
+        "breakEvenYield": 2653.53,
+        "breakEvenPrice": 805.54
+      },
+      "Karonga": {
+        "yieldKgHa": 2000.0,
+        "priceMwk": 1050.0,
+        "costMwk": 1970250.0,
+        "marginMwk": 129750.0,
+        "breakEvenYield": 1876.43,
+        "breakEvenPrice": 985.12
+      },
+      "Rumphi": {
+        "yieldKgHa": 4250.0,
+        "priceMwk": 990.0,
+        "costMwk": 3049500.0,
+        "marginMwk": 1158000.0,
+        "breakEvenYield": 3080.3,
+        "breakEvenPrice": 717.53
+      },
+      "Nkhata Bay": {
+        "yieldKgHa": 2100.0,
+        "priceMwk": 1300.0,
+        "costMwk": 2285000.0,
+        "marginMwk": 445000.0,
+        "breakEvenYield": 1757.69,
+        "breakEvenPrice": 1088.1
+      },
+      "Mzimba North": {
+        "yieldKgHa": 3000.0,
+        "priceMwk": 1100.0,
+        "costMwk": 2194000.0,
+        "marginMwk": 1106000.0,
+        "breakEvenYield": 1994.55,
+        "breakEvenPrice": 731.33
+      },
+      "Mzimba South": {
+        "yieldKgHa": 3000.0,
+        "priceMwk": 1200.0,
+        "costMwk": 3327000.0,
+        "marginMwk": 273000.0,
+        "breakEvenYield": 2772.5,
+        "breakEvenPrice": 1109.0
+      },
+      "Kasungu": {
+        "yieldKgHa": 3257.0,
+        "priceMwk": 1100.0,
+        "costMwk": 2923100.0,
+        "marginMwk": 659600.0,
+        "breakEvenYield": 2657.36,
+        "breakEvenPrice": 897.48
+      },
+      "Dowa West": {
+        "yieldKgHa": 2799.0,
+        "priceMwk": 1000.0,
+        "costMwk": 2536500.0,
+        "marginMwk": 262500.0,
+        "breakEvenYield": 2536.5,
+        "breakEvenPrice": 906.22
+      },
+      "Dowa East": {
+        "yieldKgHa": 2600.0,
+        "priceMwk": 1800.0,
+        "costMwk": 3137400.0,
+        "marginMwk": 1542600.0,
+        "breakEvenYield": 1743.0,
+        "breakEvenPrice": 1206.69
+      },
+      "Ntchisi": {
+        "yieldKgHa": 4009.0,
+        "priceMwk": 1000.0,
+        "costMwk": 2145540.0,
+        "marginMwk": 1863460.0,
+        "breakEvenYield": 2145.54,
+        "breakEvenPrice": 535.18
+      },
+      "Mchinji": {
+        "yieldKgHa": 2200.0,
+        "priceMwk": 1200.0,
+        "costMwk": 1889750.0,
+        "marginMwk": 750250.0,
+        "breakEvenYield": 1574.79,
+        "breakEvenPrice": 858.98
+      },
+      "Nkhotakota": {
+        "yieldKgHa": 2800.0,
+        "priceMwk": 1100.0,
+        "costMwk": 2223550.0,
+        "marginMwk": 856450.0,
+        "breakEvenYield": 2021.41,
+        "breakEvenPrice": 794.12
+      },
+      "Salima": {
+        "yieldKgHa": 3500.0,
+        "priceMwk": 1000.0,
+        "costMwk": 2428500.0,
+        "marginMwk": 1071500.0,
+        "breakEvenYield": 2428.5,
+        "breakEvenPrice": 693.86
+      },
+      "Lilongwe East": {
+        "yieldKgHa": 2200.0,
+        "priceMwk": 1200.0,
+        "costMwk": 2435000.0,
+        "marginMwk": 205000.0,
+        "breakEvenYield": 2029.17,
+        "breakEvenPrice": 1106.82
+      },
+      "Lilongwe West": {
+        "yieldKgHa": 3000.0,
+        "priceMwk": 1050.0,
+        "costMwk": 2147000.0,
+        "marginMwk": 1003000.0,
+        "breakEvenYield": 2044.76,
+        "breakEvenPrice": 715.67
+      },
+      "Dedza": {
+        "yieldKgHa": 4386.0,
+        "priceMwk": 964.0,
+        "costMwk": 2450000.0,
+        "marginMwk": 1778104.0,
+        "breakEvenYield": 2541.49,
+        "breakEvenPrice": 558.6
+      },
+      "Ntcheu": {
+        "yieldKgHa": 3750.0,
+        "priceMwk": 1500.0,
+        "costMwk": 1649000.0,
+        "marginMwk": 3976000.0,
+        "breakEvenYield": 1099.33,
+        "breakEvenPrice": 439.73
+      },
+      "Balaka": {
+        "yieldKgHa": 3000.0,
+        "priceMwk": 1050.0,
+        "costMwk": 2707500.0,
+        "marginMwk": 442500.0,
+        "breakEvenYield": 2578.57,
+        "breakEvenPrice": 902.5
+      },
+      "Mangochi": {
+        "yieldKgHa": 3600.0,
+        "priceMwk": 1268.78,
+        "costMwk": 2707500.0,
+        "marginMwk": 1860108.0,
+        "breakEvenYield": 2133.94,
+        "breakEvenPrice": 752.08
+      },
+      "Machinga": {
+        "yieldKgHa": 2500.0,
+        "priceMwk": 1000.0,
+        "costMwk": 2256000.0,
+        "marginMwk": 244000.0,
+        "breakEvenYield": 2256.0,
+        "breakEvenPrice": 902.4
+      },
+      "Zomba": {
+        "yieldKgHa": 3250.0,
+        "priceMwk": 1100.0,
+        "costMwk": 2801500.0,
+        "marginMwk": 773500.0,
+        "breakEvenYield": 2546.82,
+        "breakEvenPrice": 862.0
+      },
+      "Mwanza": {
+        "yieldKgHa": 2700.0,
+        "priceMwk": 1200.0,
+        "costMwk": 2916100.0,
+        "marginMwk": 323900.0,
+        "breakEvenYield": 2430.08,
+        "breakEvenPrice": 1080.04
+      },
+      "Neno": {
+        "yieldKgHa": 3750.0,
+        "priceMwk": 1100.0,
+        "costMwk": 2809500.0,
+        "marginMwk": 1315500.0,
+        "breakEvenYield": 2554.09,
+        "breakEvenPrice": 749.2
+      },
+      "Blantyre": {
+        "yieldKgHa": 3125.0,
+        "priceMwk": 1200.0,
+        "costMwk": 2506000.0,
+        "marginMwk": 1244000.0,
+        "breakEvenYield": 2088.33,
+        "breakEvenPrice": 801.92
+      },
+      "Chiradzulu": {
+        "yieldKgHa": 843.0,
+        "priceMwk": 1000.0,
+        "costMwk": 1204144.0,
+        "marginMwk": -361144.0,
+        "breakEvenYield": 1204.14,
+        "breakEvenPrice": 1428.4
+      },
+      "Thyolo": {
+        "yieldKgHa": 2100.0,
+        "priceMwk": 1200.0,
+        "costMwk": 2049500.0,
+        "marginMwk": 470500.0,
+        "breakEvenYield": 1707.92,
+        "breakEvenPrice": 975.95
+      },
+      "Mulanje": {
+        "yieldKgHa": 3000.0,
+        "priceMwk": 1700.0,
+        "costMwk": 2951650.0,
+        "marginMwk": 2148350.0,
+        "breakEvenYield": 1736.26,
+        "breakEvenPrice": 983.88
+      },
+      "Phalombe": {
+        "yieldKgHa": 3000.0,
+        "priceMwk": 1250.0,
+        "costMwk": 2720600.0,
+        "marginMwk": 1029400.0,
+        "breakEvenYield": 2176.48,
+        "breakEvenPrice": 906.87
+      },
+      "Chikwawa": {
+        "yieldKgHa": 2700.0,
+        "priceMwk": 1500.0,
+        "costMwk": 3840000.0,
+        "marginMwk": 210000.0,
+        "breakEvenYield": 2560.0,
+        "breakEvenPrice": 1422.22
+      },
+      "Nsanje": {
+        "yieldKgHa": 2400.0,
+        "priceMwk": 1200.0,
+        "costMwk": 3054000.0,
+        "marginMwk": -174000.0,
+        "breakEvenYield": 2545.0,
+        "breakEvenPrice": 1272.5
+      },
+      "National": {
+        "yieldKgHa": 2936.39,
+        "priceMwk": 1152.6,
+        "costMwk": 2507486.93,
+        "marginMwk": 876997.38,
+        "breakEvenYield": 2175.51,
+        "breakEvenPrice": 853.93
+      }
+    },
+    "rice": {
+      "Nkhata Bay": {
+        "yieldKgHa": 2600.0,
+        "priceMwk": 1370.0,
+        "costMwk": 1785020.0,
+        "marginMwk": 1776980.0,
+        "breakEvenYield": 1302.93,
+        "breakEvenPrice": 686.55
+      },
+      "Kasungu": {
+        "yieldKgHa": 1500.0,
+        "priceMwk": 1900.0,
+        "costMwk": 1188750.0,
+        "marginMwk": 1661250.0,
+        "breakEvenYield": 625.66,
+        "breakEvenPrice": 792.5
+      },
+      "Nkhotakota": {
+        "yieldKgHa": 2700.0,
+        "priceMwk": 1800.0,
+        "costMwk": 3100500.0,
+        "marginMwk": 1759500.0,
+        "breakEvenYield": 1722.5,
+        "breakEvenPrice": 1148.33
+      },
+      "Salima": {
+        "yieldKgHa": 6080.0,
+        "priceMwk": 900.0,
+        "costMwk": 1884000.0,
+        "marginMwk": 3588000.0,
+        "breakEvenYield": 2093.33,
+        "breakEvenPrice": 309.87
+      },
+      "Machinga": {
+        "yieldKgHa": 6000.0,
+        "priceMwk": 1100.0,
+        "costMwk": 2574000.0,
+        "marginMwk": 4026000.0,
+        "breakEvenYield": 2340.0,
+        "breakEvenPrice": 429.0
+      },
+      "Zomba": {
+        "yieldKgHa": 2250.0,
+        "priceMwk": 1800.0,
+        "costMwk": 2668500.0,
+        "marginMwk": 1381500.0,
+        "breakEvenYield": 1482.5,
+        "breakEvenPrice": 1186.0
+      },
+      "Blantyre": {
+        "yieldKgHa": 1050.0,
+        "priceMwk": 4500.0,
+        "costMwk": 3239500.0,
+        "marginMwk": 1485500.0,
+        "breakEvenYield": 719.89,
+        "breakEvenPrice": 3085.24
+      },
+      "Chikwawa": {
+        "yieldKgHa": 1500.0,
+        "priceMwk": 4500.0,
+        "costMwk": 5240000.0,
+        "marginMwk": 1510000.0,
+        "breakEvenYield": 1164.44,
+        "breakEvenPrice": 3493.33
+      },
+      "Nsanje": {
+        "yieldKgHa": 3000.0,
+        "priceMwk": 1200.0,
+        "costMwk": 3401500.0,
+        "marginMwk": 198500.0,
+        "breakEvenYield": 2834.58,
+        "breakEvenPrice": 1133.83
+      },
+      "National": {
+        "yieldKgHa": 2997.5,
+        "priceMwk": 2158.75,
+        "costMwk": 2747658.75,
+        "marginMwk": 3723194.38,
+        "breakEvenYield": 1272.8,
+        "breakEvenPrice": 916.65
+      }
+    },
+    "soya": {
+      "Chitipa": {
+        "yieldKgHa": 1000.0,
+        "priceMwk": 1700.0,
+        "costMwk": 1140000.0,
+        "marginMwk": 560000.0,
+        "breakEvenYield": 670.59,
+        "breakEvenPrice": 1140.0
+      },
+      "Rumphi": {
+        "yieldKgHa": 2350.0,
+        "priceMwk": 3000.0,
+        "costMwk": 3098500.0,
+        "marginMwk": 3951500.0,
+        "breakEvenYield": 1032.83,
+        "breakEvenPrice": 1318.51
+      },
+      "Mzimba North": {
+        "yieldKgHa": 1600.0,
+        "priceMwk": 2500.0,
+        "costMwk": 970800.0,
+        "marginMwk": 3029200.0,
+        "breakEvenYield": 388.32,
+        "breakEvenPrice": 606.75
+      },
+      "Mzimba South": {
+        "yieldKgHa": 1600.0,
+        "priceMwk": 2500.0,
+        "costMwk": 1703200.0,
+        "marginMwk": 2296800.0,
+        "breakEvenYield": 681.28,
+        "breakEvenPrice": 1064.5
+      },
+      "Kasungu": {
+        "yieldKgHa": 1185.0,
+        "priceMwk": 2200.0,
+        "costMwk": 1066000.0,
+        "marginMwk": 1541000.0,
+        "breakEvenYield": 484.55,
+        "breakEvenPrice": 899.58
+      },
+      "Dowa West": {
+        "yieldKgHa": 566.0,
+        "priceMwk": 2000.0,
+        "costMwk": 1518000.0,
+        "marginMwk": -386000.0,
+        "breakEvenYield": 759.0,
+        "breakEvenPrice": 2681.98
+      },
+      "Dowa East": {
+        "yieldKgHa": 942.0,
+        "priceMwk": 2000.0,
+        "costMwk": 1233200.0,
+        "marginMwk": 650800.0,
+        "breakEvenYield": 616.6,
+        "breakEvenPrice": 1309.13
+      },
+      "Ntchisi": {
+        "yieldKgHa": 1614.0,
+        "priceMwk": 2000.0,
+        "costMwk": 1570545.0,
+        "marginMwk": 1657455.0,
+        "breakEvenYield": 785.27,
+        "breakEvenPrice": 973.08
+      },
+      "Mchinji": {
+        "yieldKgHa": 728.0,
+        "priceMwk": 2200.0,
+        "costMwk": 1476300.0,
+        "marginMwk": 125300.0,
+        "breakEvenYield": 671.05,
+        "breakEvenPrice": 2027.88
+      },
+      "Nkhotakota": {
+        "yieldKgHa": 720.0,
+        "priceMwk": 3500.0,
+        "costMwk": 1850500.0,
+        "marginMwk": 669500.0,
+        "breakEvenYield": 528.71,
+        "breakEvenPrice": 2570.14
+      },
+      "Salima": {
+        "yieldKgHa": 2000.0,
+        "priceMwk": 1900.0,
+        "costMwk": 1372900.0,
+        "marginMwk": 2427100.0,
+        "breakEvenYield": 722.58,
+        "breakEvenPrice": 686.45
+      },
+      "Lilongwe East": {
+        "yieldKgHa": 1800.0,
+        "priceMwk": 3500.0,
+        "costMwk": 1826500.0,
+        "marginMwk": 4473500.0,
+        "breakEvenYield": 521.86,
+        "breakEvenPrice": 1014.72
+      },
+      "Lilongwe West": {
+        "yieldKgHa": 1500.0,
+        "priceMwk": 1200.0,
+        "costMwk": 1155000.0,
+        "marginMwk": 645000.0,
+        "breakEvenYield": 962.5,
+        "breakEvenPrice": 770.0
+      },
+      "Dedza": {
+        "yieldKgHa": 902.0,
+        "priceMwk": 1800.0,
+        "costMwk": 1050000.0,
+        "marginMwk": 573600.0,
+        "breakEvenYield": 583.33,
+        "breakEvenPrice": 1164.08
+      },
+      "Ntcheu": {
+        "yieldKgHa": 1800.0,
+        "priceMwk": 1500.0,
+        "costMwk": 1412000.0,
+        "marginMwk": 1288000.0,
+        "breakEvenYield": 941.33,
+        "breakEvenPrice": 784.44
+      },
+      "Balaka": {
+        "yieldKgHa": 1500.0,
+        "priceMwk": 1800.0,
+        "costMwk": 1666500.0,
+        "marginMwk": 1033500.0,
+        "breakEvenYield": 925.83,
+        "breakEvenPrice": 1111.0
+      },
+      "Mangochi": {
+        "yieldKgHa": 2500.0,
+        "priceMwk": 3500.0,
+        "costMwk": 1666500.0,
+        "marginMwk": 7083500.0,
+        "breakEvenYield": 476.14,
+        "breakEvenPrice": 666.6
+      },
+      "Zomba": {
+        "yieldKgHa": 1050.0,
+        "priceMwk": 2400.0,
+        "costMwk": 2116000.0,
+        "marginMwk": 404000.0,
+        "breakEvenYield": 881.67,
+        "breakEvenPrice": 2015.24
+      },
+      "Neno": {
+        "yieldKgHa": 1875.0,
+        "priceMwk": 1200.0,
+        "costMwk": 1524000.0,
+        "marginMwk": 726000.0,
+        "breakEvenYield": 1270.0,
+        "breakEvenPrice": 812.8
+      },
+      "Blantyre": {
+        "yieldKgHa": 700.0,
+        "priceMwk": 3100.0,
+        "costMwk": 2000500.0,
+        "marginMwk": 169500.0,
+        "breakEvenYield": 645.32,
+        "breakEvenPrice": 2857.86
+      },
+      "Chiradzulu": {
+        "yieldKgHa": 658.0,
+        "priceMwk": 4000.0,
+        "costMwk": 724948.0,
+        "marginMwk": 1907052.0,
+        "breakEvenYield": 181.24,
+        "breakEvenPrice": 1101.74
+      },
+      "Thyolo": {
+        "yieldKgHa": 950.0,
+        "priceMwk": 4800.0,
+        "costMwk": 1965000.0,
+        "marginMwk": 2595000.0,
+        "breakEvenYield": 409.38,
+        "breakEvenPrice": 2068.42
+      },
+      "Mulanje": {
+        "yieldKgHa": 1765.0,
+        "priceMwk": 2500.0,
+        "costMwk": 2171200.0,
+        "marginMwk": 2241300.0,
+        "breakEvenYield": 868.48,
+        "breakEvenPrice": 1230.14
+      },
+      "Phalombe": {
+        "yieldKgHa": 1666.0,
+        "priceMwk": 2500.0,
+        "costMwk": 1807000.0,
+        "marginMwk": 2358000.0,
+        "breakEvenYield": 722.8,
+        "breakEvenPrice": 1084.63
+      },
+      "National": {
+        "yieldKgHa": 1423.14,
+        "priceMwk": 2445.45,
+        "costMwk": 1590972.41,
+        "marginMwk": 1889242.88,
+        "breakEvenYield": 650.58,
+        "breakEvenPrice": 1117.93
+      }
+    },
+    "bean": {
+      "Chitipa": {
+        "yieldKgHa": 1000.0,
+        "priceMwk": 3650.0,
+        "costMwk": 1351600.0,
+        "marginMwk": 2298400.0,
+        "breakEvenYield": 370.3,
+        "breakEvenPrice": 1351.6
+      },
+      "Rumphi": {
+        "yieldKgHa": 1125.0,
+        "priceMwk": 3611.0,
+        "costMwk": 1805000.0,
+        "marginMwk": 2257375.0,
+        "breakEvenYield": 499.86,
+        "breakEvenPrice": 1604.44
+      },
+      "Nkhata Bay": {
+        "yieldKgHa": 820.0,
+        "priceMwk": 3200.0,
+        "costMwk": 1620000.0,
+        "marginMwk": 1004000.0,
+        "breakEvenYield": 506.25,
+        "breakEvenPrice": 1975.61
+      },
+      "Mzimba North": {
+        "yieldKgHa": 1100.0,
+        "priceMwk": 3500.0,
+        "costMwk": 1511800.0,
+        "marginMwk": 2338200.0,
+        "breakEvenYield": 431.94,
+        "breakEvenPrice": 1374.36
+      },
+      "Mzimba South": {
+        "yieldKgHa": 1100.0,
+        "priceMwk": 10000.0,
+        "costMwk": 2606200.0,
+        "marginMwk": 8393800.0,
+        "breakEvenYield": 260.62,
+        "breakEvenPrice": 2369.27
+      },
+      "Kasungu": {
+        "yieldKgHa": 432.0,
+        "priceMwk": 6000.0,
+        "costMwk": 1379500.0,
+        "marginMwk": 1212500.0,
+        "breakEvenYield": 229.92,
+        "breakEvenPrice": 3193.29
+      },
+      "Dowa West": {
+        "yieldKgHa": 800.0,
+        "priceMwk": 6000.0,
+        "costMwk": 1919000.0,
+        "marginMwk": 2881000.0,
+        "breakEvenYield": 319.83,
+        "breakEvenPrice": 2398.75
+      },
+      "Dowa East": {
+        "yieldKgHa": 643.0,
+        "priceMwk": 6000.0,
+        "costMwk": 1923100.0,
+        "marginMwk": 1934900.0,
+        "breakEvenYield": 320.52,
+        "breakEvenPrice": 2990.82
+      },
+      "Ntchisi": {
+        "yieldKgHa": 1350.0,
+        "priceMwk": 5125.0,
+        "costMwk": 2250025.0,
+        "marginMwk": 4668725.0,
+        "breakEvenYield": 439.03,
+        "breakEvenPrice": 1666.69
+      },
+      "Mchinji": {
+        "yieldKgHa": 973.0,
+        "priceMwk": 4500.0,
+        "costMwk": 1503000.0,
+        "marginMwk": 2875500.0,
+        "breakEvenYield": 334.0,
+        "breakEvenPrice": 1544.71
+      },
+      "Lilongwe East": {
+        "yieldKgHa": 1800.0,
+        "priceMwk": 5500.0,
+        "costMwk": 2922500.0,
+        "marginMwk": 6977500.0,
+        "breakEvenYield": 531.36,
+        "breakEvenPrice": 1623.61
+      },
+      "Lilongwe West": {
+        "yieldKgHa": 1850.0,
+        "priceMwk": 2500.0,
+        "costMwk": 1845000.0,
+        "marginMwk": 2780000.0,
+        "breakEvenYield": 738.0,
+        "breakEvenPrice": 997.3
+      },
+      "Dedza": {
+        "yieldKgHa": 1350.0,
+        "priceMwk": 3500.0,
+        "costMwk": 1950000.0,
+        "marginMwk": 2775000.0,
+        "breakEvenYield": 557.14,
+        "breakEvenPrice": 1444.44
+      },
+      "Mangochi": {
+        "yieldKgHa": 800.0,
+        "priceMwk": 3200.0,
+        "costMwk": 708000.0,
+        "marginMwk": 1852000.0,
+        "breakEvenYield": 221.25,
+        "breakEvenPrice": 885.0
+      },
+      "Machinga": {
+        "yieldKgHa": 615.0,
+        "priceMwk": 5000.0,
+        "costMwk": 559500.0,
+        "marginMwk": 2515500.0,
+        "breakEvenYield": 111.9,
+        "breakEvenPrice": 909.76
+      },
+      "Zomba": {
+        "yieldKgHa": 750.0,
+        "priceMwk": 6000.0,
+        "costMwk": 1992500.0,
+        "marginMwk": 2507500.0,
+        "breakEvenYield": 332.08,
+        "breakEvenPrice": 2656.67
+      },
+      "Mwanza": {
+        "yieldKgHa": 1500.0,
+        "priceMwk": 6000.0,
+        "costMwk": 3489000.0,
+        "marginMwk": 5511000.0,
+        "breakEvenYield": 581.5,
+        "breakEvenPrice": 2326.0
+      },
+      "Blantyre": {
+        "yieldKgHa": 1300.0,
+        "priceMwk": 6000.0,
+        "costMwk": 1643500.0,
+        "marginMwk": 6156500.0,
+        "breakEvenYield": 273.92,
+        "breakEvenPrice": 1264.23
+      },
+      "Chiradzulu": {
+        "yieldKgHa": 760.0,
+        "priceMwk": 6000.0,
+        "costMwk": 965705.0,
+        "marginMwk": 3594295.0,
+        "breakEvenYield": 160.95,
+        "breakEvenPrice": 1270.66
+      },
+      "Thyolo": {
+        "yieldKgHa": 800.0,
+        "priceMwk": 6200.0,
+        "costMwk": 1672000.0,
+        "marginMwk": 3288000.0,
+        "breakEvenYield": 269.68,
+        "breakEvenPrice": 2090.0
+      },
+      "Mulanje": {
+        "yieldKgHa": 2000.0,
+        "priceMwk": 4500.0,
+        "costMwk": 837580.0,
+        "marginMwk": 8162420.0,
+        "breakEvenYield": 186.13,
+        "breakEvenPrice": 418.79
+      },
+      "Chikwawa": {
+        "yieldKgHa": 1200.0,
+        "priceMwk": 1800.0,
+        "costMwk": 1570000.0,
+        "marginMwk": 590000.0,
+        "breakEvenYield": 872.22,
+        "breakEvenPrice": 1308.33
+      },
+      "Nsanje": {
+        "yieldKgHa": 900.0,
+        "priceMwk": 4000.0,
+        "costMwk": 3035000.0,
+        "marginMwk": 565000.0,
+        "breakEvenYield": 758.75,
+        "breakEvenPrice": 3372.22
+      },
+      "National": {
+        "yieldKgHa": 1105.68,
+        "priceMwk": 4808.45,
+        "costMwk": 1778927.73,
+        "marginMwk": 3537693.04,
+        "breakEvenYield": 369.96,
+        "breakEvenPrice": 1608.9
+      }
+    },
+    "groundnut": {
+      "Chitipa": {
+        "yieldKgHa": 1750.0,
+        "priceMwk": 3000.0,
+        "costMwk": 1347700.0,
+        "marginMwk": 3902300.0,
+        "breakEvenYield": 449.23,
+        "breakEvenPrice": 770.11
+      },
+      "Karonga": {
+        "yieldKgHa": 1200.0,
+        "priceMwk": 1300.0,
+        "costMwk": 749000.0,
+        "marginMwk": 811000.0,
+        "breakEvenYield": 576.15,
+        "breakEvenPrice": 624.17
+      },
+      "Mzimba North": {
+        "yieldKgHa": 1000.0,
+        "priceMwk": 3800.0,
+        "costMwk": 1020000.0,
+        "marginMwk": 2780000.0,
+        "breakEvenYield": 268.42,
+        "breakEvenPrice": 1020.0
+      },
+      "Mzimba South": {
+        "yieldKgHa": 1000.0,
+        "priceMwk": 10000.0,
+        "costMwk": 1807000.0,
+        "marginMwk": 8193000.0,
+        "breakEvenYield": 180.7,
+        "breakEvenPrice": 1807.0
+      },
+      "Kasungu": {
+        "yieldKgHa": 1166.0,
+        "priceMwk": 6500.0,
+        "costMwk": 2330000.0,
+        "marginMwk": 5249000.0,
+        "breakEvenYield": 358.46,
+        "breakEvenPrice": 1998.28
+      },
+      "Mchinji": {
+        "yieldKgHa": 714.0,
+        "priceMwk": 6500.0,
+        "costMwk": 1481300.0,
+        "marginMwk": 3159700.0,
+        "breakEvenYield": 227.89,
+        "breakEvenPrice": 2074.65
+      },
+      "Nkhotakota": {
+        "yieldKgHa": 760.0,
+        "priceMwk": 8500.0,
+        "costMwk": 2332500.0,
+        "marginMwk": 4127500.0,
+        "breakEvenYield": 274.41,
+        "breakEvenPrice": 3069.08
+      },
+      "Salima": {
+        "yieldKgHa": 1350.0,
+        "priceMwk": 2200.0,
+        "costMwk": 1215400.0,
+        "marginMwk": 1754600.0,
+        "breakEvenYield": 552.45,
+        "breakEvenPrice": 900.3
+      },
+      "Lilongwe East": {
+        "yieldKgHa": 1200.0,
+        "priceMwk": 7000.0,
+        "costMwk": 3255500.0,
+        "marginMwk": 5144500.0,
+        "breakEvenYield": 465.07,
+        "breakEvenPrice": 2712.92
+      },
+      "Lilongwe West": {
+        "yieldKgHa": 1800.0,
+        "priceMwk": 2000.0,
+        "costMwk": 826000.0,
+        "marginMwk": 2774000.0,
+        "breakEvenYield": 413.0,
+        "breakEvenPrice": 458.89
+      },
+      "Dedza": {
+        "yieldKgHa": 717.0,
+        "priceMwk": 3800.0,
+        "costMwk": 1072200.0,
+        "marginMwk": 1652400.0,
+        "breakEvenYield": 282.16,
+        "breakEvenPrice": 1495.4
+      },
+      "Ntcheu": {
+        "yieldKgHa": 1000.0,
+        "priceMwk": 4000.0,
+        "costMwk": 1097500.0,
+        "marginMwk": 2902500.0,
+        "breakEvenYield": 274.38,
+        "breakEvenPrice": 1097.5
+      },
+      "Mangochi": {
+        "yieldKgHa": 1200.0,
+        "priceMwk": 1200.0,
+        "costMwk": 1846000.0,
+        "marginMwk": -406000.0,
+        "breakEvenYield": 1538.33,
+        "breakEvenPrice": 1538.33
+      },
+      "Machinga": {
+        "yieldKgHa": 850.0,
+        "priceMwk": 5000.0,
+        "costMwk": 1537000.0,
+        "marginMwk": 2713000.0,
+        "breakEvenYield": 307.4,
+        "breakEvenPrice": 1808.24
+      },
+      "Neno": {
+        "yieldKgHa": 751.0,
+        "priceMwk": 4000.0,
+        "costMwk": 1869040.0,
+        "marginMwk": 1134960.0,
+        "breakEvenYield": 467.26,
+        "breakEvenPrice": 2488.74
+      },
+      "Blantyre": {
+        "yieldKgHa": 1200.0,
+        "priceMwk": 9500.0,
+        "costMwk": 2317500.0,
+        "marginMwk": 9082500.0,
+        "breakEvenYield": 243.95,
+        "breakEvenPrice": 1931.25
+      },
+      "Chiradzulu": {
+        "yieldKgHa": 712.0,
+        "priceMwk": 9000.0,
+        "costMwk": 1401696.0,
+        "marginMwk": 5006304.0,
+        "breakEvenYield": 155.74,
+        "breakEvenPrice": 1968.67
+      },
+      "Thyolo": {
+        "yieldKgHa": 1700.0,
+        "priceMwk": 8500.0,
+        "costMwk": 2255000.0,
+        "marginMwk": 12195000.0,
+        "breakEvenYield": 265.29,
+        "breakEvenPrice": 1326.47
+      },
+      "Mulanje": {
+        "yieldKgHa": 1740.0,
+        "priceMwk": 9000.0,
+        "costMwk": 1772500.0,
+        "marginMwk": 13887500.0,
+        "breakEvenYield": 196.94,
+        "breakEvenPrice": 1018.68
+      },
+      "Phalombe": {
+        "yieldKgHa": 1540.0,
+        "priceMwk": 5000.0,
+        "costMwk": 1651000.0,
+        "marginMwk": 6049000.0,
+        "breakEvenYield": 330.2,
+        "breakEvenPrice": 1072.08
+      },
+      "Nsanje": {
+        "yieldKgHa": 650.0,
+        "priceMwk": 3900.0,
+        "costMwk": 1990000.0,
+        "marginMwk": 545000.0,
+        "breakEvenYield": 510.26,
+        "breakEvenPrice": 3061.54
+      },
+      "National": {
+        "yieldKgHa": 1162.0,
+        "priceMwk": 5260.0,
+        "costMwk": 1642066.8,
+        "marginMwk": 4470053.2,
+        "breakEvenYield": 312.18,
+        "breakEvenPrice": 1413.14
+      }
+    }
+  },
+  "seed": {
+    "maize": {
+      "Balaka": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Blantyre": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Chikwawa": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Chiradzulu": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Chitipa": {
+        "variety": "SC 719 / SC 727 / MH 34",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Dedza": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Dowa": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Karonga": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Kasungu": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Lilongwe": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Machinga": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Mangochi": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Mchinji": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Mulanje": {
+        "variety": "SC 719 / SC 727 / MH 34",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Mzimba": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Neno": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Nkhata Bay": {
+        "variety": "SC 719 / SC 727 / MH 34",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Nkhotakota": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Nsanje": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Ntcheu": {
+        "variety": "SC 719 / SC 727 / MH 34",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Ntchisi": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Phalombe": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Rumphi": {
+        "variety": "SC 719 / SC 727 / MH 34",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Salima": {
+        "variety": "SC 301 / SC 419 / Peacock 10",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Thyolo": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      },
+      "Zomba": {
+        "variety": "SC 555 / SC 529 / MH 26 / Falcon M601",
+        "perHa": 25.0,
+        "unit": "kg"
+      }
+    },
+    "soya": {
+      "Balaka": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Blantyre": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Chikwawa": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Chiradzulu": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Chitipa": {
+        "variety": "Soprano / Solitaire",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Dedza": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Dowa": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Karonga": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Kasungu": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Lilongwe": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Machinga": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Mangochi": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Mchinji": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Mulanje": {
+        "variety": "Soprano / Solitaire",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Mzimba": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Neno": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Nkhata Bay": {
+        "variety": "Soprano / Solitaire",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Nkhotakota": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Nsanje": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Ntcheu": {
+        "variety": "Soprano / Solitaire",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Ntchisi": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Phalombe": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Rumphi": {
+        "variety": "Soprano / Solitaire",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Salima": {
+        "variety": "Tikolore (Promiscuous nodulating)",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Thyolo": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      },
+      "Zomba": {
+        "variety": "Makwacha / Nasoko",
+        "perHa": 80.0,
+        "unit": "kg"
+      }
+    },
+    "groundnut": {
+      "Balaka": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Blantyre": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Chikwawa": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Chiradzulu": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Chitipa": {
+        "variety": "CG 11 / MHIV 4",
+        "perHa": 100.0,
+        "unit": "kg"
+      },
+      "Dedza": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Dowa": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Karonga": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Kasungu": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Lilongwe": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Machinga": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Mangochi": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Mchinji": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Mulanje": {
+        "variety": "CG 11 / MHIV 4",
+        "perHa": 100.0,
+        "unit": "kg"
+      },
+      "Mzimba": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Neno": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Nkhata Bay": {
+        "variety": "CG 11 / MHIV 4",
+        "perHa": 100.0,
+        "unit": "kg"
+      },
+      "Nkhotakota": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Nsanje": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Ntcheu": {
+        "variety": "CG 11 / MHIV 4",
+        "perHa": 100.0,
+        "unit": "kg"
+      },
+      "Ntchisi": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Phalombe": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Rumphi": {
+        "variety": "CG 11 / MHIV 4",
+        "perHa": 100.0,
+        "unit": "kg"
+      },
+      "Salima": {
+        "variety": "Chitala / Baka (Spanish type)",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Thyolo": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      },
+      "Zomba": {
+        "variety": "CG 7 / CG 9 / Nsinjiro",
+        "perHa": 95.0,
+        "unit": "kg"
+      }
+    },
+    "rice": {
+      "Balaka": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Blantyre": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Chikwawa": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Chiradzulu": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Chitipa": {
+        "variety": "NERICA upland lines",
+        "perHa": 70.0,
+        "unit": "kg"
+      },
+      "Dedza": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Dowa": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Karonga": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Kasungu": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Lilongwe": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Machinga": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Mangochi": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Mchinji": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Mulanje": {
+        "variety": "NERICA upland lines",
+        "perHa": 70.0,
+        "unit": "kg"
+      },
+      "Mzimba": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Neno": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Nkhata Bay": {
+        "variety": "NERICA upland lines",
+        "perHa": 70.0,
+        "unit": "kg"
+      },
+      "Nkhotakota": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Nsanje": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Ntcheu": {
+        "variety": "NERICA upland lines",
+        "perHa": 70.0,
+        "unit": "kg"
+      },
+      "Ntchisi": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Phalombe": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Rumphi": {
+        "variety": "NERICA upland lines",
+        "perHa": 70.0,
+        "unit": "kg"
+      },
+      "Salima": {
+        "variety": "Kilombero / Faya / NERICA 4",
+        "perHa": 55.0,
+        "unit": "kg"
+      },
+      "Thyolo": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Zomba": {
+        "variety": "NERICA 1 / Mtupatupa",
+        "perHa": 65.0,
+        "unit": "kg"
+      }
+    },
+    "tobacco": {
+      "Balaka": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Blantyre": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Chikwawa": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Chiradzulu": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Chitipa": {
+        "variety": "Mwanga (Dark Fire-Cured)",
+        "perHa": 120.0,
+        "unit": "g"
+      },
+      "Dedza": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Dowa": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Karonga": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Kasungu": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Lilongwe": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Machinga": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Mangochi": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Mchinji": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Mulanje": {
+        "variety": "Mwanga (Dark Fire-Cured)",
+        "perHa": 120.0,
+        "unit": "g"
+      },
+      "Mzimba": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Neno": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Nkhata Bay": {
+        "variety": "Mwanga (Dark Fire-Cured)",
+        "perHa": 120.0,
+        "unit": "g"
+      },
+      "Nkhotakota": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Nsanje": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Ntcheu": {
+        "variety": "Mwanga (Dark Fire-Cured)",
+        "perHa": 120.0,
+        "unit": "g"
+      },
+      "Ntchisi": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Phalombe": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Rumphi": {
+        "variety": "Mwanga (Dark Fire-Cured)",
+        "perHa": 120.0,
+        "unit": "g"
+      },
+      "Salima": {
+        "variety": "BRK 1 / BRK 2 (Burley)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Thyolo": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      },
+      "Zomba": {
+        "variety": "TOB 7 (Burley) / Kutsaga T71 (Virginia)",
+        "perHa": 100.0,
+        "unit": "g"
+      }
+    },
+    "cotton": {
+      "Balaka": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Blantyre": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Chikwawa": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Chiradzulu": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Dedza": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Dowa": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Karonga": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Kasungu": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Lilongwe": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Machinga": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Mangochi": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Mchinji": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Mzimba": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Neno": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Nkhotakota": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Nsanje": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Ntchisi": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Phalombe": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Salima": {
+        "variety": "Chureza / Rasam 17",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Thyolo": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      },
+      "Zomba": {
+        "variety": "Makoka 2016 / SZ 9314",
+        "perHa": 17.5,
+        "unit": "kg"
+      }
+    },
+    "bean": {
+      "Balaka": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Blantyre": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Chikwawa": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Chiradzulu": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Chitipa": {
+        "variety": "Banyani / Maluwa",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Dedza": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Dowa": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Karonga": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Kasungu": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Lilongwe": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Machinga": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Mangochi": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Mchinji": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Mulanje": {
+        "variety": "Banyani / Maluwa",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Mzimba": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Neno": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Nkhata Bay": {
+        "variety": "Banyani / Maluwa",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Nkhotakota": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Nsanje": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Ntcheu": {
+        "variety": "Banyani / Maluwa",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Ntchisi": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Phalombe": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Rumphi": {
+        "variety": "Banyani / Maluwa",
+        "perHa": 85.0,
+        "unit": "kg"
+      },
+      "Salima": {
+        "variety": "Kalima (Early sugar type)",
+        "perHa": 65.0,
+        "unit": "kg"
+      },
+      "Thyolo": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      },
+      "Zomba": {
+        "variety": "Nua 45 (Biofortified) / Kholophethe",
+        "perHa": 75.0,
+        "unit": "kg"
+      }
+    }
+  },
+  "inputs": {
+    "maize": [
+      {
+        "type": "Basal Fertilizer",
+        "specification": "NPK (23:21:0+4S)",
+        "perHa": "250 kg (5 bags)"
+      },
+      {
+        "type": "Top Dressing",
+        "specification": "Urea (46% N) / CAN",
+        "perHa": "250 kg (5 bags)"
+      },
+      {
+        "type": "Insecticide",
+        "specification": "Emamectin Benzoate (Fall Armyworm)",
+        "perHa": "250 g"
+      },
+      {
+        "type": "Fungicide",
+        "specification": "Mancozeb 80% WP (Rice Blast)",
+        "perHa": "1.25 kg"
+      }
+    ],
+    "rice": [
+      {
+        "type": "Basal Fertilizer",
+        "specification": "NPK (23:21:0+4S)",
+        "perHa": "250 kg (5 bags)"
+      },
+      {
+        "type": "Top Dressing",
+        "specification": "Urea (46% N) / CAN",
+        "perHa": "250 kg (5 bags)"
+      },
+      {
+        "type": "Insecticide",
+        "specification": "Emamectin Benzoate (Fall Armyworm)",
+        "perHa": "250 g"
+      },
+      {
+        "type": "Fungicide",
+        "specification": "Mancozeb 80% WP (Rice Blast)",
+        "perHa": "1.25 kg"
+      }
+    ],
+    "soya": [
+      {
+        "type": "Basal/Gypsum",
+        "specification": "SSP / Agricultural Gypsum (Groundnuts)",
+        "perHa": "125kg SSP / 250kg Gypsum"
+      },
+      {
+        "type": "Inoculant",
+        "specification": "Rhizobium Inoculant (Soybean/Beans)",
+        "perHa": "5 packets (50g each)"
+      },
+      {
+        "type": "Insecticide",
+        "specification": "Imidacloprid 200 SL (Aphids/Thrips)",
+        "perHa": "500 ml"
+      },
+      {
+        "type": "Fungicide",
+        "specification": "Tebuconazole/Triazole (Rust/Leaf Spot)",
+        "perHa": "1 Liter"
+      }
+    ],
+    "groundnut": [
+      {
+        "type": "Basal/Gypsum",
+        "specification": "SSP / Agricultural Gypsum (Groundnuts)",
+        "perHa": "125kg SSP / 250kg Gypsum"
+      },
+      {
+        "type": "Inoculant",
+        "specification": "Rhizobium Inoculant (Soybean/Beans)",
+        "perHa": "5 packets (50g each)"
+      },
+      {
+        "type": "Insecticide",
+        "specification": "Imidacloprid 200 SL (Aphids/Thrips)",
+        "perHa": "500 ml"
+      },
+      {
+        "type": "Fungicide",
+        "specification": "Tebuconazole/Triazole (Rust/Leaf Spot)",
+        "perHa": "1 Liter"
+      }
+    ],
+    "bean": [
+      {
+        "type": "Basal/Gypsum",
+        "specification": "SSP / Agricultural Gypsum (Groundnuts)",
+        "perHa": "125kg SSP / 250kg Gypsum"
+      },
+      {
+        "type": "Inoculant",
+        "specification": "Rhizobium Inoculant (Soybean/Beans)",
+        "perHa": "5 packets (50g each)"
+      },
+      {
+        "type": "Insecticide",
+        "specification": "Imidacloprid 200 SL (Aphids/Thrips)",
+        "perHa": "500 ml"
+      },
+      {
+        "type": "Fungicide",
+        "specification": "Tebuconazole/Triazole (Rust/Leaf Spot)",
+        "perHa": "1 Liter"
+      }
+    ]
+  },
+  "suppliers": [
+    {
+      "districts": [
+        "Karonga"
+      ],
+      "epas": [
+        "Nyungwe",
+        "Mpata",
+        "Lupembe"
+      ],
+      "suppliers": "Agricultural Trading Company (ATC), ETG Inputs at Boma; Lupembe Rice Farmers Cooperative for certified rice seeds."
+    },
+    {
+      "districts": [
+        "Chitipa"
+      ],
+      "epas": [
+        "Misuku",
+        "Kameme"
+      ],
+      "suppliers": "Misuku Coffee Cooperative Depot (specialty fertilizers); Farmers World and Chipiku Stores at Boma."
+    },
+    {
+      "districts": [
+        "Mzimba"
+      ],
+      "epas": [
+        "Manyamula",
+        "Vibangalala",
+        "Ekwendeni"
+      ],
+      "suppliers": "Mzuzu GreenGrow Agrovert, PANNAR seed networks, NASFAM smallholder aggregate hubs."
+    },
+    {
+      "districts": [
+        "Lilongwe"
+      ],
+      "epas": [
+        "Nyanja",
+        "Thawale",
+        "Chitedze",
+        "Mitundu"
+      ],
+      "suppliers": "Agro-Input Suppliers Limited (AISL), Cropserve Malawi, Farmers Organization Ltd (FOL) at Kanengo; One Acre Fund EPA depots."
+    },
+    {
+      "districts": [
+        "Kasungu"
+      ],
+      "epas": [
+        "Chisemphere",
+        "Lisasadzi",
+        "Santhe"
+      ],
+      "suppliers": "Yara Malawi, Optichem, Malawi Fertilizer Company commercial retail outlets near Kasungu Boma."
+    },
+    {
+      "districts": [
+        "Dowa",
+        "Ntchisi"
+      ],
+      "epas": [
+        "Mponela",
+        "Madisi",
+        "Malomo"
+      ],
+      "suppliers": "Agwenda Investments network, Elvima Investment seed hubs at Mponela."
+    },
+    {
+      "districts": [
+        "Mchinji"
+      ],
+      "epas": [
+        "Mkanda",
+        "Kalulu"
+      ],
+      "suppliers": "Maziko Agriculture Enterprises, Sarvious Agrodealer, AB Mwale Commodities."
+    },
+    {
+      "districts": [
+        "Blantyre",
+        "Zomba"
+      ],
+      "epas": [
+        "Lunzu",
+        "Chileka",
+        "Thondwe"
+      ],
+      "suppliers": "Limbe industrial warehouses: Chikondi Farm Inputs, Agora, Ngondo Agrodealers, Emmanuel Enterprises."
+    },
+    {
+      "districts": [
+        "Chikwawa",
+        "Nsanje"
+      ],
+      "epas": [
+        "Mitole",
+        "Ngabu",
+        "Makhanga"
+      ],
+      "suppliers": "Mulli Brothers Limited local points, independent dealers backed by Shire Valley Transformation Program (SVTP)."
+    },
+    {
+      "districts": [
+        "Mulanje",
+        "Thyolo"
+      ],
+      "epas": [
+        "Thuchila",
+        "Khonjeni"
+      ],
+      "suppliers": "Vickys Shop and Agrodealer, Home Boys Agro-dealers, Tea Research Foundation of Central Africa (TRFCA) technical sales."
+    }
+  ],
+  "offtake": {
+    "maize": {
+      "yieldPerHa": "7.5 metric tons (mt)",
+      "transport": "1 x 8-MT rigid flatbed truck lined with wooden pallets & covered with waterproof PVC tarp.",
+      "buyers": "NFRA, Large commercial millers (Bakhresa, Chombe, Mwendo)",
+      "avoid": "ADMARC depots, urban grain wholesalers, farm-gate vendors (Alonda) for loss",
+      "booking": "Book 14 Days Before Harvest based on final moisture test (<14%)."
+    },
+    "rice": {
+      "yieldPerHa": "5.5 metric tons (mt)",
+      "transport": "1 x 7-MT flatbed or rigid box truck. Clean woven polypropylene sacks on pallets.",
+      "buyers": "Lupembe Rice Cooperative, Large Millers",
+      "avoid": "ADMARC depots, local traders, open markets",
+      "booking": "Book 10 Days Before Harvest. Matches post-threshing grading cycle."
+    },
+    "soya": {
+      "yieldPerHa": "2.8 metric tons (mt)",
+      "transport": "1 x 3-MT or 5-MT box truck. Zero contact with fuel/chemicals.",
+      "buyers": "Sunseed Oil, Mount Meru, Capital Oil Refineries (CORI), AHXL/ACE Exchanges",
+      "avoid": "Institutional buyers, NASFAM pooling centers, local vendors (loss)",
+      "booking": "Book 10 Days Before Harvest. Scheduled at the completion of threshing."
+    },
+    "groundnut": {
+      "yieldPerHa": "2.5 metric tons (mt)",
+      "transport": "1 x 3-MT well-ventilated slatted truck. Avoid enclosed boxes to prevent sweating.",
+      "buyers": "Large industrial processors, Exporters, ACE/AHXL commodity exchanges",
+      "avoid": "NASFAM local depots, urban markets, farm-gate vendors (loss)",
+      "booking": "Book 14 Days Before Harvest. Arranged during field pull-and-windrow drying phase."
+    },
+    "bean": {
+      "yieldPerHa": "2.0 metric tons (mt)",
+      "transport": "1 x 3-MT rigid truck or light delivery vehicle, bags stacked on pallets.",
+      "buyers": "High-end retail chains, formal seed companies, urban packaging hubs",
+      "avoid": "Institutional buyers, city open markets, roadside traders (loss)",
+      "booking": "Book 7 Days Before Harvest. Arranged during pod-drying checks to hit early high prices."
+    },
+    "cotton": {
+      "yieldPerHa": "2.0 metric tons (mt)",
+      "transport": "1 x 3-MT open flatbed truck fitted with high bamboo/wire framework extensions.",
+      "buyers": "Quton, formal ginneries under structural contract pricing",
+      "avoid": "ADMARC, local intermediate vendors (loss)",
+      "booking": "Book 14 Days Before Harvest. Scheduled at the first major open-boll wave."
+    }
+  }
+}

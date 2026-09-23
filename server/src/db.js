@@ -173,7 +173,11 @@ CREATE TABLE IF NOT EXISTS pest_reports (
   symptoms TEXT NOT NULL,
   match_name TEXT,
   channel TEXT NOT NULL,
-  created_at BIGINT NOT NULL
+  created_at BIGINT NOT NULL,
+  season_id TEXT,
+  parcel_id TEXT,
+  crop TEXT,
+  photo_path TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_pests_created ON pest_reports(created_at);
@@ -578,13 +582,22 @@ async function openMemoryDatabase() {
   const pool = new Pool();
   const db = new Database(pool);
   await db.exec(SCHEMA);
+  await db.exec(PEST_REPORT_COLUMNS);
   return db;
 }
+
+const PEST_REPORT_COLUMNS = `
+ALTER TABLE pest_reports ADD COLUMN IF NOT EXISTS season_id TEXT;
+ALTER TABLE pest_reports ADD COLUMN IF NOT EXISTS parcel_id TEXT;
+ALTER TABLE pest_reports ADD COLUMN IF NOT EXISTS crop TEXT;
+ALTER TABLE pest_reports ADD COLUMN IF NOT EXISTS photo_path TEXT;
+`;
 
 async function openPostgresDatabase(connectionString) {
   const pool = new Pool({ connectionString });
   const db = new Database(pool);
   await db.exec(SCHEMA);
+  await db.exec(PEST_REPORT_COLUMNS);
   return db;
 }
 

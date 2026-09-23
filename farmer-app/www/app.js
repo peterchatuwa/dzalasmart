@@ -3,9 +3,11 @@ const API_URL = 'https://api.zammunda.com';
 const API_BASE = 'https://api.zammunda.com'; // For new endpoints
 let currentFarmer = null;
 let authToken = null;
+let selectedSeasonId = null;
+let latestCare = null;
 
 // Get Capacitor Preferences plugin from global
-const { Preferences } = window.Capacitor?.Plugins || {};
+const { Preferences, Camera } = window.Capacitor?.Plugins || {};
 
 // Wait for Capacitor to be ready
 async function initializeApp() {
@@ -59,7 +61,7 @@ function setupEventListeners() {
     // Tab navigation
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const tabName = e.target.dataset.tab;
+            const tabName = e.currentTarget.dataset.tab;
             switchTab(tabName);
         });
     });
@@ -158,7 +160,10 @@ async function loadFarmerData() {
         // Load receipts
         await loadReceipts();
         
-        // Load market prices
+        if (!selectedSeasonId && Preferences) {
+            const stored = await Preferences.get({ key: 'active_season' });
+            if (stored?.value) selectedSeasonId = stored.value;
+        }
         await loadMarketPrices();
         
     } catch (error) {
@@ -285,9 +290,17 @@ function displayReceipts(receipts) {
     }
 }
 
+function mwk(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '';
+    return `MWK ${Math.round(n).toLocaleString('en-US')}`;
+}
+
 async function loadMarketPrices() {
     try {
-        const response = await fetch(`${API_URL}/api/farmers/market`, {
+        const params = new URLSearchParams();
+        if (selectedSeasonId) params.set('seasonId', selectedSeasonId);
+        const response = await fetch(`${API_URL}/api/farmers/market?${params}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         
@@ -302,35 +315,35 @@ async function loadMarketPrices() {
 
 function displayMarketPrices(data) {
     const pricesContainer = document.getElementById('marketPrices');
-    const floorsContainer = document.getElementById('priceFloors');
-    
-    if (data.prices && data.prices.length > 0) {
-        pricesContainer.innerHTML = data.prices.map(price => `
-            <div class="price-card">
-                <div>
-                    <div class="price-crop">${price.crop}</div>
-                    <small style="color: #666;">Current market price</small>
-                </div>
-                <div class="price-amount">MWK ${price.price}</div>
-            </div>
-        `).join('');
-    } else {
+    const quotes = data.quotes || [];
+    if (!quotes.length) {
         pricesContainer.innerHTML = `<div class="empty-state"><p>No market prices available</p></div>`;
+        return;
     }
-    
-    if (data.floors && data.floors.length > 0) {
-        floorsContainer.innerHTML = data.floors.map(floor => `
-            <div class="price-card">
-                <div>
-                    <div class="price-crop">${floor.crop}</div>
-                    <small style="color: #666;">Government floor price</small>
-                </div>
-                <div class="price-amount">MWK ${floor.floor_price}</div>
+    const place = data.warehouseHub ? `Nearest warehouse: ${data.warehouseHub}. ` : '';
+    const source = data.live ? 'Live warehouse quote.' : 'Showing the reference price until a live quote is available.';
+    pricesContainer.innerHTML = `<p class="price-line">${place}${source}</p>` + quotes.map((quote) => {
+        const title = quote.parcelName ? `${quote.parcelName} · ${quote.crop}` : quote.crop;
+        const today = quote.today
+            ? `${quote.today.live ? 'Today' : 'Reference'}: ${mwk(quote.today.pricePerKg)}/kg · ${quote.today.source}${quote.today.place ? ` · ${quote.today.place}` : ''}`
+            : 'Today: no warehouse quote';
+        const floor = quote.floor ? `Floor: ${mwk(quote.floor.pricePerKg)}/kg` : 'Floor: not set';
+        const plan = quote.plan
+            ? `Plan: ${mwk(quote.plan.pricePerKg)}/kg on the district sheet. Break-even ${mwk(quote.plan.breakEvenPrice)}/kg.`
+            : '';
+        const field = quote.plan && quote.plan.marginForField != null
+            ? `This field: gross margin about ${mwk(quote.plan.marginForField)}.`
+            : '';
+        return `
+            <div class="price-card price-board">
+                <div class="price-crop">${title}</div>
+                <div class="price-line">${today}</div>
+                <div class="price-line">${floor}</div>
+                ${plan ? `<div class="price-line">${plan}</div>` : ''}
+                ${field ? `<div class="price-line">${field}</div>` : ''}
             </div>
-        `).join('');
-    } else {
-        floorsContainer.innerHTML = `<div class="empty-state"><p>No floor prices set</p></div>`;
-    }
+        `;
+    }).join('');
 }
 
 // Profile Management
@@ -419,7 +432,12 @@ async function sendMessage() {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ query: message })
+            body: JSON.stringify({
+                query: message,
+                text: message,
+                lang: 'en',
+                seasonId: selectedSeasonId
+            })
         });
         
         if (response.ok) {
@@ -434,6 +452,102 @@ async function sendMessage() {
     }
 }
 
+async function photographPlant() {
+    if (!selectedSeasonId) {
+        addChatMessage('Choose a field on the Farm tab first, then photograph the plant.', 'advisor');
+        return;
+    }
+    if (!Camera?.getPhoto) {
+        addChatMessage('The camera is available in the phone app.', 'advisor');
+        return;
+    }
+    try {
+        if (Camera.requestPermissions) {
+            const perm = await Camera.requestPermissions({ permissions: ['camera'] });
+            const camera = perm?.camera || perm?.photos;
+            if (camera && camera !== 'granted' && camera !== 'limited') {
+                addChatMessage('Allow the camera to photograph the plant.', 'advisor');
+                return;
+            }
+        }
+        const photo = await Camera.getPhoto({
+            quality: 50,
+            width: 1024,
+            resultType: 'base64',
+            source: 'CAMERA',
+            correctOrientation: true
+        });
+        if (!photo?.base64String) {
+            addChatMessage('The photo did not come through. Try again.', 'advisor');
+            return;
+        }
+        addChatMessage('Plant photo sent for this field.', 'user');
+        const response = await fetch(`${API_URL}/api/farmers/advisor/photo`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                image: photo.base64String,
+                seasonId: selectedSeasonId,
+                lang: 'en'
+            })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            addChatMessage(data.error || 'Could not read this plant photo.', 'advisor');
+            return;
+        }
+        showPhotoAdvice(data);
+    } catch (error) {
+        console.error('Plant photo error:', error);
+        addChatMessage(error.message || 'Could not open the camera.', 'advisor');
+    }
+}
+
+function showPhotoAdvice(data) {
+    addChatMessage(data.advice || data.reply, 'advisor');
+    if (!data.choices?.length || !data.id) return;
+    const container = document.getElementById('chatContainer');
+    const wrap = document.createElement('div');
+    wrap.className = 'advisor-topics';
+    for (const choice of data.choices) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'topic-chip';
+        button.textContent = choice.lookFor;
+        button.addEventListener('click', () => confirmPlantSign(data.id, choice.name, wrap));
+        wrap.appendChild(button);
+    }
+    container.appendChild(wrap);
+    container.scrollTop = container.scrollHeight;
+}
+
+async function confirmPlantSign(reportId, sign, wrap) {
+    if (wrap) wrap.remove();
+    addChatMessage(sign, 'user');
+    try {
+        const response = await fetch(`${API_URL}/api/farmers/advisor/photo/${reportId}/sign`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ sign, lang: 'en' })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            addChatMessage(data.error || 'Could not match that sign.', 'advisor');
+            return;
+        }
+        addChatMessage(data.advice || data.reply, 'advisor');
+    } catch (error) {
+        console.error('Plant sign error:', error);
+        addChatMessage('Connection error. Please check your internet.', 'advisor');
+    }
+}
+
 function addChatMessage(text, sender) {
     const container = document.getElementById('chatContainer');
     const messageDiv = document.createElement('div');
@@ -441,6 +555,36 @@ function addChatMessage(text, sender) {
     messageDiv.textContent = text;
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
+}
+
+function selectedField(data) {
+    const rows = data?.growing || [];
+    if (!rows.length) return null;
+    return rows.find((row) => row.seasonId === selectedSeasonId) || rows[0];
+}
+
+function describeField(crop) {
+    if (!crop) return 'Start a production season so advice follows the field you select.';
+    const ha = Number.isFinite(Number(crop.hectares)) ? `, ${crop.hectares} ha` : '';
+    return `${crop.crop} on ${crop.parcelName}${ha}, day ${crop.ageDays}. Advice and quantities follow this field.`;
+}
+
+async function loadAdvisorContext() {
+    const contextEl = document.getElementById('advisorContext');
+    if (!contextEl || !authToken) return;
+    try {
+        if (!latestCare) {
+            const response = await fetch(`${API_BASE}/api/farmers/me/care`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (!response.ok) return;
+            latestCare = await response.json();
+            await restoreSelectedSeason(latestCare.growing || []);
+        }
+        contextEl.textContent = describeField(selectedField(latestCare));
+    } catch (error) {
+        console.warn('Could not load crop context:', error);
+    }
 }
 
 // UI Helpers
@@ -472,9 +616,13 @@ function switchTab(tabName) {
         loadMarketPrices();
     } else if (tabName === 'farm') {
         console.log('Loading farm data...');
+        renderFarmProfile();
         loadParcels();
         loadSeasons();
         loadHousehold();
+        loadDailyCare();
+    } else if (tabName === 'advisor') {
+        loadAdvisorContext();
     } else if (tabName === 'production') {
         loadSeasons();
     }
@@ -533,11 +681,224 @@ function showLogin() {
 function showMainApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
+    loadDailyCare();
 }
 
 // ============================================
 // FARM TAB FUNCTIONS
 // ============================================
+
+function renderFarmProfile() {
+    const nameEl = document.getElementById('farmFarmerName');
+    const locationEl = document.getElementById('farmLocation');
+    const soilEl = document.getElementById('farmSoil');
+    if (!currentFarmer) return;
+
+    if (nameEl) nameEl.textContent = currentFarmer.name || 'My Farm';
+    const location = [currentFarmer.village, currentFarmer.epa, currentFarmer.district].filter(Boolean).join(' · ');
+    if (locationEl) locationEl.textContent = location || 'Location not set';
+    const soil = currentFarmer.soilType || currentFarmer.soil_type;
+    const nutrients = currentFarmer.nutrientStatus || currentFarmer.nutrient_status;
+    if (soilEl) soilEl.textContent = [soil, nutrients].filter(Boolean).join(' · ');
+}
+
+async function loadDailyCare() {
+    const tasksEl = document.getElementById('careTasks');
+    const forecastEl = document.getElementById('careForecast');
+    if (!tasksEl || !authToken) return;
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/care`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!response.ok) {
+            tasksEl.innerHTML = '<div class="empty-state"><p>Farm checks are unavailable right now.</p></div>';
+            return;
+        }
+        const data = await response.json();
+        latestCare = data;
+        await restoreSelectedSeason(data.growing || []);
+        syncFieldSelect(data.growing || []);
+        renderCare(data);
+        scheduleCareNotifications(data);
+        const contextEl = document.getElementById('advisorContext');
+        if (contextEl) contextEl.textContent = describeField(selectedField(data));
+    } catch (error) {
+        console.error('Failed to load farm checks:', error);
+        tasksEl.innerHTML = '<div class="empty-state"><p>Could not load today\'s farm checks.</p></div>';
+    }
+}
+
+function guideLines(guide) {
+    if (!guide) return '';
+    return [guide.seed, guide.fieldInputs, guide.margin, guide.fieldMargin, guide.suppliers, guide.buyers]
+        .filter(Boolean)
+        .map((line) => `<div class="care-crop-clear">${line}</div>`)
+        .join('');
+}
+
+async function restoreSelectedSeason(growing) {
+    if (!selectedSeasonId && Preferences) {
+        const stored = await Preferences.get({ key: 'active_season' });
+        if (stored?.value) selectedSeasonId = stored.value;
+    }
+    if (growing.length && !growing.some((row) => row.seasonId === selectedSeasonId)) {
+        selectedSeasonId = growing[0].seasonId;
+    }
+}
+
+function syncFieldSelect(growing) {
+    const select = document.getElementById('fieldSelect');
+    if (!select) return;
+    select.replaceChildren();
+    if (!growing.length) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Start a season to choose a field';
+        select.appendChild(option);
+        return;
+    }
+    for (const row of growing) {
+        const option = document.createElement('option');
+        option.value = row.seasonId;
+        const ha = Number.isFinite(Number(row.hectares)) ? ` · ${row.hectares} ha` : '';
+        option.textContent = `${row.parcelName} · ${row.crop}${ha}`;
+        select.appendChild(option);
+    }
+    select.value = selectedSeasonId || growing[0].seasonId;
+}
+
+document.getElementById('fieldSelect')?.addEventListener('change', async (event) => {
+    selectedSeasonId = event.target.value || null;
+    if (Preferences && selectedSeasonId) {
+        await Preferences.set({ key: 'active_season', value: selectedSeasonId });
+    }
+    if (latestCare) {
+        renderCare(latestCare);
+        const contextEl = document.getElementById('advisorContext');
+        if (contextEl) contextEl.textContent = describeField(selectedField(latestCare));
+    }
+    loadMarketPrices();
+});
+
+function renderCare(data) {
+    const forecastEl = document.getElementById('careForecast');
+    const tasksEl = document.getElementById('careTasks');
+    const forecast = (data.forecast || []).slice(0, 3).map((day) => {
+        return `${day.day} ${Math.round(day.max)}° / ${Number(day.rain || 0).toFixed(0)} mm`;
+    }).join(' · ');
+    if (forecastEl) {
+        forecastEl.textContent = forecast
+            ? `${data.alertHeadline || 'Forecast'}. ${forecast}. ${data.advice || ''}`
+            : (data.advice || 'Weather forecast is unavailable.');
+    }
+    const tasks = (data.tasks || []).filter((task) => !selectedSeasonId || task.seasonId === selectedSeasonId);
+    const groups = new Map();
+    const growing = (data.growing || []).filter((crop) => !selectedSeasonId || crop.seasonId === selectedSeasonId);
+    for (const crop of growing) {
+        groups.set(crop.seasonId, { ...crop, tasks: [] });
+    }
+    for (const task of tasks) {
+        if (!groups.has(task.seasonId)) {
+            groups.set(task.seasonId, {
+                seasonId: task.seasonId,
+                crop: task.crop,
+                parcelName: task.parcelName,
+                ageDays: task.ageDays,
+                tasks: []
+            });
+        }
+        groups.get(task.seasonId).tasks.push(task);
+    }
+    const cropGroups = [...groups.values()];
+    if (!cropGroups.length) {
+        tasksEl.innerHTML = '<div class="empty-state"><p>No crop actions yet. Start a production season to get watering, weeding, and fertiliser reminders for that crop.</p></div>';
+        return;
+    }
+    tasksEl.innerHTML = cropGroups.map((group) => `
+        <div class="care-crop">
+            <div class="care-crop-title">${group.crop} · ${group.parcelName}${Number.isFinite(group.ageDays) ? ` · day ${group.ageDays}` : ''}</div>
+            ${group.variety ? `<div class="care-crop-clear">${group.variety}</div>` : ''}
+            ${guideLines(group.guide)}
+            ${group.nextAction ? `<div class="care-crop-clear">${group.nextAction}</div>` : ''}
+            ${group.tasks.length ? group.tasks.map((task) => `
+                <div class="card-item care-task ${task.status}">
+                    <div class="card-item-header">
+                        <span class="card-item-title">${task.label}</span>
+                        <span class="card-item-badge">${task.status === 'due' ? 'Due' : task.status === 'done' ? 'Logged' : 'Rain'}</span>
+                    </div>
+                    <div class="card-item-details">
+                        <div>${task.detail}</div>
+                    </div>
+                    ${task.status === 'due' ? `<button class="btn-small" onclick="logCareTask('${task.seasonId}','${task.type}','${task.label.replace(/'/g, '')}')">Mark done</button>` : ''}
+                </div>
+            `).join('') : (group.nextAction ? '' : '<div class="care-crop-clear">No action due for this crop today.</div>')}
+        </div>
+    `).join('');
+    const due = tasks.filter((task) => task.status === 'due');
+    if (due.length) showToast(`${due.length} crop action${due.length === 1 ? '' : 's'} due today`, 'info');
+}
+
+window.logCareTask = async function(seasonId, type, label) {
+    try {
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        const response = await fetch(`${API_BASE}/api/farmers/me/seasons/${seasonId}/activities`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                activity_type: type,
+                activityType: type,
+                activity_date: today,
+                activityDate: today,
+                description: label
+            })
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            showToast(errorData.message || 'Could not log this check', 'error');
+            return;
+        }
+        showToast('Logged', 'success');
+        loadDailyCare();
+    } catch (error) {
+        showToast('Network error', 'error');
+    }
+};
+
+async function scheduleCareNotifications(data) {
+    const notificationsApi = window.Capacitor?.Plugins?.LocalNotifications;
+    if (!notificationsApi) return;
+    try {
+        const permission = await notificationsApi.requestPermissions();
+        if (permission.display && permission.display !== 'granted') return;
+        const cancelIds = data.cancelIds || [2201, 2202, 2203];
+        await notificationsApi.cancel({ notifications: cancelIds.map((id) => ({ id })) });
+        const notifications = [];
+        for (const item of data.notifications || []) {
+            const when = new Date();
+            when.setDate(when.getDate() + (item.dayIndex || 0));
+            when.setHours(6, 30, 0, 0);
+            if (when.getTime() < Date.now() + 60000) continue;
+            notifications.push({
+                id: item.id,
+                title: item.title,
+                body: item.body,
+                schedule: { at: when, allowWhileIdle: true }
+            });
+        }
+        if (notifications.length) await notificationsApi.schedule({ notifications });
+    } catch (error) {
+        console.warn('Could not schedule farm notifications:', error);
+    }
+}
+
+function parcelSize(parcel) {
+    const size = parcel.area_hectares ?? parcel.size_hectares;
+    return size == null || size === '' ? '--' : size;
+}
 
 // Parcels Management
 async function loadParcels() {
@@ -564,7 +925,7 @@ async function loadParcels() {
         }
         
         const data = await response.json();
-        console.log('Parcels data:', data);
+        console.log('Parcels data:', JSON.stringify(data));
         displayParcels(data.parcels || []);
     } catch (error) {
         console.error('Failed to load parcels:', error);
@@ -575,19 +936,20 @@ async function loadParcels() {
 
 function displayParcels(parcels) {
     const container = document.getElementById('parcelsList');
+    if (!container) return;
     if (!parcels.length) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏞️</div><p>No land parcels added yet</p></div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏞️</div><p>No land parcels yet. Tap + Add Parcel.</p></div>';
         return;
     }
     
     container.innerHTML = parcels.map(p => `
         <div class="card-item">
             <div class="card-item-header">
-                <span class="card-item-title">${p.parcel_name}</span>
+                <span class="card-item-title">${p.parcel_name || 'Parcel'}</span>
                 <span class="card-item-badge ${p.status === 'active' ? '' : 'inactive'}">${p.status || 'active'}</span>
             </div>
             <div class="card-item-details">
-                <div>📐 Size: ${p.area_hectares} hectares</div>
+                <div>📐 Size: ${parcelSize(p)} hectares</div>
                 <div>🏷️ Ownership: ${p.ownership_type}</div>
                 ${p.soil_type ? `<div>🌱 Soil: ${p.soil_type}</div>` : ''}
                 ${p.water_source ? `<div>💧 Water: ${p.water_source}</div>` : ''}
@@ -596,8 +958,22 @@ function displayParcels(parcels) {
     `).join('');
 }
 
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.add('show');
+    modal.style.display = 'block';
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
 window.showAddParcel = function() {
-    document.getElementById('addParcelModal').classList.add('show');
+    openModal('addParcelModal');
     document.getElementById('parcelName').value = '';
     document.getElementById('parcelSize').value = '';
     document.getElementById('parcelOwnership').value = '';
@@ -607,29 +983,40 @@ window.showAddParcel = function() {
 };
 
 window.closeAddParcel = function() {
-    document.getElementById('addParcelModal').classList.remove('show');
+    closeModal('addParcelModal');
 };
 
 let capturedGPS = null;
 window.captureGPS = async function() {
     const statusEl = document.getElementById('gpsStatus');
-    statusEl.textContent = '📍 Capturing GPS...';
-    
+    statusEl.textContent = 'Capturing GPS...';
+
     try {
-        const { Geolocation } = window.Capacitor?.Plugins || {};
+        const Geolocation = window.Capacitor?.Plugins?.Geolocation;
         if (!Geolocation) {
-            statusEl.textContent = '❌ GPS not available';
+            statusEl.textContent = 'GPS is not available on this device.';
             return;
         }
-        
-        const position = await Geolocation.getCurrentPosition();
+
+        const permission = await Geolocation.requestPermissions();
+        const granted = permission.location === 'granted' || permission.coarseLocation === 'granted';
+        if (!granted) {
+            statusEl.textContent = 'Allow location access, then try again.';
+            return;
+        }
+
+        const position = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 10000
+        });
         capturedGPS = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
         };
-        statusEl.textContent = `✅ GPS captured: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+        statusEl.textContent = `GPS captured: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
     } catch (error) {
-        statusEl.textContent = '❌ Failed to capture GPS';
+        statusEl.textContent = error?.message || 'Failed to capture GPS. Turn on location and try again.';
         console.error('GPS error:', error);
     }
 };
@@ -637,13 +1024,24 @@ window.captureGPS = async function() {
 document.getElementById('addParcelForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    const size = parseFloat(document.getElementById('parcelSize').value);
     const data = {
         parcel_name: document.getElementById('parcelName').value,
-        area_hectares: parseFloat(document.getElementById('parcelSize').value),
+        parcelName: document.getElementById('parcelName').value,
+        area_hectares: size,
+        sizeHectares: size,
         ownership_type: document.getElementById('parcelOwnership').value,
+        ownershipType: document.getElementById('parcelOwnership').value,
         soil_type: document.getElementById('parcelSoilType').value,
+        soilType: document.getElementById('parcelSoilType').value,
         water_source: document.getElementById('parcelWaterSource').value,
-        ...(capturedGPS && capturedGPS)
+        waterSource: document.getElementById('parcelWaterSource').value,
+        ...(capturedGPS && {
+            latitude: capturedGPS.latitude,
+            longitude: capturedGPS.longitude,
+            gpsLatitude: capturedGPS.latitude,
+            gpsLongitude: capturedGPS.longitude
+        })
     };
     
     try {
@@ -657,12 +1055,13 @@ document.getElementById('addParcelForm').addEventListener('submit', async (e) =>
         });
         
         if (response.ok) {
-            showToast('✅ Parcel added successfully', 'success');
+            showToast('Parcel added successfully', 'success');
             closeAddParcel();
             loadParcels();
             capturedGPS = null;
         } else {
-            showToast('❌ Failed to add parcel', 'error');
+            const errorData = await response.json().catch(() => ({}));
+            showToast(errorData.message || 'Failed to add parcel', 'error');
         }
     } catch (error) {
         showToast('❌ Network error', 'error');
@@ -694,7 +1093,7 @@ async function loadSeasons() {
         }
         
         const data = await response.json();
-        console.log('Seasons data:', data);
+        console.log('Seasons data:', JSON.stringify(data));
         displaySeasons(data.seasons || []);
         populateSeasonSelect(data.seasons || []);
     } catch (error) {
@@ -728,8 +1127,9 @@ function displaySeasons(seasons) {
 
 function populateSeasonSelect(seasons) {
     const select = document.getElementById('activeSeasonSelect');
+    if (!select) return;
     select.innerHTML = '<option value="">-- Select a season --</option>' +
-        seasons.filter(s => s.status === 'active').map(s => 
+        seasons.filter(s => !s.status || s.status === 'active' || s.status === 'planned').map(s => 
             `<option value="${s.id}">${s.crop} - ${s.season_name}</option>`
         ).join('');
 }
@@ -743,30 +1143,72 @@ window.showAddSeason = async function() {
         const data = await response.json();
         const select = document.getElementById('seasonParcel');
         select.innerHTML = '<option value="">Select parcel...</option>' +
-            (data.parcels || []).map(p => `<option value="${p.id}">${p.parcel_name} (${p.area_hectares}ha)</option>`).join('');
+            (data.parcels || []).map(p => `<option value="${p.id}">${p.parcel_name} (${parcelSize(p)}ha)</option>`).join('');
     } catch (error) {
         console.error('Failed to load parcels:', error);
     }
     
-    document.getElementById('addSeasonModal').classList.add('show');
+    openModal('addSeasonModal');
     document.getElementById('seasonCrop').value = '';
-    document.getElementById('seasonVariety').value = '';
+    const varietyInput = document.getElementById('seasonVariety');
+    varietyInput.value = '';
+    varietyInput.dataset.touched = '';
     document.getElementById('seasonArea').value = '';
+    const guideEl = document.getElementById('seasonGuide');
+    if (guideEl) guideEl.textContent = '';
 };
 
+async function refreshSeasonGuide(event) {
+    const guideEl = document.getElementById('seasonGuide');
+    const crop = document.getElementById('seasonCrop')?.value;
+    if (!guideEl || !authToken) return;
+    if (!crop) {
+        guideEl.textContent = '';
+        return;
+    }
+    const hectares = document.getElementById('seasonArea')?.value;
+    const params = new URLSearchParams({ crop });
+    if (hectares) params.set('hectares', hectares);
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/guide?${params}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!response.ok) return;
+        const brief = await response.json();
+        const varietyInput = document.getElementById('seasonVariety');
+        if (event?.target?.id === 'seasonCrop' && varietyInput) varietyInput.dataset.touched = '';
+        if (varietyInput && brief.varieties && !varietyInput.dataset.touched) {
+            varietyInput.value = brief.varieties;
+        }
+        guideEl.textContent = [brief.note, brief.variety, brief.planting, brief.seed, brief.margin, brief.suppliers, brief.buyers].filter(Boolean).join('\n');
+    } catch (error) {
+        console.warn('Could not load crop guide:', error);
+    }
+}
+
+document.getElementById('seasonCrop')?.addEventListener('change', refreshSeasonGuide);
+document.getElementById('seasonArea')?.addEventListener('input', refreshSeasonGuide);
+document.getElementById('seasonVariety')?.addEventListener('input', (event) => {
+    event.target.dataset.touched = '1';
+});
+
 window.closeAddSeason = function() {
-    document.getElementById('addSeasonModal').classList.remove('show');
+    closeModal('addSeasonModal');
 };
 
 document.getElementById('addSeasonForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    const area = parseFloat(document.getElementById('seasonArea').value);
     const data = {
         parcel_id: document.getElementById('seasonParcel').value,
+        parcelId: document.getElementById('seasonParcel').value,
         crop: document.getElementById('seasonCrop').value,
         variety: document.getElementById('seasonVariety').value,
-        area_hectares: parseFloat(document.getElementById('seasonArea').value),
-        season_name: document.getElementById('seasonName').value
+        area_hectares: area,
+        areaHectares: area,
+        season_name: document.getElementById('seasonName').value,
+        seasonName: document.getElementById('seasonName').value
     };
     
     try {
@@ -815,7 +1257,7 @@ async function loadHousehold() {
         }
         
         const data = await response.json();
-        console.log('Household data:', data);
+        console.log('Household data:', JSON.stringify(data));
         displayHousehold(data.members || []);
     } catch (error) {
         console.error('Failed to load household:', error);
@@ -846,7 +1288,7 @@ function displayHousehold(members) {
 }
 
 window.showAddMember = function() {
-    document.getElementById('addMemberModal').classList.add('show');
+    openModal('addMemberModal');
     document.getElementById('memberName').value = '';
     document.getElementById('memberRelationship').value = '';
     document.getElementById('memberAge').value = '';
@@ -855,7 +1297,7 @@ window.showAddMember = function() {
 };
 
 window.closeAddMember = function() {
-    document.getElementById('addMemberModal').classList.remove('show');
+    closeModal('addMemberModal');
 };
 
 document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
@@ -866,7 +1308,8 @@ document.getElementById('addMemberForm').addEventListener('submit', async (e) =>
         relationship: document.getElementById('memberRelationship').value,
         age: parseInt(document.getElementById('memberAge').value) || null,
         gender: document.getElementById('memberGender').value || null,
-        involved_in_farming: document.getElementById('memberFarming').checked
+        involved_in_farming: document.getElementById('memberFarming').checked,
+        involvedInFarming: document.getElementById('memberFarming').checked
     };
     
     try {
@@ -977,7 +1420,7 @@ function displayActivities(activities) {
                 ${a.description ? `<div class="timeline-description">${a.description}</div>` : ''}
                 <div class="timeline-meta">
                     ${a.labor_hours ? `<span>⏱️ ${a.labor_hours}h</span>` : ''}
-                    ${a.cost_mwk ? `<span>💰 MWK ${a.cost_mwk.toLocaleString()}</span>` : ''}
+                    ${(a.cost_mwk || a.labor_cost) ? `<span>MWK ${Number(a.cost_mwk || a.labor_cost).toLocaleString()}</span>` : ''}
                 </div>
             </div>
         </div>
@@ -999,12 +1442,12 @@ function formatActivityType(type) {
 }
 
 window.showLogActivity = function() {
-    document.getElementById('logActivityModal').classList.add('show');
+    openModal('logActivityModal');
     document.getElementById('activityDate').value = new Date().toISOString().split('T')[0];
 };
 
 window.closeLogActivity = function() {
-    document.getElementById('logActivityModal').classList.remove('show');
+    closeModal('logActivityModal');
 };
 
 document.getElementById('logActivityForm').addEventListener('submit', async (e) => {
@@ -1050,7 +1493,7 @@ async function loadMonitoring() {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         const data = await response.json();
-        displayMonitoring(data.records || []);
+        displayMonitoring(data.records || data.monitoring || []);
     } catch (error) {
         console.error('Failed to load monitoring:', error);
     }
@@ -1065,12 +1508,12 @@ function displayMonitoring(records) {
     
     container.innerHTML = records.map(r => `
         <div class="timeline-item">
-            <div class="timeline-date">${new Date(r.observation_date).toLocaleDateString()}</div>
+            <div class="timeline-date">${new Date(r.observation_date || r.monitoring_date).toLocaleDateString()}</div>
             <div class="timeline-content">
                 <div class="timeline-title">${r.crop_stage || 'Observation'}</div>
                 ${r.crop_health ? `<div class="timeline-description">Health: ${r.crop_health}</div>` : ''}
-                ${r.pests_observed ? `<div class="timeline-description">🐛 Pests: ${r.pests_observed}</div>` : ''}
-                ${r.diseases_observed ? `<div class="timeline-description">🦠 Diseases: ${r.diseases_observed}</div>` : ''}
+                ${(r.pests_observed || r.pest_observed) ? `<div class="timeline-description">Pests: ${r.pests_observed || r.pest_observed}</div>` : ''}
+                ${(r.diseases_observed || r.disease_observed) ? `<div class="timeline-description">Diseases: ${r.diseases_observed || r.disease_observed}</div>` : ''}
                 ${r.notes ? `<div class="timeline-description">${r.notes}</div>` : ''}
             </div>
         </div>
@@ -1078,12 +1521,12 @@ function displayMonitoring(records) {
 }
 
 window.showRecordMonitoring = function() {
-    document.getElementById('recordMonitoringModal').classList.add('show');
+    openModal('recordMonitoringModal');
     document.getElementById('monitoringDate').value = new Date().toISOString().split('T')[0];
 };
 
 window.closeRecordMonitoring = function() {
-    document.getElementById('recordMonitoringModal').classList.remove('show');
+    closeModal('recordMonitoringModal');
 };
 
 document.getElementById('recordMonitoringForm').addEventListener('submit', async (e) => {
@@ -1178,7 +1621,7 @@ function displayCosts(costs) {
                 <div class="timeline-title">${c.description}</div>
                 <div class="timeline-description">Category: ${c.category_name}</div>
                 <div class="timeline-meta">
-                    <span>💰 MWK ${c.amount.toLocaleString()}</span>
+                    <span>MWK ${Number(c.amount || c.total_cost || 0).toLocaleString()}</span>
                     ${c.payment_method ? `<span>💳 ${c.payment_method}</span>` : ''}
                 </div>
             </div>
@@ -1187,12 +1630,12 @@ function displayCosts(costs) {
 }
 
 window.showAddCost = function() {
-    document.getElementById('addCostModal').classList.add('show');
+    openModal('addCostModal');
     document.getElementById('costDate').value = new Date().toISOString().split('T')[0];
 };
 
 window.closeAddCost = function() {
-    document.getElementById('addCostModal').classList.remove('show');
+    closeModal('addCostModal');
 };
 
 document.getElementById('addCostForm').addEventListener('submit', async (e) => {
@@ -1236,3 +1679,5 @@ window.showEditProfile = showEditProfile;
 window.closeEditProfile = closeEditProfile;
 window.askAdvisor = askAdvisor;
 window.sendMessage = sendMessage;
+window.photographPlant = photographPlant;
+window.confirmPlantSign = confirmPlantSign;

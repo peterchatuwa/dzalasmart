@@ -454,6 +454,16 @@ body {
     align-items: center;
 }
 
+.price-board {
+    display: block;
+}
+
+.price-line {
+    font-size: 14px;
+    color: #444;
+    margin-top: 6px;
+}
+
 .price-crop {
     font-weight: 600;
     font-size: 16px;
@@ -509,6 +519,7 @@ body {
     padding: 12px;
     border-radius: 10px;
     max-width: 85%;
+    white-space: pre-wrap;
 }
 
 .chat-user {
@@ -558,6 +569,55 @@ body {
     background: rgba(0,0,0,0.5);
     z-index: 1000;
     overflow-y: auto;
+}
+
+.modal.show {
+    display: block;
+}
+
+.care-forecast {
+    background: #f1f8e9;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #33691e;
+}
+
+.care-crop {
+    margin-bottom: 14px;
+}
+
+.care-crop-title {
+    font-weight: 700;
+    color: #1b5e20;
+    margin: 8px 0;
+}
+
+.care-crop-clear {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.season-guide {
+    color: #444;
+    font-size: 14px;
+    white-space: pre-wrap;
+    margin: 0 0 12px;
+}
+
+.care-task {
+    border-left: 4px solid #f9a825;
+}
+
+.care-task.done {
+    border-left-color: #2e7d32;
+    opacity: 0.75;
+}
+
+.care-task.covered {
+    border-left-color: #1565c0;
 }
 
 .modal-content {

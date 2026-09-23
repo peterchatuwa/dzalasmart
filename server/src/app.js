@@ -13,7 +13,19 @@ import {
 } from "./middleware/security.js";
 import { metricsCollector, healthCheckMiddleware, getMetrics } from "./middleware/monitoring.js";
 import { swaggerSpec } from "./swagger.js";
-import { advisorMeta, askAdvisor, listPestReports, logPestReport } from "./advisor.js";
+import { dailyFarmCare, seasonSetup } from "./crop-care.js";
+import { adviceFromGuides, buildFarmerQuotes, farmBrief, formatFarmerQuotes, quoteRows } from "./farm-guides.js";
+import {
+  advisorMeta,
+  askAdvisor,
+  attachGrowingContext,
+  decodePlantPhoto,
+  diagnosePhoto,
+  latestPestForSeason,
+  listPestReports,
+  logPestReport,
+  savePlantPhoto,
+} from "./advisor.js";
 import { readOptionalFarmer, requireCooperative, requireFarmer, requireStaff, requireStaffRole } from "./auth.js";
 import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer, updateFarmerProfile } from "./farmers.js";
 import { contractMonitor, listFloors, recordOffer, setFloor } from "./floors.js";
@@ -53,6 +65,7 @@ import {
   listHouseholdMembers,
   addLandParcel,
   listLandParcels,
+  listLandParcelsForFarmer,
   createProductionSeason,
   listProductionSeasons,
   logProductionActivity,
@@ -155,6 +168,78 @@ import {
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
+
+  async function growingCropsFor(farmer) {
+    if (!farmer) return [];
+    try {
+      const care = await dailyFarmCare(db, farmer);
+      return care.growing || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function buildAdvisorAnswer(farmer, body = {}) {
+    const text = String(body.text || body.query || "").trim();
+    const result = askAdvisor({
+      ...body,
+      text,
+      farmer,
+      soil: body.soil || farmer?.soilType,
+      nutrient: body.nutrient || farmer?.nutrientStatus,
+    });
+    if (result.intent === "weather") {
+      const district = body.district || farmer?.district;
+      if (!district) {
+        result.reply = "Tell me your district, or log in so I can use the one on your farm record.";
+      } else {
+        const wx = publicWeather(await fetchDistrictWeather(district));
+        result.reply = `${wx.district} ${wx.alert.toUpperCase()}\nNow ${wx.nowC}°C · rain 3d ${wx.rain3dayMm}mm\n${wx.fieldAdvice}`;
+      }
+    }
+    if (result.kind === "pest" && result.match && farmer) {
+      await logPestReport(db, farmer, {
+        symptoms: text || result.match,
+        matchName: result.match,
+        channel: body.channel || "mobile",
+      });
+    }
+    const seasonId = String(body.seasonId || body.season_id || "").trim();
+    const parcelId = String(body.parcelId || body.parcel_id || "").trim();
+    let growing = await growingCropsFor(farmer);
+    const allGrowing = growing;
+    if (seasonId) growing = growing.filter((row) => row.seasonId === seasonId);
+    else if (parcelId) growing = growing.filter((row) => row.parcelId === parcelId);
+    if ((seasonId || parcelId) && !growing.length) growing = allGrowing;
+    if (result.intent === "market") {
+      await refreshMarketCache(db);
+      const district = farmer?.district || body.district || null;
+      const meta = getMarketMeta(district);
+      const quotes = buildFarmerQuotes({
+        district,
+        epa: farmer?.epa,
+        liveRows: quoteRows(getMarketRows(district)),
+        floors: await listFloors(db),
+        fields: growing,
+      });
+      result.reply = formatFarmerQuotes(quotes, meta);
+    }
+    const answered = attachGrowingContext(result, growing);
+    const extra = adviceFromGuides(text, {
+      district: farmer?.district || body.district,
+      epa: farmer?.epa,
+      growing,
+    });
+    if (extra) answered.reply = answered.reply ? `${answered.reply}\n\n${extra}` : extra;
+    if (farmer && growing.length === 1 && /pest|disease|leaf|photo|plant|hole|spot|worm|streak/.test(text.toLowerCase())) {
+      const prior = await latestPestForSeason(db, farmer.id, growing[0].seasonId);
+      if (prior?.match_name) {
+        answered.reply = `${answered.reply}\n\nThe last plant photo on this field matched ${prior.match_name}.`;
+      }
+    }
+    return answered;
+  }
+
   const app = express();
 
   // Security middleware
@@ -172,7 +257,7 @@ export function createApp(db, options = {}) {
 
   // CORS and body parsing
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: "3mb" }));
   app.use(express.urlencoded({ extended: false }));
 
   // Input sanitization
@@ -461,7 +546,7 @@ export function createApp(db, options = {}) {
     try {
       const receipts = await db.prepare(`
         SELECT id, code, crop, weight_kg, moisture_pct, price_per_kg, 
-               asset_value, loan_cap, loan_disbursed, disbursed_at, created_at
+               asset_value, loan_cap, loan_disbursed, created_at
         FROM warehouse_receipts 
         WHERE farmer_id = ?
         ORDER BY created_at DESC
@@ -474,22 +559,36 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/market", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      // Get market prices for the farmer's district
-      const prices = await db.prepare(`
-        SELECT crop, price, district, recorded_at
-        FROM market_prices
-        WHERE district = ?
-        ORDER BY recorded_at DESC
-      `).all(req.farmer.district);
-      
-      // Get government floor prices (using existing table structure)
-      const floors = await db.prepare(`
-        SELECT crop, price_per_kg as floor_price, updated_at
-        FROM price_floors
-        ORDER BY crop
-      `).all();
-      
-      res.json({ prices, floors });
+      const district = req.farmer.district;
+      await refreshMarketCache(db);
+      const meta = getMarketMeta(district);
+      let fields = [];
+      try {
+        fields = (await dailyFarmCare(db, req.farmer)).growing || [];
+      } catch {
+        fields = [];
+      }
+      const seasonId = String(req.query.seasonId || "").trim();
+      const parcelId = String(req.query.parcelId || "").trim();
+      const allFields = fields;
+      if (seasonId) fields = fields.filter((row) => row.seasonId === seasonId);
+      else if (parcelId) fields = fields.filter((row) => row.parcelId === parcelId);
+      if ((seasonId || parcelId) && !fields.length) fields = allFields;
+      const quotes = buildFarmerQuotes({
+        district,
+        epa: req.farmer.epa,
+        liveRows: quoteRows(getMarketRows(district)),
+        floors: await listFloors(db),
+        fields,
+      });
+      res.json({
+        district,
+        live: meta.live,
+        source: meta.source,
+        warehouseHub: meta.warehouseHub,
+        fetchedAt: meta.fetchedAt,
+        quotes,
+      });
     } catch (error) {
       next(error);
     }
@@ -497,39 +596,92 @@ export function createApp(db, options = {}) {
 
   app.post("/api/farmers/advisor", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const { query } = req.body;
-      if (!query || typeof query !== 'string') {
-        return res.status(400).json({ error: 'Query is required' });
+      const query = req.body?.query || req.body?.text;
+      if (!query || typeof query !== "string") {
+        return res.status(400).json({ error: "Query is required" });
       }
-      
-      // Simple rule-based advisor responses
-      let advice = '';
-      const q = query.toLowerCase();
-      
-      if (q.includes('weather') || q.includes('rain') || q.includes('forecast')) {
-        advice = 'Based on current forecasts, expect moderate rainfall this week. This is good for planting season. Make sure your fields are prepared for planting.';
-      } else if (q.includes('fertilizer') || q.includes('manure') || q.includes('nutrient')) {
-        advice = 'For maize, use NPK 23:21:0+4S at planting (2-3 bags per hectare), and top-dress with Urea 46%N 4-6 weeks after planting. Always apply after rain.';
-      } else if (q.includes('irrigation') || q.includes('water')) {
-        advice = 'For dry spells, water crops early morning or late evening to reduce evaporation. Focus on critical growth stages like flowering and grain filling.';
-      } else if (q.includes('pest') || q.includes('disease') || q.includes('insect')) {
-        advice = 'Common pests include armyworm and aphids. Scout your fields regularly. Use integrated pest management: remove infected plants, use biopesticides, and only use chemicals as a last resort.';
-      } else if (q.includes('storage') || q.includes('store') || q.includes('harvest')) {
-        advice = 'Dry your grain to 12-13% moisture before storage. Use hermetic bags or metal silos to prevent pest damage. Store in cool, dry places away from direct sunlight.';
-      } else if (q.includes('market') || q.includes('sell') || q.includes('price')) {
-        advice = 'Check current market prices in the Market tab. Consider storing if prices are low and you can wait. Warehouse receipts can help you get better prices later and access credit.';
-      } else {
-        advice = 'For specific agricultural advice, contact your local extension officer or visit our service center. You can also use the USSD code *413# for quick information.';
-      }
-      
-      // Log the query (generate ID for PostgreSQL)
-      const { randomUUID } = await import('crypto');
+
+      const result = await buildAdvisorAnswer(req.farmer, req.body || {});
+      const { randomUUID } = await import("crypto");
       await db.prepare(`
         INSERT INTO advisor_queries (id, farmer_id, query, response, created_at)
         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-      `).run(randomUUID(), req.farmer.id, query, advice);
-      
-      res.json({ advice });
+      `).run(randomUUID(), req.farmer.id, query, result.reply || "");
+
+      res.json({
+        advice: result.reply,
+        reply: result.reply,
+        kind: result.kind,
+        match: result.match || null,
+        growing: result.growing || [],
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/farmers/advisor/photo", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const buffer = decodePlantPhoto(req.body?.image);
+      if (!buffer) return res.status(400).json({ error: "A plant photo is required" });
+      const seasonId = String(req.body?.seasonId || "").trim();
+      const growing = await growingCropsFor(req.farmer);
+      const field = growing.find((row) => row.seasonId === seasonId);
+      if (!field) return res.status(400).json({ error: "Choose a field that has a crop in season" });
+      const diagnosis = diagnosePhoto({
+        crop: field.crop,
+        note: req.body?.note,
+        sign: req.body?.sign,
+        lang: req.body?.lang,
+      });
+      const { randomUUID } = await import("crypto");
+      const id = randomUUID();
+      const photoPath = await savePlantPhoto(id, buffer);
+      await logPestReport(db, req.farmer, {
+        id,
+        symptoms: String(req.body?.note || req.body?.sign || `Plant photo on ${field.parcelName}`).slice(0, 500),
+        matchName: diagnosis.match,
+        channel: "photo",
+        seasonId: field.seasonId,
+        parcelId: field.parcelId,
+        crop: field.crop,
+        photoPath,
+      });
+      res.status(201).json({
+        id,
+        advice: diagnosis.reply,
+        reply: diagnosis.reply,
+        match: diagnosis.match,
+        choices: diagnosis.choices,
+        crop: field.crop,
+        parcelName: field.parcelName,
+        seasonId: field.seasonId,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/farmers/advisor/photo/:id/sign", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const report = await db
+        .prepare("SELECT * FROM pest_reports WHERE id = ? AND farmer_id = ?")
+        .get(req.params.id, req.farmer.id);
+      if (!report) return res.status(404).json({ error: "Photo not found" });
+      const diagnosis = diagnosePhoto({ crop: report.crop, sign: req.body?.sign, lang: req.body?.lang });
+      if (!diagnosis.match) {
+        return res.status(400).json({ error: "Choose one of the signs for this crop", choices: diagnosis.choices });
+      }
+      await db
+        .prepare("UPDATE pest_reports SET match_name = ?, symptoms = ? WHERE id = ?")
+        .run(diagnosis.match, String(req.body?.sign || diagnosis.match).slice(0, 500), report.id);
+      res.json({
+        id: report.id,
+        advice: diagnosis.reply,
+        reply: diagnosis.reply,
+        match: diagnosis.match,
+        choices: [],
+      });
     } catch (error) {
       next(error);
     }
@@ -866,7 +1018,7 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/me/parcels", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const parcels = await listLandParcels(db, req.farmer.id);
+      const parcels = await listLandParcelsForFarmer(db, req.farmer);
       res.json({ parcels });
     } catch (error) {
       next(error);
@@ -891,6 +1043,28 @@ export function createApp(db, options = {}) {
     } catch (error) {
       next(error);
     }
+  });
+
+  app.get("/api/farmers/me/care", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await dailyFarmCare(db, req.farmer));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/guide", requireFarmer(db, jwtSecret), (req, res) => {
+    const hectares = Number(req.query.hectares);
+    const setup = seasonSetup(req.query.crop, req.farmer.district);
+    res.json({
+      ...(farmBrief({
+        crop: req.query.crop,
+        district: req.farmer.district,
+        epa: req.farmer.epa,
+        hectares: Number.isFinite(hectares) ? hectares : null,
+      }) || {}),
+      ...setup,
+    });
   });
 
   // Production Activities
@@ -935,7 +1109,7 @@ export function createApp(db, options = {}) {
   app.get("/api/farmers/me/seasons/:seasonId/monitoring", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
       const history = await getMonitoringHistory(db, req.params.seasonId);
-      res.json({ monitoring: history });
+      res.json({ monitoring: history, records: history });
     } catch (error) {
       next(error);
     }
@@ -1069,43 +1243,7 @@ export function createApp(db, options = {}) {
   app.post("/api/advisor/ask", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const body = req.body || {};
-      const result = askAdvisor({
-        ...body,
-        farmer,
-        soil: body.soil || farmer?.soilType,
-        nutrient: body.nutrient || farmer?.nutrientStatus,
-      });
-      if (result.intent === "weather") {
-        const district = body.district || farmer?.district;
-        if (!district) {
-          result.reply = "Tell me your district, or log in so I can use the one on your farm record.";
-        } else {
-          const wx = publicWeather(await fetchDistrictWeather(district));
-          result.reply = `${wx.district} ${wx.alert.toUpperCase()}\nNow ${wx.nowC}°C · rain 3d ${wx.rain3dayMm}mm\n${wx.fieldAdvice}`;
-        }
-      }
-      if (result.intent === "market") {
-        await refreshMarketCache(db);
-        const district = farmer?.district || body.district || null;
-        const meta = getMarketMeta(district);
-        const floors = (await listFloors(db)).map((row) => `${row.crop} floor MWK ${row.pricePerKg}/kg`).join("\n");
-        const rows = getMarketRows(district)
-          .slice(0, 4)
-          .map((row) => `${row.crop} ${row.price}`)
-          .join("\n");
-        const label = meta.live
-          ? `LocalBuyEx prices${meta.warehouseHub ? ` · ${meta.warehouseHub} warehouse` : ""}`
-          : "Reference prices";
-        result.reply = `Ministry floors:\n${floors}\n\n${label}:\n${rows}`;
-      }
-      if (result.kind === "pest" && farmer) {
-        await logPestReport(db, farmer, {
-          symptoms: body.text || result.match,
-          matchName: result.match,
-          channel: body.channel || "mobile",
-        });
-      }
+      const result = await buildAdvisorAnswer(farmer, req.body || {});
       res.json(result);
     } catch (error) {
       next(error);
