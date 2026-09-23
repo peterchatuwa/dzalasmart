@@ -75,6 +75,7 @@ import {
   getMonitoringHistory,
   recordProductionCost,
   getProductionCostSummary,
+  farmerHomeSummary,
   createOfftakeAgreement,
   listOfftakeAgreements,
 } from "./production-management.js";
@@ -1045,6 +1046,14 @@ export function createApp(db, options = {}) {
     }
   });
 
+  app.get("/api/farmers/me/home", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await farmerHomeSummary(db, req.farmer.id));
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/farmers/me/care", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
       res.json(await dailyFarmCare(db, req.farmer));
@@ -1070,7 +1079,7 @@ export function createApp(db, options = {}) {
   // Production Activities
   app.post("/api/farmers/me/seasons/:seasonId/activities", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const activity = await logProductionActivity(db, req.params.seasonId, req.body || {});
+      const activity = await logProductionActivity(db, req.params.seasonId, req.body || {}, req.farmer.id);
       res.status(201).json(activity);
     } catch (error) {
       next(error);
@@ -1079,7 +1088,7 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/me/seasons/:seasonId/activities", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const activities = await listProductionActivities(db, req.params.seasonId);
+      const activities = await listProductionActivities(db, req.params.seasonId, req.farmer.id);
       res.json({ activities });
     } catch (error) {
       next(error);
@@ -1089,7 +1098,7 @@ export function createApp(db, options = {}) {
   // Planting Details
   app.post("/api/farmers/me/seasons/:seasonId/planting", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const planting = await recordPlantingDetails(db, req.params.seasonId, req.body || {});
+      const planting = await recordPlantingDetails(db, req.params.seasonId, req.body || {}, req.farmer.id);
       res.status(201).json(planting);
     } catch (error) {
       next(error);
@@ -1099,7 +1108,7 @@ export function createApp(db, options = {}) {
   // Daily Monitoring
   app.post("/api/farmers/me/seasons/:seasonId/monitoring", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const monitoring = await logDailyMonitoring(db, req.params.seasonId, req.body || {});
+      const monitoring = await logDailyMonitoring(db, req.params.seasonId, req.body || {}, req.farmer.id);
       res.status(201).json(monitoring);
     } catch (error) {
       next(error);
@@ -1108,7 +1117,7 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/me/seasons/:seasonId/monitoring", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const history = await getMonitoringHistory(db, req.params.seasonId);
+      const history = await getMonitoringHistory(db, req.params.seasonId, req.farmer.id);
       res.json({ monitoring: history, records: history });
     } catch (error) {
       next(error);
@@ -1118,7 +1127,7 @@ export function createApp(db, options = {}) {
   // Production Costs
   app.post("/api/farmers/me/seasons/:seasonId/costs", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const cost = await recordProductionCost(db, req.params.seasonId, req.body || {});
+      const cost = await recordProductionCost(db, req.params.seasonId, req.body || {}, req.farmer.id);
       res.status(201).json(cost);
     } catch (error) {
       next(error);
@@ -1127,7 +1136,7 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/me/seasons/:seasonId/costs", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
-      const summary = await getProductionCostSummary(db, req.params.seasonId);
+      const summary = await getProductionCostSummary(db, req.params.seasonId, req.farmer.id);
       res.json(summary);
     } catch (error) {
       next(error);

@@ -200,10 +200,11 @@ body {
 
 .tab-btn {
     flex: 1;
-    padding: 15px 10px;
+    min-width: 44px;
+    padding: 12px 4px;
     border: none;
     background: transparent;
-    font-size: 12px;
+    font-size: 18px;
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s;

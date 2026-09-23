@@ -9,7 +9,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css?v=22" />
+    <link rel="stylesheet" href="/styles.css?v=23" />
   </head>
   <body>
     <!-- Toast notification container -->
@@ -328,6 +328,53 @@
             </div>
           </div>
 
+          <div class="market-card" id="careCard">
+            <p class="eyebrow">Today on the farm</p>
+            <h2 style="margin-top: 0">Land preparation, then planting</h2>
+            <p class="hint" id="careNote">
+              The season starts with land preparation. Crop days begin on the day planting is recorded.
+            </p>
+            <label
+              >Field
+              <select id="webFieldSelect"></select>
+            </label>
+            <div id="careBody" class="ledger-list"></div>
+            <div id="fieldQuotes" class="ledger-list"></div>
+            <form id="webSeasonForm" class="stack" style="margin-top: 1rem">
+              <p class="eyebrow">Start a season</p>
+              <label
+                >Parcel
+                <select id="webSeasonParcel" required></select>
+              </label>
+              <label
+                >Crop
+                <select id="webSeasonCrop" required>
+                  <option value="">Select crop…</option>
+                  <option value="Maize">Maize</option>
+                  <option value="Soya">Soya</option>
+                  <option value="Groundnuts">Groundnuts</option>
+                  <option value="Tobacco">Tobacco</option>
+                  <option value="Rice">Rice</option>
+                </select>
+              </label>
+              <label
+                >Variety
+                <input id="webSeasonVariety" placeholder="Filled from the district sheet" />
+              </label>
+              <label
+                >Area (hectares)
+                <input id="webSeasonArea" type="number" min="0.01" step="0.01" required />
+              </label>
+              <label
+                >Season name
+                <input id="webSeasonName" value="2025-2026" required />
+              </label>
+              <p class="hint" id="webSeasonGuide"></p>
+              <button type="submit" class="primary">Start season</button>
+              <p class="form-error" id="webSeasonError" hidden></p>
+            </form>
+          </div>
+
           <div class="weather-card" id="weatherCard">
             <div class="weather-head">
               <div>
@@ -473,8 +520,8 @@
             <p class="eyebrow">Crop & pest assistant</p>
             <h2 style="margin-top: 0" id="chatTitle">Ask in English, Chichewa, or Tumbuka</h2>
             <p class="hint" id="chatDisclaimer">
-              This assistant gives simplified demo advice. Confirm chemical products and rates with your extension
-              officer before use. Photo diagnosis is not live yet.
+              Confirm chemical products and rates with your extension officer before use. A plant photo is saved on
+              the selected field and matched to that crop's sign list.
             </p>
             <div class="tabs" id="chatLangTabs">
               <button type="button" class="tab active" data-chat-lang="en">English</button>
@@ -507,6 +554,8 @@
               </label>
               <div class="demo-row" style="flex-wrap: wrap;">
                 <button type="submit" class="primary" id="chatSend">Send</button>
+                <label class="chip" for="plantPhoto">Photograph a plant</label>
+                <input id="plantPhoto" type="file" accept="image/*" capture="environment" hidden />
                 <button type="button" class="chip" id="chatCropBtn">🌾 Crop advice</button>
                 <button type="button" class="chip" id="chatWeatherBtn">🌤 Weather</button>
                 <button type="button" class="chip" id="chatMarketBtn">📈 Market</button>
@@ -605,6 +654,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script src="/app.js?v=20"></script>
+    <script src="/app.js?v=21"></script>
   </body>
 </html>

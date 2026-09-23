@@ -67,6 +67,16 @@ test("a groundnut photo does not use the maize armyworm answer", () => {
   assert.doesNotMatch(groundnut.reply, /Fall Armyworm/);
 });
 
+test("soya, rice, and tobacco photos offer their own signs", () => {
+  const soya = diagnosePhoto({ crop: "Soya" });
+  assert.ok(soya.choices.some((choice) => /Soybean rust/.test(choice.name)));
+  const rice = diagnosePhoto({ crop: "Rice" });
+  assert.ok(rice.choices.some((choice) => /Rice blast/.test(choice.name)));
+  const tobacco = diagnosePhoto({ crop: "Tobacco" });
+  assert.ok(tobacco.choices.some((choice) => /Tobacco bushy top/.test(choice.name)));
+  assert.equal(matchDiseaseForCrop("holes in the leaves", "Soya"), null);
+});
+
 test("fertiliser questions hit the general knowledge base", () => {
   const reply = askAdvisor({ text: "which fertiliser should I use for top dress?" });
   assert.equal(reply.kind, "general");

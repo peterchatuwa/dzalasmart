@@ -164,6 +164,7 @@ async function loadFarmerData() {
             const stored = await Preferences.get({ key: 'active_season' });
             if (stored?.value) selectedSeasonId = stored.value;
         }
+        await loadHomeSummary();
         await loadMarketPrices();
         
     } catch (error) {
@@ -185,9 +186,9 @@ function updateUI() {
         const totalLand = document.getElementById('totalLand');
         const totalReceipts = document.getElementById('totalReceipts');
         const totalLoans = document.getElementById('totalLoans');
-        if (totalLand) totalLand.textContent = currentFarmer.totalLand || '0';
-        if (totalReceipts) totalReceipts.textContent = currentFarmer.receipts?.length || '0';
-        if (totalLoans) totalLoans.textContent = currentFarmer.loans?.active || '0';
+        if (totalLand) totalLand.textContent = homeSummary?.hectares ?? '0';
+        if (totalReceipts) totalReceipts.textContent = homeSummary?.receipts ?? '0';
+        if (totalLoans) totalLoans.textContent = homeSummary?.loans ?? '0';
         
         // Profile tab
         const profileName = document.getElementById('profileName');
@@ -208,8 +209,7 @@ function updateUI() {
         if (profileHousehold) profileHousehold.textContent = currentFarmer.household_size || '--';
         if (profileHouseholdType) profileHouseholdType.textContent = formatHouseholdType(currentFarmer.household_type);
         
-        // Recent activity
-        updateRecentActivity();
+        renderRecentActivity(homeSummary?.recent || []);
     } catch (error) {
         console.error('Error updating UI:', error);
     }
@@ -628,24 +628,43 @@ function switchTab(tabName) {
     }
 }
 
-function updateRecentActivity() {
+let homeSummary = null;
+
+async function loadHomeSummary() {
+    if (!authToken) return;
+    try {
+        const response = await fetch(`${API_BASE}/api/farmers/me/home`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!response.ok) return;
+        homeSummary = await response.json();
+        updateUI();
+    } catch (error) {
+        console.warn('Could not load home summary:', error);
+    }
+}
+
+function renderRecentActivity(items) {
     const container = document.getElementById('recentActivity');
-    
-    // Mock recent activity - in real app, this would come from API
-    container.innerHTML = `
+    if (!container) return;
+    if (!items.length) {
+        container.innerHTML = '<div class="empty-state"><p>No farm activity yet. Start a season and land preparation will show on the Farm tab.</p></div>';
+        return;
+    }
+    container.innerHTML = items.map((item) => `
         <div class="activity-item">
-            <div class="activity-title">📄 Warehouse receipt created</div>
-            <div class="activity-time">2 days ago</div>
+            <div class="activity-title">${escapeHtml(item.title || 'Activity')}</div>
+            <div class="activity-time">${escapeHtml(item.when || '')}</div>
         </div>
-        <div class="activity-item">
-            <div class="activity-title">💰 Loan disbursed</div>
-            <div class="activity-time">3 days ago</div>
-        </div>
-        <div class="activity-item">
-            <div class="activity-title">👤 Profile updated</div>
-            <div class="activity-time">1 week ago</div>
-        </div>
-    `;
+    `).join('');
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function formatHouseholdType(type) {
@@ -772,6 +791,11 @@ document.getElementById('fieldSelect')?.addEventListener('change', async (event)
     if (Preferences && selectedSeasonId) {
         await Preferences.set({ key: 'active_season', value: selectedSeasonId });
     }
+    currentSeasonId = selectedSeasonId;
+    const productionSelect = document.getElementById('activeSeasonSelect');
+    if (productionSelect && [...productionSelect.options].some((option) => option.value === selectedSeasonId)) {
+        productionSelect.value = selectedSeasonId;
+    }
     if (latestCare) {
         renderCare(latestCare);
         const contextEl = document.getElementById('advisorContext');
@@ -816,7 +840,7 @@ function renderCare(data) {
     }
     tasksEl.innerHTML = cropGroups.map((group) => `
         <div class="care-crop">
-            <div class="care-crop-title">${group.crop} · ${group.parcelName}${Number.isFinite(group.ageDays) ? ` · day ${group.ageDays}` : ''}</div>
+            <div class="care-crop-title">${group.crop} · ${group.parcelName} · ${group.planted ? `day ${group.ageDays}` : 'land preparation'}</div>
             ${group.variety ? `<div class="care-crop-clear">${group.variety}</div>` : ''}
             ${guideLines(group.guide)}
             ${group.nextAction ? `<div class="care-crop-clear">${group.nextAction}</div>` : ''}
@@ -829,7 +853,7 @@ function renderCare(data) {
                     <div class="card-item-details">
                         <div>${task.detail}</div>
                     </div>
-                    ${task.status === 'due' ? `<button class="btn-small" onclick="logCareTask('${task.seasonId}','${task.type}','${task.label.replace(/'/g, '')}')">Mark done</button>` : ''}
+                    ${task.status === 'due' ? `<button class="btn-small" onclick="logCareTask('${task.seasonId}','${task.logType || task.type}','${task.label.replace(/'/g, '')}')">Mark done</button>` : ''}
                 </div>
             `).join('') : (group.nextAction ? '' : '<div class="care-crop-clear">No action due for this crop today.</div>')}
         </div>
@@ -863,6 +887,7 @@ window.logCareTask = async function(seasonId, type, label) {
         }
         showToast('Logged', 'success');
         loadDailyCare();
+        loadHomeSummary();
     } catch (error) {
         showToast('Network error', 'error');
     }
@@ -1119,7 +1144,7 @@ function displaySeasons(seasons) {
             <div class="card-item-details">
                 <div>📐 Area: ${s.area_hectares} hectares</div>
                 ${s.variety ? `<div>🌱 Variety: ${s.variety}</div>` : ''}
-                ${s.planting_date ? `<div>📅 Planted: ${new Date(s.planting_date).toLocaleDateString()}</div>` : ''}
+                ${s.planting_date ? `<div>📅 Planted: ${new Date(s.planting_date).toLocaleDateString()}</div>` : '<div>Land preparation · planting not recorded yet</div>'}
             </div>
         </div>
     `).join('');
@@ -1132,6 +1157,13 @@ function populateSeasonSelect(seasons) {
         seasons.filter(s => !s.status || s.status === 'active' || s.status === 'planned').map(s => 
             `<option value="${s.id}">${s.crop} - ${s.season_name}</option>`
         ).join('');
+    if (selectedSeasonId && [...select.options].some((option) => option.value === selectedSeasonId)) {
+        select.value = selectedSeasonId;
+        currentSeasonId = selectedSeasonId;
+    }
+    if (document.getElementById('productionTab')?.classList.contains('active') && select.value) {
+        loadSeasonDetails();
+    }
 }
 
 window.showAddSeason = async function() {
@@ -1180,7 +1212,7 @@ async function refreshSeasonGuide(event) {
         if (varietyInput && brief.varieties && !varietyInput.dataset.touched) {
             varietyInput.value = brief.varieties;
         }
-        guideEl.textContent = [brief.note, brief.variety, brief.planting, brief.seed, brief.margin, brief.suppliers, brief.buyers].filter(Boolean).join('\n');
+        guideEl.textContent = [brief.phaseNote, brief.note, brief.variety, brief.planting, brief.seed, brief.margin, brief.suppliers, brief.buyers].filter(Boolean).join('\n');
     } catch (error) {
         console.warn('Could not load crop guide:', error);
     }
@@ -1343,6 +1375,15 @@ let currentSeasonId = null;
 
 window.loadSeasonDetails = async function() {
     currentSeasonId = document.getElementById('activeSeasonSelect').value;
+    selectedSeasonId = currentSeasonId || selectedSeasonId;
+    if (Preferences && selectedSeasonId) {
+        await Preferences.set({ key: 'active_season', value: selectedSeasonId });
+    }
+    const fieldSelect = document.getElementById('fieldSelect');
+    if (fieldSelect && [...fieldSelect.options].some((option) => option.value === selectedSeasonId)) {
+        fieldSelect.value = selectedSeasonId;
+    }
+    if (latestCare) renderCare(latestCare);
     
     if (!currentSeasonId) {
         document.getElementById('seasonDetailsContainer').style.display = 'none';
@@ -1369,7 +1410,7 @@ async function updateSeasonStats() {
             const days = Math.floor((new Date() - new Date(season.planting_date)) / (1000 * 60 * 60 * 24));
             document.getElementById('daysSincePlanting').textContent = days;
         } else {
-            document.getElementById('daysSincePlanting').textContent = '--';
+            document.getElementById('daysSincePlanting').textContent = 'Prep';
         }
     } catch (error) {
         console.error('Failed to update stats:', error);

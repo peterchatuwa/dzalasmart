@@ -583,7 +583,16 @@ async function openMemoryDatabase() {
   const db = new Database(pool);
   await db.exec(SCHEMA);
   await db.exec(PEST_REPORT_COLUMNS);
+  await ensureSeasonPlantingColumn(db);
   return db;
+}
+
+async function ensureSeasonPlantingColumn(db) {
+  try {
+    await db.exec("ALTER TABLE production_seasons ADD COLUMN IF NOT EXISTS planting_date DATE");
+  } catch {
+    // The farm-management schema creates this table on the server.
+  }
 }
 
 const PEST_REPORT_COLUMNS = `
@@ -598,6 +607,7 @@ async function openPostgresDatabase(connectionString) {
   const db = new Database(pool);
   await db.exec(SCHEMA);
   await db.exec(PEST_REPORT_COLUMNS);
+  await ensureSeasonPlantingColumn(db);
   return db;
 }
 

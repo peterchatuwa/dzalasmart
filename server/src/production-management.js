@@ -328,7 +328,29 @@ export async function listProductionSeasons(db, farmerId, status = null) {
 // PRODUCTION ACTIVITIES
 // ============================================================================
 
-export async function logProductionActivity(db, seasonId, input) {
+async function assertFarmerSeason(db, seasonId, farmerId) {
+  const season = await db.prepare(`
+    SELECT id, farmer_id, crop, planting_date
+    FROM production_seasons
+    WHERE id = ?
+  `).get(seasonId);
+  if (!season || (farmerId && season.farmer_id !== farmerId)) {
+    throw HttpError(404, "Season not found");
+  }
+  return season;
+}
+
+async function rememberPlantingDate(db, seasonId, date) {
+  if (!date) return;
+  await db.prepare(`
+    UPDATE production_seasons
+    SET planting_date = ?
+    WHERE id = ? AND planting_date IS NULL
+  `).run(String(date).slice(0, 10), seasonId);
+}
+
+export async function logProductionActivity(db, seasonId, input, farmerId) {
+  await assertFarmerSeason(db, seasonId, farmerId);
   const activity = {
     id: crypto.randomUUID(),
     season_id: seasonId,
@@ -374,10 +396,15 @@ export async function logProductionActivity(db, seasonId, input) {
     activity.recorded_by
   );
 
+  if (String(activity.activity_type).toLowerCase() === "planting") {
+    await rememberPlantingDate(db, seasonId, activity.activity_date);
+  }
+
   return withActivityAliases(activity);
 }
 
-export async function listProductionActivities(db, seasonId) {
+export async function listProductionActivities(db, seasonId, farmerId) {
+  await assertFarmerSeason(db, seasonId, farmerId);
   const activities = await db.prepare(`
     SELECT *
     FROM production_activities
@@ -391,7 +418,8 @@ export async function listProductionActivities(db, seasonId) {
 // PLANTING DETAILS
 // ============================================================================
 
-export async function recordPlantingDetails(db, seasonId, input) {
+export async function recordPlantingDetails(db, seasonId, input, farmerId) {
+  await assertFarmerSeason(db, seasonId, farmerId);
   const planting = {
     id: crypto.randomUUID(),
     season_id: seasonId,
@@ -433,8 +461,8 @@ export async function recordPlantingDetails(db, seasonId, input) {
     planting.notes
   );
 
-  // Update season status to active
   await db.prepare("UPDATE production_seasons SET status = 'active' WHERE id = ?").run(seasonId);
+  await rememberPlantingDate(db, seasonId, planting.planting_date);
 
   return planting;
 }
@@ -443,7 +471,8 @@ export async function recordPlantingDetails(db, seasonId, input) {
 // DAILY MONITORING
 // ============================================================================
 
-export async function logDailyMonitoring(db, seasonId, input) {
+export async function logDailyMonitoring(db, seasonId, input, farmerId) {
+  await assertFarmerSeason(db, seasonId, farmerId);
   const monitoring = {
     id: crypto.randomUUID(),
     season_id: seasonId,
@@ -499,7 +528,8 @@ export async function logDailyMonitoring(db, seasonId, input) {
   return withMonitoringAliases(monitoring);
 }
 
-export async function getMonitoringHistory(db, seasonId) {
+export async function getMonitoringHistory(db, seasonId, farmerId) {
+  await assertFarmerSeason(db, seasonId, farmerId);
   const records = await db.prepare(`
     SELECT *
     FROM farm_monitoring
@@ -513,7 +543,8 @@ export async function getMonitoringHistory(db, seasonId) {
 // COST TRACKING
 // ============================================================================
 
-export async function recordProductionCost(db, seasonId, input) {
+export async function recordProductionCost(db, seasonId, input, farmerId) {
+  await assertFarmerSeason(db, seasonId, farmerId);
   const cost = {
     id: crypto.randomUUID(),
     season_id: seasonId,
@@ -563,7 +594,8 @@ export async function recordProductionCost(db, seasonId, input) {
   return cost;
 }
 
-export async function getProductionCostSummary(db, seasonId) {
+export async function getProductionCostSummary(db, seasonId, farmerId) {
+  await assertFarmerSeason(db, seasonId, farmerId);
   const costs = await db.prepare(`
     SELECT 
       pc.*,
@@ -697,4 +729,92 @@ export async function listOfftakeAgreements(db, farmerId, status = null) {
   query += " ORDER BY contract_date DESC";
 
   return await db.prepare(query).all(...params);
+}
+
+function dayLabel(value) {
+  if (!value) return "";
+  if (typeof value === "number" || /^\d+$/.test(String(value))) {
+    const stamp = Number(value);
+    return new Date(stamp < 1e12 ? stamp * 1000 : stamp).toISOString().slice(0, 10);
+  }
+  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : String(value).slice(0, 10);
+}
+
+export async function farmerHomeSummary(db, farmerId) {
+  let hectares = 0;
+  try {
+    const land = await db.prepare(`
+      SELECT COALESCE(SUM(size_hectares), 0) AS hectares
+      FROM land_parcels
+      WHERE farmer_id = ?
+    `).get(farmerId);
+    hectares = Number(land?.hectares) || 0;
+  } catch {
+    hectares = 0;
+  }
+  if (!hectares) {
+    try {
+      const registered = await db.prepare(`
+        SELECT COALESCE(SUM(hectares), 0) AS hectares
+        FROM farm_land_parcels
+        WHERE farmer_id = ?
+      `).get(farmerId);
+      hectares = Number(registered?.hectares) || 0;
+    } catch {
+      hectares = 0;
+    }
+  }
+
+  const receipts = await db.prepare(`
+    SELECT COUNT(*)::int AS n FROM warehouse_receipts WHERE farmer_id = ?
+  `).get(farmerId);
+  const loans = await db.prepare(`
+    SELECT COUNT(*)::int AS n FROM loan_requests WHERE farmer_id = ?
+  `).get(farmerId);
+
+  const recent = [];
+  try {
+    const activities = await db.prepare(`
+      SELECT pa.activity_type, pa.description, pa.activity_date::text AS activity_date, ps.crop
+      FROM production_activities pa
+      JOIN production_seasons ps ON ps.id = pa.season_id
+      WHERE ps.farmer_id = ?
+      ORDER BY pa.activity_date DESC
+      LIMIT 5
+    `).all(farmerId);
+    for (const row of activities || []) {
+      const title = row.description || row.activity_type;
+      recent.push({
+        title: `${row.crop ? `${row.crop}: ` : ""}${title}`,
+        when: dayLabel(row.activity_date),
+        sort: dayLabel(row.activity_date),
+      });
+    }
+  } catch {
+    // Seasons live in the farm-management schema. Home still loads without them.
+  }
+
+  const receiptRows = await db.prepare(`
+    SELECT crop, status, created_at
+    FROM warehouse_receipts
+    WHERE farmer_id = ?
+    ORDER BY created_at DESC
+    LIMIT 5
+  `).all(farmerId);
+  for (const row of receiptRows || []) {
+    recent.push({
+      title: `Warehouse receipt · ${row.crop} · ${row.status}`,
+      when: dayLabel(row.created_at),
+      sort: dayLabel(row.created_at),
+    });
+  }
+  recent.sort((a, b) => String(b.sort).localeCompare(String(a.sort)));
+
+  return {
+    hectares,
+    receipts: Number(receipts?.n) || 0,
+    loans: Number(loans?.n) || 0,
+    recent: recent.slice(0, 5).map(({ title, when }) => ({ title, when })),
+  };
 }

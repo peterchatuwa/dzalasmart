@@ -142,6 +142,7 @@ export function seasonSetup(crop, district) {
     planting: planting?.detail || "",
     onSheet,
     note: onSheet ? "" : `${plan.name} is not on a district production sheet yet, so the actions are a short general plan.`,
+    phaseNote: "The season starts with land preparation. When that work is done, the app tells you it is time to plant. Watering, weeding, and fertiliser dates are counted from the day you record planting.",
   };
 }
 
@@ -173,8 +174,17 @@ function daysBetween(startIso, endIso) {
   return Math.round((end - start) / 86400000);
 }
 
-function seasonStart(season) {
-  const raw = season.planting_date || season.created_at;
+function planParts(plan) {
+  const tasks = plan.tasks || [];
+  return {
+    prep: tasks.filter((task) => task.to < 0).sort((a, b) => a.from - b.from || a.label.localeCompare(b.label)),
+    plant: tasks.find((task) => task.from <= 0 && task.to >= 0) || null,
+    crop: tasks.filter((task) => task.from > 0),
+  };
+}
+
+function plantingDate(season) {
+  const raw = season?.planting_date;
   if (!raw) return null;
   if (typeof raw === "number" || /^\d+$/.test(String(raw))) {
     const value = Number(raw);
@@ -183,6 +193,47 @@ function seasonStart(season) {
   const parsed = new Date(raw);
   if (Number.isNaN(parsed.getTime())) return String(raw).slice(0, 10);
   return malawiDate(parsed);
+}
+
+function taskLogged(activities, task) {
+  const label = String(task.label || "").toLowerCase();
+  return (activities || []).some((activity) => {
+    const type = activity.activity_type;
+    const typeOk = type === task.type || type === task.logType || (task.phase === "plant" && type === "planting");
+    if (!typeOk) return false;
+    const note = String(activity.description || "").toLowerCase();
+    if (label && note && !note.includes(label)) return false;
+    return true;
+  });
+}
+
+function taskCard(season, plan, task, date, status, ageDays, phase, detail) {
+  return {
+    id: `${season.id}:${phase}:${task.type}:${task.from}:${task.label}`,
+    seasonId: season.id,
+    crop: plan.name,
+    parcelName: season.parcel_name || "Plot",
+    type: task.type,
+    logType: phase === "plant" ? "planting" : task.type,
+    phase,
+    label: `${task.label} (${plan.name})`,
+    detail,
+    status,
+    dueDate: date,
+    ageDays,
+  };
+}
+
+export function careAdvice(crop, district, { planted = false, ageDays = null, openPrep = 0 } = {}) {
+  if (!planted) {
+    if (openPrep > 0) {
+      return openPrep === 1
+        ? "1 land preparation task is still open. Planting comes after it is done."
+        : `${openPrep} land preparation tasks are still open. Planting comes after they are done.`;
+    }
+    return "Land preparation is done. You can plant now.";
+  }
+  return upcomingAction(crop, district, ageDays);
 }
 
 function rainOn(forecast, iso) {
@@ -219,13 +270,32 @@ function activityInWindow(activities, type, startIso, fromDay, toDay, label) {
   });
 }
 
-function tasksForSeason(season, activities, date, forecast, district) {
-  const start = seasonStart(season);
-  if (!start) return [];
-  const age = daysBetween(start, date);
-  if (!Number.isFinite(age) || age < -70 || age > 180) return [];
-
+export function seasonActions(season, activities, date, forecast, district) {
   const plan = cropPlan(season.crop, district);
+  const parts = planParts(plan);
+  const planted = plantingDate(season);
+
+  if (!planted) {
+    const openPrep = parts.prep.filter((task) => !taskLogged(activities, { ...task, phase: "prep", logType: task.type }));
+    if (openPrep.length) {
+      return openPrep.map((task) => taskCard(season, plan, task, date, "due", null, "prep", task.detail));
+    }
+    const plant = parts.plant || {
+      type: "planting",
+      from: 0,
+      label: "Record planting",
+      detail: "Mark this done on the day you sow. Watering, weeding, and fertiliser dates start from that day.",
+    };
+    if (taskLogged(activities, { ...plant, phase: "plant", logType: "planting" })) return [];
+    const lead = parts.prep.length
+      ? "Land preparation is done. You can plant now. "
+      : "You can plant now. ";
+    return [taskCard(season, plan, plant, date, "due", null, "plant", `${lead}${plant.detail || ""}`.trim())];
+  }
+
+  const age = daysBetween(planted, date);
+  if (!Number.isFinite(age) || age < 0 || age > 180) return [];
+
   const rain = rainOn(forecast, date);
   const tasks = [];
   const waterStage = plan.water.find((stage) => age >= stage.from && age <= stage.to);
@@ -251,15 +321,17 @@ function tasksForSeason(season, activities, date, forecast, district) {
       detail: coveredByRain
         ? `${rain.toFixed(0)} mm of rain is forecast, so watering is not required today.`
         : `${waterStage.note}. Last required interval is every ${waterStage.every} days.`,
+      phase: "crop",
+      logType: "irrigation",
       status: done ? "done" : coveredByRain ? "covered" : "due",
       dueDate: date,
       ageDays: age,
     });
   }
 
-  for (const task of plan.tasks) {
+  for (const task of parts.crop) {
     if (age < task.from || age > task.to) continue;
-    const done = activityInWindow(activities, task.type, start, task.from, task.to, task.label);
+    const done = activityInWindow(activities, task.type, planted, task.from, task.to, task.label);
     const detail = task.detail;
     tasks.push({
       id: `${season.id}:${task.type}:${task.from}:${task.label}`,
@@ -267,6 +339,8 @@ function tasksForSeason(season, activities, date, forecast, district) {
       crop: plan.name,
       parcelName: season.parcel_name || "Plot",
       type: task.type,
+      logType: task.type,
+      phase: "crop",
       label: `${task.label} (${plan.name})`,
       detail,
       status: done ? "done" : "due",
@@ -321,24 +395,33 @@ export function careNotifications(upcoming) {
   return { notifications, cancelIds };
 }
 
-function growingCrops(seasons, today, todayTasks, district, epa) {
+function growingCrops(seasons, today, todayTasks, district, epa, activitiesBySeason) {
   const rows = [];
   for (const season of seasons) {
-    const start = seasonStart(season);
-    if (!start) continue;
-    const age = daysBetween(start, today);
-    if (!Number.isFinite(age) || age < -70 || age > 180) continue;
+    const activities = activitiesBySeason.get(season.id) || [];
+    const plantedOn = plantingDate(season);
+    const age = plantedOn ? daysBetween(plantedOn, today) : null;
+    if (plantedOn && (!Number.isFinite(age) || age < -1 || age > 180)) continue;
     const plan = cropPlan(season.crop, district);
+    const parts = planParts(plan);
+    const openPrep = plantedOn
+      ? 0
+      : parts.prep.filter((task) => !taskLogged(activities, { ...task, phase: "prep", logType: task.type })).length;
     const hectares = Number(season.area_hectares || season.parcel_size);
     rows.push({
       seasonId: season.id,
       parcelId: season.parcel_id || null,
       crop: plan.name,
       parcelName: season.parcel_name || "Plot",
-      ageDays: age,
+      planted: Boolean(plantedOn),
+      ageDays: plantedOn ? age : null,
       hectares: Number.isFinite(hectares) ? hectares : null,
       variety: plan.variety,
-      nextAction: upcomingAction(season.crop, district, age),
+      nextAction: careAdvice(season.crop, district, {
+        planted: Boolean(plantedOn),
+        ageDays: age,
+        openPrep,
+      }),
       guide: farmBrief({
         crop: plan.name,
         district,
@@ -376,17 +459,28 @@ export async function dailyFarmCare(db, farmer) {
     return !season.status || season.status === "active" || season.status === "planned";
   });
 
+  const activitiesBySeason = new Map();
+  for (const season of seasons) {
+    const activities = await db.prepare(`
+      SELECT activity_type, activity_date::text AS activity_date, description
+      FROM production_activities
+      WHERE season_id = ?
+    `).all(season.id);
+    activitiesBySeason.set(season.id, activities || []);
+  }
+
   const days = [0, 1, 2].map((offset) => addDays(today, offset));
   const upcoming = [];
   for (const date of days) {
     const tasks = [];
     for (const season of seasons) {
-      const activities = await db.prepare(`
-        SELECT activity_type, activity_date::text AS activity_date, description
-        FROM production_activities
-        WHERE season_id = ?
-      `).all(season.id);
-      tasks.push(...tasksForSeason(season, activities || [], date, weather?.forecast, farmer.district));
+      tasks.push(...seasonActions(
+        season,
+        activitiesBySeason.get(season.id) || [],
+        date,
+        weather?.forecast,
+        farmer.district,
+      ));
     }
     upcoming.push({ date, tasks: dedupeTasks(tasks) });
   }
@@ -400,7 +494,7 @@ export async function dailyFarmCare(db, farmer) {
     alert: weather?.alert || "unavailable",
     alertHeadline: weather?.alertHeadline || "Weather unavailable",
     tasks,
-    growing: growingCrops(seasons, today, tasks, farmer.district, farmer.epa),
+    growing: growingCrops(seasons, today, tasks, farmer.district, farmer.epa, activitiesBySeason),
     notifications,
     cancelIds,
     upcoming,

@@ -48,7 +48,7 @@ const CHAT_UI = {
   en: {
     title: "Ask in English, Chichewa, or Tumbuka",
     disclaimer:
-      "This assistant gives simplified demo advice. Confirm chemical products and rates with your extension officer before use. Photo diagnosis is not live yet.",
+      "Confirm chemical products and rates with your extension officer before use. A plant photo is saved on the selected field and matched to that crop's sign list.",
     weather: "Today's weather",
     market: "What's my crop worth?",
     crop: "Best crop for my soil",
@@ -313,7 +313,311 @@ function renderFarm() {
   loadVouchers();
   loadInputsCatalog();
   loadFarmerProfile();
+  loadWebCare();
 }
+
+let webCare = null;
+let webSeasonId = localStorage.getItem("web_active_season") || "";
+
+function webEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function webMoney(amount) {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return "—";
+  return `MWK ${Math.round(value).toLocaleString("en-MW")}`;
+}
+
+async function loadWebCare() {
+  const note = document.getElementById("careNote");
+  if (!note || !token) return;
+  try {
+    webCare = await api("GET", "/api/farmers/me/care", { auth: true });
+    const growing = webCare.growing || [];
+    if (growing.length && !growing.some((row) => row.seasonId === webSeasonId)) {
+      webSeasonId = growing[0].seasonId;
+    }
+    if (webSeasonId) localStorage.setItem("web_active_season", webSeasonId);
+    renderWebFieldSelect(growing);
+    renderWebCare();
+    await Promise.all([loadWebQuotes(), loadWebParcels()]);
+  } catch (error) {
+    note.textContent = error.message || "Farm checks are unavailable right now.";
+  }
+}
+
+function renderWebFieldSelect(growing) {
+  const select = document.getElementById("webFieldSelect");
+  if (!select) return;
+  select.innerHTML = growing.length
+    ? growing
+        .map((row) => {
+          const ha = Number.isFinite(Number(row.hectares)) ? ` · ${row.hectares} ha` : "";
+          return `<option value="${webEscape(row.seasonId)}">${webEscape(row.parcelName)} · ${webEscape(row.crop)}${ha}</option>`;
+        })
+        .join("")
+    : `<option value="">Start a season to choose a field</option>`;
+  if (webSeasonId) select.value = webSeasonId;
+}
+
+function renderWebCare() {
+  const body = document.getElementById("careBody");
+  const note = document.getElementById("careNote");
+  if (!body || !webCare) return;
+  const forecast = (webCare.forecast || [])
+    .slice(0, 3)
+    .map((day) => `${day.day} ${Math.round(day.max)}° / ${Number(day.rain || 0).toFixed(0)} mm`)
+    .join(" · ");
+  note.textContent = forecast
+    ? `${webCare.alertHeadline || "Forecast"}. ${forecast}. ${webCare.advice || ""}`
+    : webCare.advice || "The season starts with land preparation. Crop days begin on the day planting is recorded.";
+  const growing = (webCare.growing || []).filter((row) => !webSeasonId || row.seasonId === webSeasonId);
+  const tasks = (webCare.tasks || []).filter((task) => !webSeasonId || task.seasonId === webSeasonId);
+  if (!growing.length) {
+    body.innerHTML = `<p class="hint">No crop actions yet. Start a season below.</p>`;
+    return;
+  }
+  body.innerHTML = growing
+    .map((group) => {
+      const groupTasks = tasks.filter((task) => task.seasonId === group.seasonId);
+      const stage = group.planted ? `day ${group.ageDays}` : "land preparation";
+      const guide = [group.variety, group.guide?.seed, group.guide?.fieldInputs, group.guide?.margin, group.guide?.buyers]
+        .filter(Boolean)
+        .map((line) => `<div class="hint">${webEscape(line)}</div>`)
+        .join("");
+      const taskHtml = groupTasks.length
+        ? groupTasks
+            .map(
+              (task) => `
+          <div class="ledger-row">
+            <div>
+              <strong>${webEscape(task.label)}</strong>
+              <div class="hint">${webEscape(task.detail || "")}</div>
+            </div>
+            <div class="ledger-side">
+              <span class="badge ${task.status === "done" ? "accepted" : ""}">${task.status === "due" ? "Due" : task.status === "done" ? "Logged" : "Rain"}</span>
+              ${
+                task.status === "due"
+                  ? `<button type="button" class="primary" data-care-season="${webEscape(task.seasonId)}" data-care-type="${webEscape(task.logType || task.type)}" data-care-label="${webEscape(task.label)}">Mark done</button>`
+                  : ""
+              }
+            </div>
+          </div>`
+            )
+            .join("")
+        : `<p class="hint">${group.nextAction ? "" : "No action due for this crop today."}</p>`;
+      return `
+        <div>
+          <strong>${webEscape(group.crop)} · ${webEscape(group.parcelName)} · ${stage}</strong>
+          ${group.nextAction ? `<div class="hint">${webEscape(group.nextAction)}</div>` : ""}
+          ${guide}
+          ${taskHtml}
+        </div>`;
+    })
+    .join("");
+}
+
+async function loadWebQuotes() {
+  const box = document.getElementById("fieldQuotes");
+  if (!box || !token) return;
+  const params = new URLSearchParams();
+  if (webSeasonId) params.set("seasonId", webSeasonId);
+  try {
+    const data = await api("GET", `/api/farmers/market?${params}`, { auth: true });
+    const quotes = data.quotes || [];
+    if (!quotes.length) {
+      box.innerHTML = "";
+      return;
+    }
+    const source = data.live ? "Live warehouse quote." : "Reference price until a live quote is available.";
+    box.innerHTML = `<p class="hint">${webEscape(data.warehouseHub ? `Nearest warehouse: ${data.warehouseHub}. ` : "")}${source}</p>` +
+      quotes
+        .map((quote) => {
+          const title = quote.parcelName ? `${quote.parcelName} · ${quote.crop}` : quote.crop;
+          const today = quote.today
+            ? `${quote.today.live ? "Today" : "Reference"}: ${webMoney(quote.today.pricePerKg)}/kg · ${quote.today.source || ""}`
+            : "Today: no warehouse quote";
+          const floor = quote.floor ? `Floor: ${webMoney(quote.floor.pricePerKg)}/kg` : "Floor: not set";
+          const plan = quote.plan
+            ? `Plan: ${webMoney(quote.plan.pricePerKg)}/kg. Break-even ${webMoney(quote.plan.breakEvenPrice)}/kg.`
+            : "";
+          const field =
+            quote.plan && quote.plan.marginForField != null
+              ? `This field: gross margin about ${webMoney(quote.plan.marginForField)}.`
+              : "";
+          return `<div class="ledger-row"><div><strong>${webEscape(title)}</strong><div class="hint">${webEscape(today)}</div><div class="hint">${webEscape(floor)}</div>${plan ? `<div class="hint">${webEscape(plan)}</div>` : ""}${field ? `<div class="hint">${webEscape(field)}</div>` : ""}</div></div>`;
+        })
+        .join("");
+  } catch (error) {
+    box.innerHTML = `<p class="hint">${webEscape(error.message)}</p>`;
+  }
+}
+
+async function loadWebParcels() {
+  const select = document.getElementById("webSeasonParcel");
+  if (!select || !token) return;
+  try {
+    const data = await api("GET", "/api/farmers/me/parcels", { auth: true });
+    const parcels = data.parcels || [];
+    select.innerHTML = parcels.length
+      ? parcels
+          .map((parcel) => {
+            const name = parcel.parcel_name || parcel.parcelName || "Plot";
+            const ha = parcel.size_hectares ?? parcel.hectares ?? parcel.area_hectares ?? "";
+            return `<option value="${webEscape(parcel.id)}">${webEscape(name)}${ha !== "" ? ` (${ha} ha)` : ""}</option>`;
+          })
+          .join("")
+      : `<option value="">No parcel yet</option>`;
+  } catch (error) {
+    select.innerHTML = `<option value="">${webEscape(error.message)}</option>`;
+  }
+}
+
+async function refreshWebSeasonGuide() {
+  const guide = document.getElementById("webSeasonGuide");
+  const crop = document.getElementById("webSeasonCrop")?.value;
+  if (!guide || !token) return;
+  if (!crop) {
+    guide.textContent = "";
+    return;
+  }
+  const params = new URLSearchParams({ crop });
+  const hectares = document.getElementById("webSeasonArea")?.value;
+  if (hectares) params.set("hectares", hectares);
+  try {
+    const brief = await api("GET", `/api/farmers/me/guide?${params}`, { auth: true });
+    const variety = document.getElementById("webSeasonVariety");
+    if (variety && brief.varieties && !variety.dataset.touched) variety.value = brief.varieties;
+    guide.textContent = [brief.phaseNote, brief.note, brief.variety, brief.planting, brief.seed, brief.margin, brief.suppliers, brief.buyers]
+      .filter(Boolean)
+      .join(" ");
+  } catch (error) {
+    guide.textContent = error.message;
+  }
+}
+
+document.getElementById("webFieldSelect")?.addEventListener("change", (event) => {
+  webSeasonId = event.target.value || "";
+  if (webSeasonId) localStorage.setItem("web_active_season", webSeasonId);
+  renderWebCare();
+  loadWebQuotes();
+});
+
+document.getElementById("careBody")?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-care-season]");
+  if (!button) return;
+  button.disabled = true;
+  const today = new Date();
+  const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  try {
+    await api("POST", `/api/farmers/me/seasons/${button.dataset.careSeason}/activities`, {
+      auth: true,
+      body: {
+        activityType: button.dataset.careType,
+        activityDate: date,
+        description: button.dataset.careLabel,
+      },
+    });
+    showToast("Logged", "success");
+    await loadWebCare();
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message || "Could not log this check", "error");
+  }
+});
+
+document.getElementById("webSeasonCrop")?.addEventListener("change", () => {
+  const variety = document.getElementById("webSeasonVariety");
+  if (variety) variety.dataset.touched = "";
+  refreshWebSeasonGuide();
+});
+document.getElementById("webSeasonArea")?.addEventListener("input", refreshWebSeasonGuide);
+document.getElementById("webSeasonVariety")?.addEventListener("input", (event) => {
+  event.target.dataset.touched = "1";
+});
+document.getElementById("webSeasonForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showError("webSeasonError", "");
+  const area = parseFloat(document.getElementById("webSeasonArea").value);
+  try {
+    const season = await api("POST", "/api/farmers/me/seasons", {
+      auth: true,
+      body: {
+        parcelId: document.getElementById("webSeasonParcel").value,
+        crop: document.getElementById("webSeasonCrop").value,
+        variety: document.getElementById("webSeasonVariety").value,
+        areaHectares: area,
+        seasonName: document.getElementById("webSeasonName").value,
+      },
+    });
+    webSeasonId = season.id || webSeasonId;
+    showToast("Season started. Land preparation is the first step.", "success");
+    await loadWebCare();
+  } catch (error) {
+    showError("webSeasonError", error.message);
+  }
+});
+
+document.getElementById("plantPhoto")?.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+  if (!webSeasonId) {
+    showError("chatError", "Choose a field first, then photograph the plant.");
+    return;
+  }
+  if (file.size > 2_500_000) {
+    showError("chatError", "Use a photo smaller than 2.5 MB.");
+    return;
+  }
+  const image = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read the photo"));
+    reader.readAsDataURL(file);
+  });
+  addChatBubble("Plant photo sent for this field.", "user");
+  try {
+    const data = await api("POST", "/api/farmers/advisor/photo", {
+      auth: true,
+      body: { image, seasonId: webSeasonId, lang: chatLang },
+    });
+    addChatBubble(data.advice || data.reply || "No match yet.", "bot");
+    if (!data.choices?.length || !data.id) return;
+    const win = document.getElementById("chatWindow");
+    const wrap = document.createElement("div");
+    wrap.className = "chat-topics";
+    for (const choice of data.choices) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "chip";
+      button.textContent = choice.lookFor;
+      button.addEventListener("click", async () => {
+        wrap.remove();
+        addChatBubble(choice.lookFor, "user");
+        try {
+          const confirmed = await api("POST", `/api/farmers/advisor/photo/${data.id}/sign`, {
+            auth: true,
+            body: { sign: choice.name, lang: chatLang },
+          });
+          addChatBubble(confirmed.advice || confirmed.reply, "bot");
+        } catch (error) {
+          showError("chatError", error.message);
+        }
+      });
+      wrap.appendChild(button);
+    }
+    win.appendChild(wrap);
+    win.scrollTop = win.scrollHeight;
+  } catch (error) {
+    showError("chatError", error.message);
+  }
+});
 
 async function loadStatus() {
   status = await api("GET", "/api/farmers/me/status", { auth: true });
@@ -1101,7 +1405,8 @@ async function askChat({ text, topic, soil, nutrient, showUser = true }) {
         lang: chatLang,
         soil: soil || document.getElementById("chatSoil").value,
         nutrient: nutrient || document.getElementById("chatNutrient").value,
-        channel: "mobile",
+        seasonId: document.getElementById("webFieldSelect")?.value || undefined,
+        channel: "web",
       },
     });
     addChatBubble(payload.reply || "No reply.", "bot");

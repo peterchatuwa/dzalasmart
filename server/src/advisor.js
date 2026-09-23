@@ -150,6 +150,54 @@ export const DISEASE_DB = [
     cultural:
       "Encourage ladybird beetles and other natural predators, and avoid over-applying nitrogen fertiliser, which attracts aphids.",
   },
+  {
+    name: "Soybean rust",
+    crops: ["soya"],
+    lookFor: "Brown or orange pustules on the underside of soya leaves",
+    keywords: ["soya rust", "soybean rust", "pustules on soya", "orange under soya"],
+    chemical: "A labelled soybean-rust fungicide, applied at the first pustules and following the product label rate.",
+    cultural: "Plant a rust-tolerant variety, scout the underside of leaves from flowering, and remove volunteer soya between seasons.",
+  },
+  {
+    name: "Frogeye leaf spot",
+    crops: ["soya"],
+    lookFor: "Round brown soya leaf spots with a pale centre",
+    keywords: ["frogeye", "frog eye", "pale centre on soya", "soya leaf spot"],
+    chemical: "A labelled fungicide for frogeye leaf spot, following the product label rate.",
+    cultural: "Use certified seed, rotate away from soya, and avoid working in the field while the leaves are wet.",
+  },
+  {
+    name: "Rice blast",
+    crops: ["rice"],
+    lookFor: "Diamond-shaped grey spots on rice leaves",
+    keywords: ["rice blast", "diamond-shaped", "diamond spots on rice", "blast on rice"],
+    chemical: "A labelled rice-blast fungicide, following the product label rate. There is no benefit in guessing a dose.",
+    cultural: "Use a blast-tolerant variety, avoid excess nitrogen, and keep the nursery and field free of infected residue.",
+  },
+  {
+    name: "Rice yellow mottle",
+    crops: ["rice"],
+    lookFor: "Yellow mottling and stunting on rice leaves",
+    keywords: ["yellow mottle", "rice yellow", "mottled rice"],
+    chemical: "No chemical cure. Control the beetles that spread it with a labelled insecticide if an officer recommends one.",
+    cultural: "Plant resistant rice, rogue out infected plants, and keep the field edges clear of grassy weeds.",
+  },
+  {
+    name: "Tobacco bushy top",
+    crops: ["tobacco"],
+    lookFor: "Yellowing and bunching at the top of the tobacco plant",
+    keywords: ["bushy top", "bunching at the top", "tobacco top yellow"],
+    chemical: "No cure for the virus. Control the aphids that spread it with a labelled insecticide, following the product label rate.",
+    cultural: "Remove and destroy infected plants, control aphids early in the nursery and field, and do not use infected seedlings.",
+  },
+  {
+    name: "Tobacco brown spot",
+    crops: ["tobacco"],
+    lookFor: "Brown round spots with rings on older tobacco leaves",
+    keywords: ["tobacco brown spot", "rings on tobacco", "brown spots on tobacco"],
+    chemical: "A labelled tobacco fungicide, following the product label rate.",
+    cultural: "Avoid excess nitrogen late in the season, prime ripe leaves on time, and destroy stalk residue after harvest.",
+  },
 ];
 
 export const GENERAL_AG_KB = [

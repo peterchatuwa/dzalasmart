@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { guideForCrop, seasonSetup, upcomingAction } from "../src/crop-care.js";
+import { careAdvice, guideForCrop, seasonActions, seasonSetup, upcomingAction } from "../src/crop-care.js";
 import { adviceFromGuides, buildFarmerQuotes, farmBrief, guideLines, quoteRows } from "../src/farm-guides.js";
 import { DISTRICT_EPAS, sectionsFor } from "../src/places.js";
 
@@ -28,9 +28,46 @@ test("the season setup names the district variety and the planting line", () => 
   assert.match(setup.planting, /basal NPK/i);
   assert.equal(setup.onSheet, true);
   assert.match(upcomingAction("Maize", "Kasungu", 11), /First weeding in 3 days/);
+  assert.match(setup.phaseNote, /land preparation/);
+  assert.match(setup.phaseNote, /day you record planting/);
   const cotton = seasonSetup("Cotton", "Kasungu");
   assert.equal(cotton.onSheet, false);
   assert.match(cotton.note, /short general plan/);
+});
+
+test("a new season starts with land preparation, and crop days start at planting", () => {
+  const today = "2026-09-23";
+  const prep = seasonActions({ id: "s", crop: "Maize" }, [], today, [], "Kasungu");
+  assert.ok(prep.length > 0);
+  assert.ok(prep.every((action) => action.phase === "prep"));
+  assert.ok(prep.some((action) => /plough/i.test(action.label)));
+  assert.equal(careAdvice("Maize", "Kasungu", { planted: false, openPrep: prep.length }).includes("land preparation"), true);
+
+  const done = prep.map((action) => ({
+    activity_type: action.logType,
+    description: action.label,
+    activity_date: "2026-09-20",
+  }));
+  const ready = seasonActions({ id: "s", crop: "Maize" }, done, today, [], "Kasungu");
+  assert.equal(ready.length, 1);
+  assert.equal(ready[0].phase, "plant");
+  assert.equal(ready[0].logType, "planting");
+  assert.match(ready[0].detail, /You can plant now/);
+  assert.match(careAdvice("Maize", "Kasungu", { planted: false, openPrep: 0 }), /You can plant now/);
+
+  const early = seasonActions({ id: "s", crop: "Maize", created_at: "2026-06-01" }, [], today, [], "Kasungu");
+  assert.ok(early.every((action) => action.phase === "prep"));
+
+  const planted = seasonActions(
+    { id: "s", crop: "Maize", planting_date: "2026-09-09" },
+    [],
+    today,
+    [],
+    "Kasungu",
+  );
+  const weeding = planted.find((action) => action.label.includes("First weeding"));
+  assert.equal(weeding.ageDays, 14);
+  assert.ok(planted.every((action) => action.phase === "crop"));
 });
 
 test("groundnuts in the Shire Valley use a short-duration variety", () => {
