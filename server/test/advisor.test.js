@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import http from "node:http";
 import test from "node:test";
-import { askAdvisor, matchDisease, recommendCrops } from "../src/advisor.js";
+import { askAdvisor, attachGrowingContext, diagnosePhoto, matchDisease, matchDiseaseForCrop, recommendCrops } from "../src/advisor.js";
+import { careNotifications } from "../src/crop-care.js";
 import { createApp } from "../src/app.js";
 import { openDatabase } from "../src/db.js";
 import { seedIfEmpty } from "../src/farmers.js";
@@ -52,10 +53,71 @@ test("holes in the leaves match fall armyworm", () => {
   assert.match(reply.reply, /Emamectin/);
 });
 
+test("a groundnut photo does not use the maize armyworm answer", () => {
+  assert.equal(matchDiseaseForCrop("holes in the leaves", "Groundnuts"), null);
+  const open = diagnosePhoto({ crop: "Maize" });
+  assert.equal(open.match, null);
+  assert.ok(open.choices.some((choice) => choice.name === "Fall Armyworm (on maize)"));
+  const chosen = diagnosePhoto({ crop: "Maize", sign: "Fall Armyworm (on maize)" });
+  assert.equal(chosen.match, "Fall Armyworm (on maize)");
+  assert.match(chosen.reply, /Emamectin benzoate/);
+  assert.match(chosen.reply, /product label rate/);
+  const groundnut = diagnosePhoto({ crop: "Groundnuts", sign: "Groundnut Rosette Virus" });
+  assert.equal(groundnut.match, "Groundnut Rosette Virus");
+  assert.doesNotMatch(groundnut.reply, /Fall Armyworm/);
+});
+
+test("soya, rice, and tobacco photos offer their own signs", () => {
+  const soya = diagnosePhoto({ crop: "Soya" });
+  assert.ok(soya.choices.some((choice) => /Soybean rust/.test(choice.name)));
+  const rice = diagnosePhoto({ crop: "Rice" });
+  assert.ok(rice.choices.some((choice) => /Rice blast/.test(choice.name)));
+  const tobacco = diagnosePhoto({ crop: "Tobacco" });
+  assert.ok(tobacco.choices.some((choice) => /Tobacco bushy top/.test(choice.name)));
+  assert.equal(matchDiseaseForCrop("holes in the leaves", "Soya"), null);
+});
+
 test("fertiliser questions hit the general knowledge base", () => {
   const reply = askAdvisor({ text: "which fertiliser should I use for top dress?" });
   assert.equal(reply.kind, "general");
   assert.match(reply.reply, /Urea|CAN|basal/i);
+});
+
+test("answers name the crop the farmer is growing", () => {
+  const result = attachGrowingContext(
+    askAdvisor({ text: "holes in the leaves", topic: "pest" }),
+    [{
+      crop: "Maize",
+      parcelName: "Kaluluma",
+      ageDays: 24,
+      dueActions: ["Top-dress with nitrogen (Maize)"],
+    }]
+  );
+  assert.match(result.reply, /You are growing Maize on Kaluluma \(day 24\)/);
+  assert.match(result.reply, /Fall Armyworm/);
+  assert.match(result.reply, /Today's actions: Maize: Top-dress with nitrogen/);
+});
+
+test("notifications are one per crop plot and skip rain-covered watering", () => {
+  const { notifications, cancelIds } = careNotifications([
+    {
+      date: "2026-09-22",
+      tasks: [
+        { seasonId: "a", crop: "Maize", parcelName: "Kaluluma", ageDays: 24, status: "due", label: "Top-dress with nitrogen (Maize)" },
+        { seasonId: "a", crop: "Maize", parcelName: "Kaluluma", ageDays: 24, status: "due", label: "Water the maize" },
+        { seasonId: "a", crop: "Maize", parcelName: "Kaluluma", ageDays: 24, status: "covered", label: "Water the maize" },
+        { seasonId: "b", crop: "Rice", parcelName: "Paddy", ageDays: 10, status: "due", label: "Weed the rice (Rice)" },
+        { seasonId: "b", crop: "Rice", parcelName: "Paddy", ageDays: 10, status: "done", label: "Water the rice" },
+      ],
+    },
+  ]);
+  assert.equal(notifications.length, 2);
+  assert.equal(notifications[0].title, "Maize · Kaluluma");
+  assert.match(notifications[0].body, /Day 24\. Top-dress with nitrogen\. Water the maize\./);
+  assert.equal(notifications[1].title, "Rice · Paddy");
+  assert.match(notifications[1].body, /Day 10\. Weed the rice\./);
+  assert.ok(cancelIds.includes(notifications[0].id));
+  assert.ok(cancelIds.includes(2201));
 });
 
 test("POST /api/advisor/ask logs a pest report for a signed-in farmer", async (t) => {

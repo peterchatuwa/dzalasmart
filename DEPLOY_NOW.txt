@@ -1,0 +1,127 @@
+========================================
+  MOBILE API - MANUAL DEPLOYMENT STEPS
+========================================
+
+The mobile API code has been committed and pushed to GitHub.
+Follow these steps to deploy it to your VPS:
+
+STEP 1: SSH INTO YOUR VPS
+--------------------------
+Open a terminal and run:
+
+    ssh peter@37.60.252.211
+
+Password: C8$mq0Ws
+
+
+STEP 2: PULL LATEST CODE
+-------------------------
+Once connected, run these commands:
+
+    cd /home/peter/dzalasmart
+    git pull origin cursor/comprehensive-improvements-7360
+
+
+STEP 3: INSTALL DEPENDENCIES
+-----------------------------
+    cd server
+    npm install
+
+
+STEP 4: RESTART THE API
+------------------------
+    pm2 restart nzeru-api
+
+Or if not running yet:
+
+    pm2 start src/index.js --name nzeru-api
+
+
+STEP 5: VERIFY DEPLOYMENT
+--------------------------
+Check the logs:
+
+    pm2 logs nzeru-api --lines 20
+
+
+STEP 6: TEST THE API
+--------------------
+From your local machine or browser, test:
+
+    https://api.zammunda.com/health
+    https://api.zammunda.com/api/mobile/stats
+
+
+========================================
+  WHAT WAS DEPLOYED
+========================================
+
+NEW FILES:
+- server/src/mobile-api.js (Mobile API endpoints module)
+
+UPDATED FILES:
+- server/src/app.js (Added mobile endpoints)
+
+NEW API ENDPOINTS:
+- POST /api/mobile/farmers    (Register farmer)
+- POST /api/mobile/parcels    (Add land parcel)
+- POST /api/mobile/crops      (Record crop data)
+- GET  /api/mobile/stats      (Get statistics)
+- GET  /api/mobile/submissions (Recent submissions)
+
+
+========================================
+  ANDROID APK LOCATION
+========================================
+
+The Android APK is ready for installation:
+
+    /workspace/nzeru-farmer-v1.0.0.apk
+
+Size: 8.4 MB
+
+Install on Android device to test data collection.
+
+
+========================================
+  VPN STATUS
+========================================
+
+VPN configuration is READY but NOT YET DEPLOYED.
+
+Waiting for: Pre-Shared Key (PSK) from Airtel
+
+VPN is only needed for USSD, not for mobile API.
+
+
+========================================
+  NEED HELP?
+========================================
+
+Read detailed guide:
+    /workspace/MOBILE_API_DEPLOYMENT.md
+
+Test endpoints manually:
+    curl https://api.zammunda.com/api/mobile/stats
+
+Check if API is running:
+    ssh peter@37.60.252.211 'pm2 list'
+
+
+========================================
+  DEPLOYMENT CHECKLIST
+========================================
+
+☐ SSH into VPS
+☐ Pull latest code
+☐ Install dependencies
+☐ Restart PM2 service
+☐ Check logs for errors
+☐ Test health endpoint
+☐ Test stats endpoint
+☐ Install APK on device
+☐ Test farmer registration via app
+☐ Verify data syncs to server
+
+
+READY TO DEPLOY!

@@ -1,0 +1,76 @@
+================================
+PRE-BUILD CHECKLIST
+================================
+
+Before building the APK, make sure you have:
+
+☐ Android Studio installed
+  → Download from: https://developer.android.com/studio
+  
+☐ Node.js v22+ installed
+  → Check: Open CMD and run: node --version
+  → Should show: v22.x.x or higher
+  
+☐ JDK 17+ installed (comes with Android Studio)
+  → Check: Open CMD and run: java --version
+  
+☐ Android SDK installed (comes with Android Studio)
+  → In Android Studio: Tools > SDK Manager
+  → Make sure these are checked:
+     • Android SDK Platform 33
+     • Android SDK Build-Tools 33.0.0
+     • Android SDK Platform-Tools
+
+☐ Gradle (comes with Android Studio)
+  → No manual installation needed
+
+☐ Internet connection
+  → First build needs to download dependencies (~200MB)
+
+================================
+FOLDER STRUCTURE YOU'LL HAVE
+================================
+
+C:\Users\peter\Projects\farmer-app\
+├── www/                   ← Your app's HTML/CSS/JS
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+├── android/               ← Android project (auto-generated)
+│   ├── app/
+│   │   └── build/
+│   │       └── outputs/
+│   │           └── apk/
+│   │               └── debug/
+│   │                   └── app-debug.apk  ← YOUR APK WILL BE HERE
+│   └── gradlew.bat
+├── capacitor.config.json
+└── package.json
+
+================================
+ESTIMATED TIME
+================================
+
+First time build:
+• npm install: 2-3 minutes
+• cap sync: 30 seconds
+• Gradle sync: 3-5 minutes
+• Build APK: 2-4 minutes
+─────────────────────────────
+Total: ~10-15 minutes
+
+Subsequent builds:
+• ~2-3 minutes (caches help)
+
+================================
+DISK SPACE NEEDED
+================================
+
+• farmer-app folder: ~15 MB
+• node_modules: ~150 MB
+• Android build files: ~300 MB
+• APK output: ~9 MB
+─────────────────────────────
+Total: ~500 MB free space
+
+================================

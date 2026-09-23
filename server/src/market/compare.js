@@ -1,11 +1,7 @@
 import { matchCommodityName } from "./catalog.js";
 import { fmtPricePerKg } from "./normalize.js";
 import { WAREHOUSE_HUBS } from "./locations.js";
-import {
-  formatNetMargin,
-  formatTransportSummary,
-  resolveTransportCost,
-} from "./logistics.js";
+import { formatNetMargin, formatTransportSummary, resolveTransportCost } from "./logistics.js";
 import { listCommodities, listLatestPrices, resolveCommodity } from "./store.js";
 
 function buyStats(rows) {
@@ -40,9 +36,11 @@ function summarizeRow(row, district) {
 
 function pickPrimaryPrice(rows, { marketOnly = false } = {}) {
   const pool = marketOnly ? rows.filter((row) => row.priceKind === "market") : rows;
-  return pool.find((row) => row.sourceSlug === "localbuy" && row.buyPricePerKg != null)
-    || pool.find((row) => row.buyPricePerKg != null)
-    || null;
+  return (
+    pool.find((row) => row.sourceSlug === "localbuy" && row.buyPricePerKg != null) ||
+    pool.find((row) => row.buyPricePerKg != null) ||
+    null
+  );
 }
 
 function sellPriceAt(row) {
@@ -53,9 +51,7 @@ export async function compareDistrictPrices(db, { commoditySlug, districts = [] 
   const commodity = await resolveCommodity(db, commoditySlug);
   if (!commodity) throw new Error("Unknown commodity");
 
-  const districtList = districts.length
-    ? districts
-    : WAREHOUSE_HUBS;
+  const districtList = districts.length ? districts : WAREHOUSE_HUBS;
 
   const rows = [];
   for (const district of districtList) {
@@ -69,15 +65,17 @@ export async function compareDistrictPrices(db, { commoditySlug, districts = [] 
     commodity: commodity.name,
     commoditySlug: commodity.slug,
     districts: rows,
-    stats: stats ? {
-      lowestBuy: stats.lowestBuy,
-      highestBuy: stats.highestBuy,
-      spread: stats.spread,
-      lowestDistrict: stats.lowest.district || stats.lowest.market,
-      highestDistrict: stats.highest.district || stats.highest.market,
-      lowestBuyLabel: fmtPricePerKg(stats.lowestBuy),
-      highestBuyLabel: fmtPricePerKg(stats.highestBuy),
-    } : null,
+    stats: stats
+      ? {
+          lowestBuy: stats.lowestBuy,
+          highestBuy: stats.highestBuy,
+          spread: stats.spread,
+          lowestDistrict: stats.lowest.district || stats.lowest.market,
+          highestDistrict: stats.highest.district || stats.highest.market,
+          lowestBuyLabel: fmtPricePerKg(stats.lowestBuy),
+          highestBuyLabel: fmtPricePerKg(stats.highestBuy),
+        }
+      : null,
   };
 }
 
@@ -86,8 +84,9 @@ export async function compareSourcePrices(db, { commoditySlug, district }) {
   if (!commodity) throw new Error("Unknown commodity");
   if (!district) throw new Error("District is required");
 
-  const sources = (await listLatestPrices(db, { commoditySlug: commodity.slug, district }))
-    .map((row) => summarizeRow(row, district));
+  const sources = (await listLatestPrices(db, { commoditySlug: commodity.slug, district })).map((row) =>
+    summarizeRow(row, district)
+  );
   const marketSources = sources.filter((row) => row.priceKind === "market");
   const procurementSources = sources.filter((row) => row.priceKind === "procurement");
   const stats = buyStats(sources);
@@ -99,15 +98,17 @@ export async function compareSourcePrices(db, { commoditySlug, district }) {
     sources,
     marketSources,
     procurementSources,
-    stats: stats ? {
-      lowestBuy: stats.lowestBuy,
-      highestBuy: stats.highestBuy,
-      spread: stats.spread,
-      lowestSource: stats.lowest.source,
-      highestSource: stats.highest.source,
-      lowestBuyLabel: fmtPricePerKg(stats.lowestBuy),
-      highestBuyLabel: fmtPricePerKg(stats.highestBuy),
-    } : null,
+    stats: stats
+      ? {
+          lowestBuy: stats.lowestBuy,
+          highestBuy: stats.highestBuy,
+          spread: stats.spread,
+          lowestSource: stats.lowest.source,
+          highestSource: stats.highest.source,
+          lowestBuyLabel: fmtPricePerKg(stats.lowestBuy),
+          highestBuyLabel: fmtPricePerKg(stats.highestBuy),
+        }
+      : null,
   };
 }
 
@@ -133,7 +134,7 @@ export async function findMarketOpportunities(db, { commoditySlug, loadKg } = {}
 
     for (const fromDistrict of WAREHOUSE_HUBS) {
       const buyRow = hubPrices.get(fromDistrict);
-        if (buyRow?.buyPricePerKg == null) continue;
+      if (buyRow?.buyPricePerKg == null) continue;
       for (const toDistrict of WAREHOUSE_HUBS) {
         if (toDistrict === fromDistrict) continue;
         const sellRow = hubPrices.get(toDistrict);
@@ -168,10 +169,10 @@ export async function findMarketOpportunities(db, { commoditySlug, loadKg } = {}
           spreadLabel: fmtPricePerKg(grossSpreadPerKg),
           profitable: netMarginPerKg > 0,
           note: transport
-            ? `${commodity.name}: buy ${buyRow.buyPrice} in ${fromDistrict}, `
-              + `sell ${fmtPricePerKg(sellPrice)} in ${toDistrict}. `
-              + `${formatTransportSummary(transport, transportPerKg)}. `
-              + `Net margin ${formatNetMargin(netMarginPerKg)}${netMarginPerKg > 0 ? "" : " (not profitable after haulage)"}.`
+            ? `${commodity.name}: buy ${buyRow.buyPrice} in ${fromDistrict}, ` +
+              `sell ${fmtPricePerKg(sellPrice)} in ${toDistrict}. ` +
+              `${formatTransportSummary(transport, transportPerKg)}. ` +
+              `Net margin ${formatNetMargin(netMarginPerKg)}${netMarginPerKg > 0 ? "" : " (not profitable after haulage)"}.`
             : `Buy in ${fromDistrict}, sell in ${toDistrict}. Transport cost not configured.`,
         });
       }

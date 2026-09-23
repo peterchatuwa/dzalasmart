@@ -81,8 +81,9 @@ test("staff can import ADMARC CSV prices", async (t) => {
   });
   assert.equal(imported.status, 201);
 
-  const sources = await fetch(`${url}/api/market/sources/compare?commodity=maize&district=Lilongwe`)
-    .then((r) => r.json());
+  const sources = await fetch(`${url}/api/market/sources/compare?commodity=maize&district=Lilongwe`).then((r) =>
+    r.json()
+  );
   assert.ok(sources.sources.some((row) => row.sourceSlug === "admarc" && row.priceKind === "procurement"));
 });
 
@@ -90,13 +91,17 @@ test("market compare API highlights warehouse spreads", async (t) => {
   const db = await openDatabase(":memory:");
   await seedMarketCatalog(db);
   const catalog = parseLocalBuyHtml(SAMPLE_HTML).catalog;
-  await insertObservations(db, "localbuy", catalog.map((row) => ({
-    commoditySlug: row.commoditySlug,
-    locationSlug: `warehouse-${row.hub.toLowerCase()}`,
-    buyPricePerKg: row.buyPricePerKg,
-    sellPricePerKg: row.sellPricePerKg,
-    grade: row.grade,
-  })));
+  await insertObservations(
+    db,
+    "localbuy",
+    catalog.map((row) => ({
+      commoditySlug: row.commoditySlug,
+      locationSlug: `warehouse-${row.hub.toLowerCase()}`,
+      buyPricePerKg: row.buyPricePerKg,
+      sellPricePerKg: row.sellPricePerKg,
+      grade: row.grade,
+    }))
+  );
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);
   t.after(close);

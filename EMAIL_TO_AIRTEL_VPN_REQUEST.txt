@@ -1,0 +1,214 @@
+================================================================================
+                    EMAIL TO AIRTEL - VPN CONFIGURATION REQUEST
+                        USSD Integration: Nzeru za Alimi
+================================================================================
+
+TO: [Airtel USSD Integration Team Email]
+CC: [Airtel Technical Support / Account Manager]
+SUBJECT: USSD Integration VPN Configuration Request - Nzeru za Alimi (*413#)
+
+--------------------------------------------------------------------------------
+
+Dear Airtel USSD Integration Team,
+
+We are in the process of setting up USSD integration for our service "Nzeru za 
+Alimi" (Smart Farming Platform) using short code *413#.
+
+We understand that Airtel requires VPN connectivity for all USSD integrations 
+for security purposes. To proceed with the setup, we kindly request the 
+following VPN configuration details and documentation:
+
+
+📋 REQUIRED VPN CONFIGURATION INFORMATION:
+────────────────────────────────────────────────────────────────────────────
+
+1. VPN PROTOCOL & TYPE
+   • Which VPN protocol does Airtel support?
+     (IPSec/IKEv1/IKEv2/OpenVPN/WireGuard/L2TP/Other)
+   • Site-to-Site (S2S) or Client-to-Site VPN?
+
+2. AIRTEL VPN GATEWAY DETAILS
+   • Public IP address of Airtel's VPN concentrator/gateway
+   • VPN gateway hostname (if applicable)
+   • Port number(s) used
+
+3. AUTHENTICATION METHOD
+   • Pre-shared Key (PSK) - please provide
+   • Digital Certificates - please provide CA certificate
+   • Username/Password - please provide credentials
+
+4. ENCRYPTION & SECURITY SETTINGS
+   • IKE Policy settings (Phase 1)
+     - Encryption algorithm (e.g., AES-256, AES-128)
+     - Hash algorithm (e.g., SHA-256, SHA-1)
+     - DH Group (e.g., Group 14, Group 19)
+     - Lifetime
+   
+   • IPSec Policy settings (Phase 2)
+     - Encryption algorithm
+     - Hash algorithm
+     - PFS Group
+     - Lifetime
+
+5. NETWORK CONFIGURATION
+   • Local subnet range (our side)
+   • Remote subnet range (Airtel's side - 172.26.x.x network)
+   • VPN tunnel IP addressing scheme
+   • MTU size requirements
+
+6. ROUTING REQUIREMENTS
+   • Static routes to be configured
+   • BGP configuration (if applicable)
+   • Gateway addresses
+
+7. DOCUMENTATION
+   • VPN setup guide or configuration template
+   • Network topology diagram
+   • Testing procedures
+   • Troubleshooting contacts
+
+
+🖥️ OUR SERVER DETAILS:
+────────────────────────────────────────────────────────────────────────────
+
+Public IP Address:          37.60.252.211
+Domain Name:                api.zammunda.com
+Server Location:            Malawi
+Operating System:           Ubuntu Linux 22.04 LTS
+USSD API Endpoint:          https://api.zammunda.com/ussd
+
+VPN Capabilities:           We can support IPSec (StrongSwan), OpenVPN, 
+                            WireGuard, or any standard VPN protocol.
+
+USSD Service Code:          *413#
+Service Name:               Nzeru za Alimi (Smart Farming Platform)
+
+
+📞 PROJECT CONTACTS:
+────────────────────────────────────────────────────────────────────────────
+
+Technical Lead:             Peter Chatuwa
+Email:                      peter.chatuwa@zammunda.com
+Phone:                      [Your Phone Number]
+Organization:               Zammunda / Nzeru za Alimi
+
+
+⏱️ TIMELINE REQUEST:
+────────────────────────────────────────────────────────────────────────────
+
+We are ready to implement the VPN configuration as soon as we receive the 
+necessary details. Our estimated timeline:
+
+• VPN setup & configuration:    1-2 days after receiving details
+• Testing & validation:          1-3 days
+• Production readiness:          Within 1 week of receiving VPN config
+
+Could you please provide:
+1. Expected timeline for providing VPN configuration details
+2. Airtel's technical support contact for VPN setup assistance
+3. Testing environment availability (if any) before production
+
+
+❓ ADDITIONAL QUESTIONS:
+────────────────────────────────────────────────────────────────────────────
+
+1. Do you provide a pre-configured VPN appliance or VM image?
+2. Are there redundant VPN gateways for high availability?
+3. What is the expected VPN uptime SLA?
+4. Are there any VPN-related setup fees or recurring costs?
+5. Can we schedule a technical call to discuss the VPN setup?
+6. Is there a staging/test VPN environment we can use first?
+
+
+📄 COMPLETED DOCUMENTATION:
+────────────────────────────────────────────────────────────────────────────
+
+We have already prepared:
+✓ PCR (Policy Change Request) form - ready to submit once VPN is configured
+✓ USSD API technical specifications
+✓ Network architecture documentation
+✓ Security and compliance documentation
+
+We are fully prepared to proceed with the VPN setup immediately upon receiving 
+the configuration details from your team.
+
+
+🙏 REQUEST FOR RESPONSE:
+────────────────────────────────────────────────────────────────────────────
+
+Could you please:
+1. Acknowledge receipt of this email
+2. Provide the VPN configuration package
+3. Assign a technical contact person for VPN setup support
+4. Provide an estimated timeline for VPN provisioning
+
+We appreciate your prompt assistance and look forward to completing this 
+integration successfully.
+
+
+Best regards,
+
+Peter Chatuwa
+Technical Lead
+Nzeru za Alimi / Zammunda
+Email: peter.chatuwa@zammunda.com
+Phone: [Your Phone Number]
+
+
+────────────────────────────────────────────────────────────────────────────
+Service: Nzeru za Alimi (Smart Farming Platform)
+USSD Code: *413#
+Server: api.zammunda.com (37.60.252.211)
+Date: September 17, 2026
+────────────────────────────────────────────────────────────────────────────
+
+
+ATTACHMENTS (if sending):
+□ Server details document
+□ Network configuration overview
+□ Company/organization registration documents (if required)
+
+
+================================================================================
+                            END OF EMAIL TEMPLATE
+================================================================================
+
+
+INSTRUCTIONS FOR SENDING:
+────────────────────────────────────────────────────────────────────────────
+
+1. Copy the content above (from "Dear Airtel..." to your signature)
+2. Paste into your email client
+3. Replace [Your Phone Number] with your actual phone number
+4. Add Airtel's USSD integration team email address
+5. CC any relevant Airtel contacts (technical support, account manager)
+6. Send and keep a copy for your records
+7. Follow up after 2-3 business days if no response
+
+
+EXPECTED RESPONSE FROM AIRTEL:
+────────────────────────────────────────────────────────────────────────────
+
+Airtel should respond with:
+✓ VPN configuration document (PDF or Word)
+✓ Pre-shared key or certificate files
+✓ Network diagram showing VPN topology
+✓ Contact person for technical support
+✓ Timeline for VPN provisioning
+✓ Any additional requirements or forms to complete
+
+
+AFTER RECEIVING VPN DETAILS:
+────────────────────────────────────────────────────────────────────────────
+
+Once Airtel provides the VPN configuration, I can help you:
+1. Install and configure the VPN software on your VPS
+2. Set up the VPN tunnel
+3. Configure firewall rules
+4. Test connectivity
+5. Route USSD traffic through VPN
+6. Perform end-to-end testing
+7. Update and resubmit the PCR form with VPN details
+
+
+================================================================================

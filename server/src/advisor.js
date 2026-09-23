@@ -1,8 +1,14 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { APP_NAME } from "./brand.js";
 
 export const SOIL_TYPES = ["Sandy", "Sandy loam", "Loamy", "Clay loam", "Clay"];
 export const NUTRIENT_STATUSES = [
-  "Low nitrogen", "Low phosphorus", "Low potassium", "Balanced / fertile", "Acidic soil",
+  "Low nitrogen",
+  "Low phosphorus",
+  "Low potassium",
+  "Balanced / fertile",
+  "Acidic soil",
 ];
 
 export const CROP_INFO = {
@@ -56,101 +62,267 @@ export const CROP_INFO = {
 export const DISEASE_DB = [
   {
     name: "Fall Armyworm (on maize)",
-    keywords: ["ragged leaf", "ragged leaves", "window pane", "windowing", "frass", "droppings in whorl", "caterpillar", "leaf holes", "holes in the leaves", "holes in leaves", "worms on leaves", "mphutsi"],
+    crops: ["maize"],
+    lookFor: "Ragged holes or droppings in the maize whorl",
+    keywords: [
+      "ragged leaf",
+      "ragged leaves",
+      "window pane",
+      "windowing",
+      "frass",
+      "droppings in whorl",
+      "caterpillar",
+      "leaf holes",
+      "holes in the leaves",
+      "holes in leaves",
+      "worms on leaves",
+      "mphutsi",
+    ],
     chemical: "Emamectin benzoate or Lambda-cyhalothrin sprayed into the whorl, following the product label rate.",
-    cultural: "Plant early, hand-pick and destroy egg clusters and young caterpillars, and avoid unnecessary spraying so natural predators can help.",
+    cultural:
+      "Plant early, hand-pick and destroy egg clusters and young caterpillars, and avoid unnecessary spraying so natural predators can help.",
   },
   {
     name: "Maize Streak Virus",
+    crops: ["maize"],
+    lookFor: "Yellow streaks along the maize leaves",
     keywords: ["streak", "yellow streak", "stunt", "stunted maize", "yellow spots", "mawanga achikasu", "vibiriwiri"],
     chemical: "No direct chemical cure — control the leafhopper insect that spreads it with a recommended insecticide.",
-    cultural: "Use tolerant/resistant maize varieties, plant early with the first rains, and remove and destroy infected plants.",
+    cultural:
+      "Use tolerant/resistant maize varieties, plant early with the first rains, and remove and destroy infected plants.",
   },
   {
     name: "Groundnut Rosette Virus",
+    crops: ["groundnut"],
+    lookFor: "Yellow, stunted groundnut plants in a rosette",
     keywords: ["rosette", "yellowing groundnut", "mottle", "stunted groundnut"],
-    chemical: "Control the aphid that spreads it with a systemic insecticide such as Imidacloprid, applied early in the season.",
-    cultural: "Plant early and densely, use rosette-resistant varieties, and remove volunteer groundnut plants between seasons.",
+    chemical:
+      "Control the aphid that spreads it with a systemic insecticide such as Imidacloprid, applied early in the season.",
+    cultural:
+      "Plant early and densely, use rosette-resistant varieties, and remove volunteer groundnut plants between seasons.",
   },
   {
     name: "Bean Rust",
+    crops: ["bean"],
+    lookFor: "Orange or brown pustules on bean leaves",
     keywords: ["orange spot", "rust", "pustule", "brown spot bean", "bean leaf"],
     chemical: "A protectant fungicide such as Mancozeb or Chlorothalonil, applied at the first sign of spotting.",
-    cultural: "Rotate away from beans for a season, avoid overhead watering late in the day, and use resistant varieties where available.",
+    cultural:
+      "Rotate away from beans for a season, avoid overhead watering late in the day, and use resistant varieties where available.",
   },
   {
     name: "Cassava Mosaic Disease",
+    crops: ["cassava"],
+    lookFor: "Distorted cassava leaves with a mosaic pattern",
     keywords: ["mosaic", "cassava leaf", "distorted cassava"],
     chemical: "No chemical cure — the disease is managed by controlling the whitefly that spreads it.",
-    cultural: "Always plant cuttings from disease-free cassava, remove and burn infected plants promptly, and choose mosaic-tolerant varieties.",
+    cultural:
+      "Always plant cuttings from disease-free cassava, remove and burn infected plants promptly, and choose mosaic-tolerant varieties.",
   },
   {
     name: "Maize Stalk Borer",
-    keywords: ["stem hole", "tunnel", "tunnels", "dead heart", "stalk hole", "holes in the stem", "holes in stem", "borer", "wilt", "wilting", "wilting stalks", "kufota"],
+    crops: ["maize"],
+    lookFor: "Holes in the maize stem or a dead heart",
+    keywords: [
+      "stem hole",
+      "tunnel",
+      "tunnels",
+      "dead heart",
+      "stalk hole",
+      "holes in the stem",
+      "holes in stem",
+      "borer",
+      "wilt",
+      "wilting",
+      "wilting stalks",
+      "kufota",
+    ],
     chemical: "An insecticide dust such as Carbaryl, or Chlorpyrifos, applied into the whorl.",
-    cultural: "Destroy old maize stalks and crop residue right after harvest, and plant early to avoid peak borer activity.",
+    cultural:
+      "Destroy old maize stalks and crop residue right after harvest, and plant early to avoid peak borer activity.",
   },
   {
     name: "Aphids (general)",
+    crops: ["any"],
+    lookFor: "Sticky, curling leaves with clusters of tiny insects",
     keywords: ["sticky leaf", "curl", "tiny insect", "cluster of insect", "aphid"],
     chemical: "A neem-based biopesticide, or Imidacloprid for heavier infestations.",
-    cultural: "Encourage ladybird beetles and other natural predators, and avoid over-applying nitrogen fertiliser, which attracts aphids.",
+    cultural:
+      "Encourage ladybird beetles and other natural predators, and avoid over-applying nitrogen fertiliser, which attracts aphids.",
+  },
+  {
+    name: "Soybean rust",
+    crops: ["soya"],
+    lookFor: "Brown or orange pustules on the underside of soya leaves",
+    keywords: ["soya rust", "soybean rust", "pustules on soya", "orange under soya"],
+    chemical: "A labelled soybean-rust fungicide, applied at the first pustules and following the product label rate.",
+    cultural: "Plant a rust-tolerant variety, scout the underside of leaves from flowering, and remove volunteer soya between seasons.",
+  },
+  {
+    name: "Frogeye leaf spot",
+    crops: ["soya"],
+    lookFor: "Round brown soya leaf spots with a pale centre",
+    keywords: ["frogeye", "frog eye", "pale centre on soya", "soya leaf spot"],
+    chemical: "A labelled fungicide for frogeye leaf spot, following the product label rate.",
+    cultural: "Use certified seed, rotate away from soya, and avoid working in the field while the leaves are wet.",
+  },
+  {
+    name: "Rice blast",
+    crops: ["rice"],
+    lookFor: "Diamond-shaped grey spots on rice leaves",
+    keywords: ["rice blast", "diamond-shaped", "diamond spots on rice", "blast on rice"],
+    chemical: "A labelled rice-blast fungicide, following the product label rate. There is no benefit in guessing a dose.",
+    cultural: "Use a blast-tolerant variety, avoid excess nitrogen, and keep the nursery and field free of infected residue.",
+  },
+  {
+    name: "Rice yellow mottle",
+    crops: ["rice"],
+    lookFor: "Yellow mottling and stunting on rice leaves",
+    keywords: ["yellow mottle", "rice yellow", "mottled rice"],
+    chemical: "No chemical cure. Control the beetles that spread it with a labelled insecticide if an officer recommends one.",
+    cultural: "Plant resistant rice, rogue out infected plants, and keep the field edges clear of grassy weeds.",
+  },
+  {
+    name: "Tobacco bushy top",
+    crops: ["tobacco"],
+    lookFor: "Yellowing and bunching at the top of the tobacco plant",
+    keywords: ["bushy top", "bunching at the top", "tobacco top yellow"],
+    chemical: "No cure for the virus. Control the aphids that spread it with a labelled insecticide, following the product label rate.",
+    cultural: "Remove and destroy infected plants, control aphids early in the nursery and field, and do not use infected seedlings.",
+  },
+  {
+    name: "Tobacco brown spot",
+    crops: ["tobacco"],
+    lookFor: "Brown round spots with rings on older tobacco leaves",
+    keywords: ["tobacco brown spot", "rings on tobacco", "brown spots on tobacco"],
+    chemical: "A labelled tobacco fungicide, following the product label rate.",
+    cultural: "Avoid excess nitrogen late in the season, prime ripe leaves on time, and destroy stalk residue after harvest.",
   },
 ];
 
 export const GENERAL_AG_KB = [
-  { topic: "Fertiliser & soil nutrients", keywords: ["fertiliser", "fertilizer", "manure", "compost", "soil nutrient", "top dress", "topdress", "nutrient", "nitrogen", "feteleza"],
-    answer: "Match fertiliser to a soil test where possible. As a rule of thumb: apply basal fertiliser (like D-Compound or NPK) at planting, then top-dress with Urea or CAN 3–5 weeks later once the crop is established. Manure and compost improve soil structure over several seasons — apply well before planting so it has time to break down." },
-  { topic: "Irrigation & water", keywords: ["irrigate", "irrigation", "watering", "drip", "water my", "moisture stress"],
-    answer: "If you're rainfed, plant right after the first reliable rains and consider small water-harvesting basins near the field. If you have irrigation access, drip systems use far less water than flood irrigation and reduce disease risk from wet leaves." },
-  { topic: "Land preparation", keywords: ["plough", "ploughing", "land prep", "clear the land", "ridging", "bed preparation"],
-    answer: "Prepare land 2–4 weeks before the rains where possible — ploughing too close to planting can leave soil loose and prone to erosion in early storms. Ridging helps drainage on heavier soils; flat planting suits lighter, sandy soils." },
-  { topic: "Storage & post-harvest loss", keywords: ["storage", "store my", "post-harvest", "losing grain", "weevil", "grain store"],
-    answer: "Dry grain to the recommended moisture level before storing (around 13% for maize), use hermetic (airtight) bags where possible to control weevils without chemicals, and keep stores off the ground and away from damp walls." },
-  { topic: "Selling & market timing", keywords: ["sell my", "best price", "when to sell", "market price", "which buyer", "where to sell"],
-    answer: "Prices are usually lowest right after harvest when everyone sells at once, and often rise a few months later if you can store safely. Compare at least two buyers before committing, and check this dashboard's market prices first." },
-  { topic: "Loans & financing", keywords: ["loan", "finance", "financing", "borrow money", "credit", "bankable", "ngongole"],
-    answer: `Lenders generally want to see a consistent record — planting dates, input costs, yields and sales — before extending credit. Building up your season log on ${APP_NAME} is exactly the kind of evidence they look for.` },
-  { topic: "Livestock feeding", keywords: ["feed my cattle", "feed my goat", "feed my chicken", "feed my animal", "livestock feed", "fodder", "feeding my"],
-    answer: "Balance energy (maize bran, crop residues) with protein (legume residues, oilcake) and always provide clean water. Introduce any new feed gradually over 5–7 days to avoid digestive upset." },
-  { topic: "Livestock disease & vaccination", keywords: ["vaccinate", "vaccination", "sick cattle", "sick goat", "sick chicken", "animal disease", "deworm"],
-    answer: "Keep a basic vaccination and deworming calendar for your herd or flock, isolate any sick animal immediately, and contact a local veterinary or livestock extension officer for anything beyond routine care — don't guess with medicine dosages." },
-  { topic: "Weather & climate risk", keywords: ["drought", "dry spell", "too much rain", "flooding", "climate risk"],
-    answer: "During a dry spell, prioritise your most valuable or most advanced crop for any water you have, and delay new planting until rain is more reliable. In excess rain, prioritise drainage — waterlogged roots fail faster than dry ones." },
-  { topic: "Cooperatives & registration", keywords: ["join a cooperative", "register with", "farmers union", "how do i join"],
-    answer: "You can register with a cooperative or the Farmers Union from this system — an officer can then see your farm record and help connect you to bulk input buying and group marketing." },
+  {
+    topic: "Fertiliser & soil nutrients",
+    keywords: [
+      "fertiliser",
+      "fertilizer",
+      "manure",
+      "compost",
+      "soil nutrient",
+      "top dress",
+      "topdress",
+      "nutrient",
+      "nitrogen",
+      "feteleza",
+    ],
+    answer:
+      "Match fertiliser to a soil test where possible. As a rule of thumb: apply basal fertiliser (like D-Compound or NPK) at planting, then top-dress with Urea or CAN 3–5 weeks later once the crop is established. Manure and compost improve soil structure over several seasons — apply well before planting so it has time to break down.",
+  },
+  {
+    topic: "Irrigation & water",
+    keywords: ["irrigate", "irrigation", "watering", "drip", "water my", "moisture stress"],
+    answer:
+      "If you're rainfed, plant right after the first reliable rains and consider small water-harvesting basins near the field. If you have irrigation access, drip systems use far less water than flood irrigation and reduce disease risk from wet leaves.",
+  },
+  {
+    topic: "Land preparation",
+    keywords: ["plough", "ploughing", "land prep", "clear the land", "ridging", "bed preparation"],
+    answer:
+      "Prepare land 2–4 weeks before the rains where possible — ploughing too close to planting can leave soil loose and prone to erosion in early storms. Ridging helps drainage on heavier soils; flat planting suits lighter, sandy soils.",
+  },
+  {
+    topic: "Storage & post-harvest loss",
+    keywords: ["storage", "store my", "post-harvest", "losing grain", "weevil", "grain store"],
+    answer:
+      "Dry grain to the recommended moisture level before storing (around 13% for maize), use hermetic (airtight) bags where possible to control weevils without chemicals, and keep stores off the ground and away from damp walls.",
+  },
+  {
+    topic: "Selling & market timing",
+    keywords: ["sell my", "best price", "when to sell", "market price", "which buyer", "where to sell"],
+    answer:
+      "Prices are usually lowest right after harvest when everyone sells at once, and often rise a few months later if you can store safely. Compare at least two buyers before committing, and check this dashboard's market prices first.",
+  },
+  {
+    topic: "Loans & financing",
+    keywords: ["loan", "finance", "financing", "borrow money", "credit", "bankable", "ngongole"],
+    answer: `Lenders generally want to see a consistent record — planting dates, input costs, yields and sales — before extending credit. Building up your season log on ${APP_NAME} is exactly the kind of evidence they look for.`,
+  },
+  {
+    topic: "Livestock feeding",
+    keywords: [
+      "feed my cattle",
+      "feed my goat",
+      "feed my chicken",
+      "feed my animal",
+      "livestock feed",
+      "fodder",
+      "feeding my",
+    ],
+    answer:
+      "Balance energy (maize bran, crop residues) with protein (legume residues, oilcake) and always provide clean water. Introduce any new feed gradually over 5–7 days to avoid digestive upset.",
+  },
+  {
+    topic: "Livestock disease & vaccination",
+    keywords: ["vaccinate", "vaccination", "sick cattle", "sick goat", "sick chicken", "animal disease", "deworm"],
+    answer:
+      "Keep a basic vaccination and deworming calendar for your herd or flock, isolate any sick animal immediately, and contact a local veterinary or livestock extension officer for anything beyond routine care — don't guess with medicine dosages.",
+  },
+  {
+    topic: "Weather & climate risk",
+    keywords: ["drought", "dry spell", "too much rain", "flooding", "climate risk"],
+    answer:
+      "During a dry spell, prioritise your most valuable or most advanced crop for any water you have, and delay new planting until rain is more reliable. In excess rain, prioritise drainage — waterlogged roots fail faster than dry ones.",
+  },
+  {
+    topic: "Cooperatives & registration",
+    keywords: ["join a cooperative", "register with", "farmers union", "how do i join"],
+    answer:
+      "You can register with a cooperative or the Farmers Union from this system — an officer can then see your farm record and help connect you to bulk input buying and group marketing.",
+  },
 ];
 
 export const COPY = {
   en: {
     greeting: `Hello! I'm the ${APP_NAME} farming assistant. Ask me what to grow for your soil, or describe a pest or disease problem below.`,
-    disclaimer: "This assistant gives simplified, illustrative advice for this demo. Always confirm chemical products and rates with your local extension officer before use.",
-    cropLeadIn: (soil, nutrient) => `Based on ${soil.toLowerCase()} soil with ${nutrient.toLowerCase()}, these tend to do well:`,
-    noMatch: "I couldn't match specific symptoms. Try describing the colour, which part of the plant is affected (leaf, stem, pod), and the pattern (spots, holes, wilting).",
+    disclaimer:
+      "This assistant gives simplified, illustrative advice for this demo. Always confirm chemical products and rates with your local extension officer before use.",
+    cropLeadIn: (soil, nutrient) =>
+      `Based on ${soil.toLowerCase()} soil with ${nutrient.toLowerCase()}, these tend to do well:`,
+    noMatch:
+      "I couldn't match specific symptoms. Try describing the colour, which part of the plant is affected (leaf, stem, pod), and the pattern (spots, holes, wilting).",
     matchedIntro: (name) => `This sounds like it could be ${name}.`,
     chemicalLbl: "Chemical control:",
     culturalLbl: "Non-chemical / cultural control:",
-    fallback: "I don't have a specific answer on file for that yet, but I can help with crop choice, pests and disease, fertiliser and soil, irrigation, livestock, storage, loans, or market timing — try rephrasing, or ask your local extension officer.",
+    fallback:
+      "I don't have a specific answer on file for that yet, but I can help with crop choice, pests and disease, fertiliser and soil, irrigation, livestock, storage, loans, or market timing — try rephrasing, or ask your local extension officer.",
   },
   ny: {
     greeting: `Moni! Ndine wothandizira waulimi wa ${APP_NAME}. Funsani za mbewu zoyenera nthaka yanu, kapena fotokozani za tizilombo kapena matenda a mbewu pansipa.`,
-    disclaimer: "Wothandizirayu akupereka malangizo osavuta a chitsanzo. Onetsetsani ndi wa Ulimi musanagwiritse ntchito mankhwala aliwonse.",
-    cropLeadIn: (soil, nutrient) => `Poganizira nthaka ya ${soil.toLowerCase()} ndi ${nutrient.toLowerCase()}, mbewu izi zingakhale zabwino:`,
-    noMatch: "Sindinapeze chizindikiro chenicheni. Fotokozaninso mtundu, gawo la mbewu limene lakhudzidwa, ndi mmene zikuwonekera (mawanga, mabowo, kufota).",
+    disclaimer:
+      "Wothandizirayu akupereka malangizo osavuta a chitsanzo. Onetsetsani ndi wa Ulimi musanagwiritse ntchito mankhwala aliwonse.",
+    cropLeadIn: (soil, nutrient) =>
+      `Poganizira nthaka ya ${soil.toLowerCase()} ndi ${nutrient.toLowerCase()}, mbewu izi zingakhale zabwino:`,
+    noMatch:
+      "Sindinapeze chizindikiro chenicheni. Fotokozaninso mtundu, gawo la mbewu limene lakhudzidwa, ndi mmene zikuwonekera (mawanga, mabowo, kufota).",
     matchedIntro: (name) => `Izi zikuwoneka ngati ${name}.`,
     chemicalLbl: "Mankhwala oyenera:",
     culturalLbl: "Njira zopanda mankhwala:",
-    fallback: "Sindili ndi yankho lenileni pa izi, koma ndingathandize pa mbewu, tizilombo, feteleza, kutunga madzi, ziweto, kusunga, ngongole, kapena msika — funsani wa Ulimi wa kudera lanu.",
+    fallback:
+      "Sindili ndi yankho lenileni pa izi, koma ndingathandize pa mbewu, tizilombo, feteleza, kutunga madzi, ziweto, kusunga, ngongole, kapena msika — funsani wa Ulimi wa kudera lanu.",
   },
   tum: {
     greeting: `Tempokani! Ndine wovwira wa ulimi wa ${APP_NAME}. Munifumbe za mbeu izo zingemera pa charu chinu, panandi mulongosole za tuvingondo panji matenda gha mbeu pasi apa.`,
-    disclaimer: "Wovwira uyu wakupeleka ulongozgi wapadera wa chiyelezgero. Fumbani wa vilimo pambere mundagwiliskire ntchito mankhwala ghalighose.",
-    cropLeadIn: (soil, nutrient) => `Pakuwona charu cha ${soil.toLowerCase()} na ${nutrient.toLowerCase()}, mbeu izi zingemera makola:`,
-    noMatch: "Nkhupulika yayi vinthu ivyo mwalongosola makola. Longosolani cha, chigaŵa cha mbeu icho chakhwaskika, na umo vikuwonekera (vibiriwiri, viwaya, kufota).",
+    disclaimer:
+      "Wovwira uyu wakupeleka ulongozgi wapadera wa chiyelezgero. Fumbani wa vilimo pambere mundagwiliskire ntchito mankhwala ghalighose.",
+    cropLeadIn: (soil, nutrient) =>
+      `Pakuwona charu cha ${soil.toLowerCase()} na ${nutrient.toLowerCase()}, mbeu izi zingemera makola:`,
+    noMatch:
+      "Nkhupulika yayi vinthu ivyo mwalongosola makola. Longosolani cha, chigaŵa cha mbeu icho chakhwaskika, na umo vikuwonekera (vibiriwiri, viwaya, kufota).",
     matchedIntro: (name) => `Ichi chikuwoneka nga ${name}.`,
     chemicalLbl: "Mankhwala ghakwenelela:",
     culturalLbl: "Nthowa zambura mankhwala:",
-    fallback: "Nkhulije yankho lenileni pa ivi, kweni ningakuvwira pa mbeu, tuvingondo, feteleza, maji, viweto, kusunga, ngongole, panji msika — fumbani wa vilimo wa mu chigaŵa chinu.",
+    fallback:
+      "Nkhulije yankho lenileni pa ivi, kweni ningakuvwira pa mbeu, tuvingondo, feteleza, maji, viweto, kusunga, ngongole, panji msika — fumbani wa vilimo wa mu chigaŵa chinu.",
   },
 };
 
@@ -164,13 +336,18 @@ export function normalizeLang(lang) {
 }
 
 export function recommendCrops(soil, nutrient) {
-  const scored = Object.entries(CROP_INFO).map(([crop, info]) => {
-    let score = 0;
-    if (info.soils.includes(soil)) score += 2;
-    if (info.nutrients.includes(nutrient)) score += 2;
-    return { crop, score };
-  }).sort((a, b) => b.score - a.score);
-  const top = scored.filter((row) => row.score > 0).slice(0, 3).map((row) => row.crop);
+  const scored = Object.entries(CROP_INFO)
+    .map(([crop, info]) => {
+      let score = 0;
+      if (info.soils.includes(soil)) score += 2;
+      if (info.nutrients.includes(nutrient)) score += 2;
+      return { crop, score };
+    })
+    .sort((a, b) => b.score - a.score);
+  const top = scored
+    .filter((row) => row.score > 0)
+    .slice(0, 3)
+    .map((row) => row.crop);
   return top.length ? top : scored.slice(0, 2).map((row) => row.crop);
 }
 
@@ -186,6 +363,75 @@ export function matchDisease(text) {
     }
   }
   return bestScore > 0 ? best : null;
+}
+
+function cropKey(crop) {
+  const key = String(crop || "").toLowerCase();
+  if (key.includes("ground")) return "groundnut";
+  if (key.includes("maize") || key.includes("chimanga")) return "maize";
+  if (key.includes("soya") || key.includes("soy")) return "soya";
+  if (key.includes("rice")) return "rice";
+  if (key.includes("tobacco") || key.includes("fodya")) return "tobacco";
+  if (key.includes("cassava")) return "cassava";
+  if (key.includes("cotton")) return "cotton";
+  if (key.includes("bean")) return "bean";
+  return key;
+}
+
+export function diseasesForCrop(crop) {
+  const key = cropKey(crop);
+  return DISEASE_DB.filter((disease) => disease.crops?.includes(key) || disease.crops?.includes("any"));
+}
+
+export function matchDiseaseForCrop(text, crop) {
+  const t = String(text || "").toLowerCase();
+  let best = null;
+  let bestScore = 0;
+  for (const disease of diseasesForCrop(crop)) {
+    let score = disease.keywords.filter((keyword) => t.includes(keyword)).length;
+    if (disease.lookFor && t.includes(disease.lookFor.toLowerCase())) score += 3;
+    if (score > bestScore) {
+      bestScore = score;
+      best = disease;
+    }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+export function diagnosePhoto({ crop, note, sign, lang = "en" } = {}) {
+  const pool = diseasesForCrop(crop);
+  const chosen = pool.find((disease) => disease.name === sign || disease.lookFor === sign);
+  const match = chosen || matchDiseaseForCrop(`${sign || ""} ${note || ""}`, crop);
+  if (!match) {
+    const lines = pool.map((disease) => `• ${disease.lookFor}`);
+    const reply = pool.length
+      ? `Photo saved on this ${crop} field. Which of these matches the picture?\n${lines.join("\n")}`
+      : `Photo saved. There is no picture guide for ${crop} yet. Describe the leaf, stem, or pods.`;
+    return {
+      kind: "pest",
+      match: null,
+      choices: pool.map((disease) => ({ name: disease.name, lookFor: disease.lookFor })),
+      reply,
+    };
+  }
+  return { kind: "pest", match: match.name, choices: [], reply: buildPestReply(match, lang) };
+}
+
+const PHOTO_DIR = path.resolve(process.cwd(), "data", "pest-photos");
+
+export function decodePlantPhoto(image) {
+  const raw = String(image || "").replace(/^data:image\/\w+;base64,/, "").trim();
+  if (!raw) return null;
+  const buffer = Buffer.from(raw, "base64");
+  if (buffer.length < 32 || buffer.length > 2_500_000) return null;
+  return buffer;
+}
+
+export async function savePlantPhoto(id, buffer) {
+  await mkdir(PHOTO_DIR, { recursive: true });
+  const file = path.join(PHOTO_DIR, `${id}.jpg`);
+  await writeFile(file, buffer);
+  return file;
 }
 
 export function answerGeneralQuestion(text) {
@@ -204,10 +450,12 @@ export function answerGeneralQuestion(text) {
 
 export function buildCropReply(crops, soil, nutrient, lang = "en") {
   const copy = COPY[normalizeLang(lang)];
-  const list = crops.map((crop) => {
-    const extra = lang === "ny" ? (CROP_ALIAS[crop] || "") : "";
-    return `• ${crop}${extra} — ${CROP_INFO[crop].reason}`;
-  }).join("\n");
+  const list = crops
+    .map((crop) => {
+      const extra = lang === "ny" ? CROP_ALIAS[crop] || "" : "";
+      return `• ${crop}${extra} — ${CROP_INFO[crop].reason}`;
+    })
+    .join("\n");
   return `${copy.cropLeadIn(soil, nutrient)}\n${list}`;
 }
 
@@ -226,10 +474,15 @@ export function advisorMeta() {
       { id: "ny", label: "Chichewa" },
       { id: "tum", label: "Tumbuka" },
     ],
-    copy: Object.fromEntries(Object.entries(COPY).map(([lang, value]) => [lang, {
-      greeting: value.greeting,
-      disclaimer: value.disclaimer,
-    }])),
+    copy: Object.fromEntries(
+      Object.entries(COPY).map(([lang, value]) => [
+        lang,
+        {
+          greeting: value.greeting,
+          disclaimer: value.disclaimer,
+        },
+      ])
+    ),
   };
 }
 
@@ -281,33 +534,89 @@ export function askAdvisor(input = {}) {
     return { lang, kind: "crop", crops, reply: buildCropReply(crops, soil, nutrient, lang) };
   }
 
+  if (/\bpests?\b|\bdiseases?\b|\binsects?\b|\btizilombo\b|\bmatenda\b/.test(lowered)) {
+    return { lang, kind: "unknown", reply: copy.noMatch };
+  }
+
   return { lang, kind: "unknown", reply: topic === "pest" ? copy.noMatch : copy.fallback };
+}
+
+export function attachGrowingContext(result, crops) {
+  const rows = (crops || []).filter((crop) => crop && crop.crop);
+  if (!result || !rows.length) return result;
+  const list = rows
+    .map((crop) => {
+      const place = crop.parcelName ? ` on ${crop.parcelName}` : "";
+      const day = Number.isFinite(Number(crop.ageDays)) ? ` (day ${crop.ageDays})` : "";
+      return `${crop.crop}${place}${day}`;
+    })
+    .join("; ");
+  const due = [];
+  for (const crop of rows) {
+    for (const action of crop.dueActions || []) due.push(`${crop.crop}: ${action}`);
+  }
+  const actionLine = due.length ? `\nToday's actions: ${due.join("; ")}.` : "";
+  const reply = result.reply ? `You are growing ${list}.\n${result.reply}${actionLine}` : `You are growing ${list}.${actionLine}`;
+  return { ...result, growing: rows, reply };
 }
 
 export async function logPestReport(db, farmer, input = {}) {
   const row = {
-    id: crypto.randomUUID(),
+    id: input.id || crypto.randomUUID(),
     farmer_id: farmer.id,
     symptoms: String(input.symptoms || "").slice(0, 500),
     match_name: input.matchName || null,
     channel: input.channel || "mobile",
     created_at: Date.now(),
+    season_id: input.seasonId || null,
+    parcel_id: input.parcelId || null,
+    crop: input.crop || null,
+    photo_path: input.photoPath || null,
   };
-  await db.prepare(`
-    INSERT INTO pest_reports (id, farmer_id, symptoms, match_name, channel, created_at)
-    VALUES (@id, @farmer_id, @symptoms, @match_name, @channel, @created_at)
-  `).run(row);
+  await db
+    .prepare(
+      `
+    INSERT INTO pest_reports (
+      id, farmer_id, symptoms, match_name, channel, created_at, season_id, parcel_id, crop, photo_path
+    )
+    VALUES (
+      @id, @farmer_id, @symptoms, @match_name, @channel, @created_at, @season_id, @parcel_id, @crop, @photo_path
+    )
+  `
+    )
+    .run(row);
   return row;
 }
 
+export async function latestPestForSeason(db, farmerId, seasonId) {
+  if (!farmerId || !seasonId) return null;
+  return db
+    .prepare(
+      `
+    SELECT match_name, crop, season_id, created_at
+    FROM pest_reports
+    WHERE farmer_id = ? AND season_id = ? AND match_name IS NOT NULL
+    ORDER BY created_at DESC
+    LIMIT 1
+  `
+    )
+    .get(farmerId, seasonId);
+}
+
 export async function listPestReports(db) {
-  return (await db.prepare(`
+  return (
+    await db
+      .prepare(
+        `
     SELECT r.*, f.name AS farmer_name, f.code AS farmer_code, f.district, f.epa
     FROM pest_reports r
     JOIN farmers f ON f.id = r.farmer_id
     ORDER BY r.created_at DESC
     LIMIT 50
-  `).all()).map((row) => ({
+  `
+      )
+      .all()
+  ).map((row) => ({
     id: row.id,
     farmerId: row.farmer_id,
     farmerName: row.farmer_name,
@@ -318,5 +627,8 @@ export async function listPestReports(db) {
     matchName: row.match_name,
     channel: row.channel,
     createdAt: row.created_at,
+    crop: row.crop || null,
+    seasonId: row.season_id || null,
+    hasPhoto: Boolean(row.photo_path),
   }));
 }

@@ -16,7 +16,9 @@ export function fmtPricePerKg(amount) {
 export function toPricePerKg(amount, unit = "kg") {
   const value = Number(amount);
   if (!Number.isFinite(value)) return null;
-  const u = String(unit || "kg").toLowerCase().replace(/\s+/g, "");
+  const u = String(unit || "kg")
+    .toLowerCase()
+    .replace(/\s+/g, "");
   if (u === "kg" || u === "perkg") return value;
   if (u === "50kg" || u === "50kgbag" || u === "bag50") return value / 50;
   if (u === "90kg" || u === "90kgbag" || u === "bag90") return value / 90;

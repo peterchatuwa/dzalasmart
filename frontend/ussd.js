@@ -27,7 +27,11 @@ async function api(method, path, { body, plain = false } = {}) {
   const raw = await res.text();
   let parsed = raw;
   if (!plain) {
-    try { parsed = raw ? JSON.parse(raw) : {}; } catch { parsed = { error: raw }; }
+    try {
+      parsed = raw ? JSON.parse(raw) : {};
+    } catch {
+      parsed = { error: raw };
+    }
   }
   addWire(method, path, body ?? null, parsed, res.status);
   if (!res.ok) {

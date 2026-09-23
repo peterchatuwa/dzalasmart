@@ -1,0 +1,52 @@
+========================================
+BUILD NZERU FARMER APP APK - QUICK GUIDE
+========================================
+
+LOCATION OF APP CODE:
+/workspace/farmer-app/
+
+YOUR STEPS:
+-----------
+
+1. COPY THE FARMER-APP FOLDER TO YOUR LOCAL MACHINE
+   From: /workspace/farmer-app/
+   To: C:\Users\peter\Projects\farmer-app\
+   
+   (Use Cursor's download feature or copy via file explorer)
+
+2. OPEN POWERSHELL OR CMD
+   cd C:\Users\peter\Projects\farmer-app
+
+3. INSTALL DEPENDENCIES
+   npm install
+
+4. SYNC WITH ANDROID
+   npx cap sync android
+
+5. OPEN IN ANDROID STUDIO
+   npx cap open android
+   
+   This will automatically launch Android Studio
+
+6. IN ANDROID STUDIO:
+   - Wait for Gradle sync to finish
+   - Click: Build > Build APK
+   - Wait 2-5 minutes
+   - APK will be at: android\app\build\outputs\apk\debug\app-debug.apk
+
+ALTERNATIVE - COMMAND LINE:
+---------------------------
+cd C:\Users\peter\Projects\farmer-app\android
+gradlew assembleDebug
+
+APK LOCATION:
+app\build\outputs\apk\debug\app-debug.apk
+
+TEST CREDENTIALS:
+Phone: +265888000101
+PIN: 0000
+
+NEED HELP?
+See: BUILD_APK_ON_WINDOWS.md for detailed guide
+
+========================================

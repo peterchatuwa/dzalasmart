@@ -6,6 +6,7 @@ Desktop.ini
 .idea/
 node_modules/
 .env
+server/data/pest-photos/
 server/data/*.db
 server/data/*.db-wal
 server/data/*.db-shm

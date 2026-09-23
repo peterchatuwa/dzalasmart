@@ -67,12 +67,14 @@ test("price alerts trigger when a stored price crosses the threshold", async (t)
     name: "Nkhotakota Boma",
     district: "Nkhotakota",
   });
-  await insertObservations(db, "namis", [{
-    commoditySlug: "maize",
-    locationSlug,
-    buyPricePerKg: 1100,
-    priceKind: "reference",
-  }]);
+  await insertObservations(db, "namis", [
+    {
+      commoditySlug: "maize",
+      locationSlug,
+      buyPricePerKg: 1100,
+      priceKind: "reference",
+    },
+  ]);
 
   const app = createApp(db, { jwtSecret: "test-secret" });
   const { url, close } = await listen(app);

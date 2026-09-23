@@ -7,7 +7,10 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
-    "ussd": "node src/ussd-sim.js"
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
+    "ussd": "node src/ussd-sim.js",
+    "migrate": "node scripts/migrate.js",
+    "migrate:create": "node scripts/create-migration.js"
   },
   "engines": {
     "node": ">=22"
@@ -17,8 +20,15 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
+    "pino-pretty": "^13.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "pg-mem": "^3.0.5"

@@ -1,0 +1,6 @@
+cd /home/peter/dzalasmart
+git pull origin cursor/comprehensive-improvements-7360
+cd server
+npm install
+pm2 restart nzeru-api || pm2 start src/index.js --name nzeru-api
+pm2 logs nzeru-api --lines 20 --nostream

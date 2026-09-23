@@ -5,11 +5,9 @@ const ULIMI_URL = "https://www.ulimi.online/";
 
 export { ULIMI_URL };
 
-const TICKER_ITEM_RE =
-  /opacity-70">([^<]+)<\/span>\s*<span[^>]*>\s*MWK\s*([\d,]+(?:\.\d+)?)\s*\/\s*kg\s*<\/span>/gi;
+const TICKER_ITEM_RE = /opacity-70">([^<]+)<\/span>\s*<span[^>]*>\s*MWK\s*([\d,]+(?:\.\d+)?)\s*\/\s*kg\s*<\/span>/gi;
 
-const PLAIN_PRICE_RE =
-  /([A-Za-z][A-Za-z ]*?)\s+MWK\s*([\d,]+(?:\.\d+)?)\s*\/\s*kg/gi;
+const PLAIN_PRICE_RE = /([A-Za-z][A-Za-z ]*?)\s+MWK\s*([\d,]+(?:\.\d+)?)\s*\/\s*kg/gi;
 
 function stripHtmlComments(html) {
   return html.replace(/<!--[\s\S]*?-->/g, "");

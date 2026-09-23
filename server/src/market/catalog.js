@@ -49,7 +49,9 @@ export const PLAN_CROP_SOURCES = {
 };
 
 export function matchCommodityName(name) {
-  const key = String(name || "").trim().toLowerCase();
+  const key = String(name || "")
+    .trim()
+    .toLowerCase();
   if (!key) return null;
   for (const row of MARKET_COMMODITIES) {
     if (row.name.toLowerCase() === key || row.slug === key) return row;

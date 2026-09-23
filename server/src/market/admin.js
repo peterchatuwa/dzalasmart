@@ -1,12 +1,7 @@
 import { HttpError } from "../util.js";
 import { MARKET_SOURCES } from "./catalog.js";
 import { toPricePerKg } from "./normalize.js";
-import {
-  insertObservations,
-  resolveCommodity,
-  resolveLocation,
-  updateSourceStatus,
-} from "./store.js";
+import { insertObservations, resolveCommodity, resolveLocation, updateSourceStatus } from "./store.js";
 import { sourceIdBySlug } from "./seed.js";
 
 const MANUAL_SOURCES = new Set(
@@ -20,7 +15,9 @@ function defaultPriceKind(sourceSlug) {
 }
 
 export async function recordManualObservation(db, staff, input = {}) {
-  const sourceSlug = String(input.sourceSlug || input.source || "manual").trim().toLowerCase();
+  const sourceSlug = String(input.sourceSlug || input.source || "manual")
+    .trim()
+    .toLowerCase();
   if (!MANUAL_SOURCES.has(sourceSlug)) {
     throw HttpError(400, "Manual entry must use a staff-managed source (manual, ADMARC, NFRA, ACE, NAMIS, World Bank)");
   }
@@ -46,18 +43,20 @@ export async function recordManualObservation(db, staff, input = {}) {
   const sellPricePerKg = sellRaw != null ? toPricePerKg(sellRaw, unit) : null;
   const priceKind = input.priceKind || defaultPriceKind(sourceSlug);
 
-  const count = await insertObservations(db, sourceSlug, [{
-    commodityId: commodity.id,
-    locationId: location.id,
-    buyPricePerKg,
-    sellPricePerKg,
-    rawUnit: unit,
-    rawAmount,
-    priceKind,
-    grade: input.grade || null,
-    notes: input.notes || `Entered by ${staff.name}`,
-    metadata: { staffId: staff.id, staffRole: staff.role, sourceSlug },
-  }]);
+  const count = await insertObservations(db, sourceSlug, [
+    {
+      commodityId: commodity.id,
+      locationId: location.id,
+      buyPricePerKg,
+      sellPricePerKg,
+      rawUnit: unit,
+      rawAmount,
+      priceKind,
+      grade: input.grade || null,
+      notes: input.notes || `Entered by ${staff.name}`,
+      metadata: { staffId: staff.id, staffRole: staff.role, sourceSlug },
+    },
+  ]);
   if (!count) throw HttpError(500, "Could not save price");
   await updateSourceStatus(db, sourceSlug, { ok: true });
   return { saved: count, sourceSlug, priceKind };

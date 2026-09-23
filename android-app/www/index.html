@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Nzeru Farmer - Data Collection</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1>🌾 Nzeru Farmer</h1>
+            <p class="tagline">Agricultural Data Collection</p>
+        </div>
+        <div class="sync-status" id="syncStatus">
+            <span class="status-dot offline"></span>
+            <span id="syncText">Offline Mode</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="register">Register Farmer</button>
+            <button class="tab-btn" data-tab="parcel">Add Parcel</button>
+            <button class="tab-btn" data-tab="crop">Record Crop</button>
+            <button class="tab-btn" data-tab="sync">Sync Data</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Register Farmer Tab -->
+            <div class="tab-pane active" id="register-tab">
+                <h2>👤 Farmer Registration</h2>
+                
+                <form id="farmerForm" class="data-form">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="farmerName" placeholder="Enter farmer's full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number *</label>
+                        <input type="tel" id="farmerPhone" placeholder="+265 888 000 001" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>District *</label>
+                        <select id="farmerDistrict" required>
+                            <option value="">Select District</option>
+                            <option value="Lilongwe">Lilongwe</option>
+                            <option value="Blantyre">Blantyre</option>
+                            <option value="Mzuzu">Mzuzu</option>
+                            <option value="Zomba">Zomba</option>
+                            <option value="Kasungu">Kasungu</option>
+                            <option value="Mangochi">Mangochi</option>
+                            <option value="Salima">Salima</option>
+                            <option value="Dedza">Dedza</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>EPA (Extension Planning Area) *</label>
+                        <input type="text" id="farmerEpa" placeholder="e.g., Lilongwe North" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Village</label>
+                        <input type="text" id="farmerVillage" placeholder="Village name">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="farmerGender">
+                            <option value="">Select</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date of Birth</label>
+                        <input type="date" id="farmerDob">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Household Size</label>
+                        <input type="number" id="farmerHousehold" placeholder="Number of people" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Household Type</label>
+                        <select id="farmerHouseholdType">
+                            <option value="">Select</option>
+                            <option value="single">Single</option>
+                            <option value="married">Married</option>
+                            <option value="extended">Extended Family</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Livestock Owned</label>
+                        <input type="text" id="farmerLivestock" placeholder="e.g., 5 chickens, 2 goats">
+                    </div>
+
+                    <div class="form-group">
+                        <label>📸 Farmer Photo (Optional)</label>
+                        <button type="button" class="btn btn-secondary" onclick="capturePhoto('farmer')">
+                            Take Photo
+                        </button>
+                        <div id="farmerPhotoPreview" class="photo-preview"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Farmer</button>
+                </form>
+            </div>
+
+            <!-- Add Parcel Tab -->
+            <div class="tab-pane" id="parcel-tab">
+                <h2>🗺️ Add Land Parcel</h2>
+                
+                <form id="parcelForm" class="data-form">
+                    <div class="form-group">
+                        <label>Farmer Phone *</label>
+                        <input type="tel" id="parcelFarmerPhone" placeholder="+265 888 000 001" required>
+                        <small>Phone of registered farmer</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Parcel Name *</label>
+                        <input type="text" id="parcelName" placeholder="e.g., Main Field, North Plot" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Size (Hectares) *</label>
+                        <input type="number" step="0.01" id="parcelSize" placeholder="0.5" required min="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tenure Status</label>
+                        <select id="parcelTenure">
+                            <option value="">Select</option>
+                            <option value="owned">Owned</option>
+                            <option value="leased">Leased</option>
+                            <option value="communal">Communal</option>
+                            <option value="customary">Customary</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Soil Type</label>
+                        <select id="parcelSoil">
+                            <option value="">Select</option>
+                            <option value="clay">Clay</option>
+                            <option value="loam">Loam</option>
+                            <option value="sandy">Sandy</option>
+                            <option value="silt">Silt</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Water Source</label>
+                        <select id="parcelWater">
+                            <option value="">Select</option>
+                            <option value="rain">Rain-fed only</option>
+                            <option value="borehole">Borehole</option>
+                            <option value="river">River/Stream</option>
+                            <option value="irrigation">Irrigation System</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📍 Capture GPS Location</label>
+                        <button type="button" class="btn btn-secondary" onclick="captureLocation()">
+                            Get Current Location
+                        </button>
+                        <div id="locationDisplay" class="location-display"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📸 Parcel Photo</label>
+                        <button type="button" class="btn btn-secondary" onclick="capturePhoto('parcel')">
+                            Take Photo
+                        </button>
+                        <div id="parcelPhotoPreview" class="photo-preview"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Parcel</button>
+                </form>
+            </div>
+
+            <!-- Record Crop Tab -->
+            <div class="tab-pane" id="crop-tab">
+                <h2>🌽 Record Crop Data</h2>
+                
+                <form id="cropForm" class="data-form">
+                    <div class="form-group">
+                        <label>Farmer Phone *</label>
+                        <input type="tel" id="cropFarmerPhone" placeholder="+265 888 000 001" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Parcel Name *</label>
+                        <input type="text" id="cropParcelName" placeholder="Main Field" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Crop Type *</label>
+                        <select id="cropType" required>
+                            <option value="">Select Crop</option>
+                            <option value="maize">Maize</option>
+                            <option value="tobacco">Tobacco</option>
+                            <option value="groundnuts">Groundnuts</option>
+                            <option value="beans">Beans</option>
+                            <option value="soya">Soya Beans</option>
+                            <option value="rice">Rice</option>
+                            <option value="cassava">Cassava</option>
+                            <option value="sweet-potato">Sweet Potato</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Variety</label>
+                        <input type="text" id="cropVariety" placeholder="e.g., SC513, Kazembe">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Planting Date</label>
+                        <input type="date" id="cropPlantDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Expected Harvest Date</label>
+                        <input type="date" id="cropHarvestDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Area Planted (Hectares)</label>
+                        <input type="number" step="0.01" id="cropArea" placeholder="0.5" min="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Expected Yield (kg)</label>
+                        <input type="number" id="cropYield" placeholder="500" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Irrigation Status</label>
+                        <select id="cropIrrigation">
+                            <option value="none">Rain-fed only</option>
+                            <option value="partial">Partial irrigation</option>
+                            <option value="full">Full irrigation</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📸 Crop Photo</label>
+                        <button type="button" class="btn btn-secondary" onclick="capturePhoto('crop')">
+                            Take Photo
+                        </button>
+                        <div id="cropPhotoPreview" class="photo-preview"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="cropNotes" rows="3" placeholder="Additional observations..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Crop Data</button>
+                </form>
+            </div>
+
+            <!-- Sync Data Tab -->
+            <div class="tab-pane" id="sync-tab">
+                <h2>☁️ Sync Data</h2>
+                
+                <div class="sync-panel">
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingCount">0</div>
+                        <div class="stat-label">Pending Records</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value" id="syncedCount">0</div>
+                        <div class="stat-label">Synced Today</div>
+                    </div>
+
+                    <div class="sync-info">
+                        <p><strong>Last Sync:</strong> <span id="lastSync">Never</span></p>
+                        <p><strong>Server:</strong> api.zammunda.com</p>
+                        <p><strong>Status:</strong> <span id="serverStatus">Checking...</span></p>
+                    </div>
+
+                    <button class="btn btn-primary btn-large" onclick="syncAllData()">
+                        🔄 Sync All Data
+                    </button>
+
+                    <div class="sync-log" id="syncLog">
+                        <h3>Sync History</h3>
+                        <div id="syncHistory">
+                            <p class="text-muted">No sync history yet</p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="viewLocalData()">
+                        📋 View Local Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

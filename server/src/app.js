@@ -1,32 +1,308 @@
 import path from "node:path";
 import express from "express";
 import cors from "cors";
-import { advisorMeta, askAdvisor, listPestReports, logPestReport } from "./advisor.js";
+import swaggerUi from "swagger-ui-express";
+import { logger, createRequestLogger } from "./logger.js";
+import {
+  securityHeaders,
+  apiLimiter,
+  authLimiter,
+  ussdLimiter,
+  requestSizeLimiter,
+  sanitizeInput,
+} from "./middleware/security.js";
+import { metricsCollector, healthCheckMiddleware, getMetrics } from "./middleware/monitoring.js";
+import { swaggerSpec } from "./swagger.js";
+import { dailyFarmCare, seasonSetup } from "./crop-care.js";
+import { adviceFromGuides, buildFarmerQuotes, farmBrief, formatFarmerQuotes, quoteRows } from "./farm-guides.js";
+import {
+  advisorMeta,
+  askAdvisor,
+  attachGrowingContext,
+  decodePlantPhoto,
+  diagnosePhoto,
+  latestPestForSeason,
+  listPestReports,
+  logPestReport,
+  savePlantPhoto,
+} from "./advisor.js";
 import { readOptionalFarmer, requireCooperative, requireFarmer, requireStaff, requireStaffRole } from "./auth.js";
-import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer } from "./farmers.js";
+import { farmerStatus, getFarmerById, listFarmerSummaries, loginFarmer, logStage, registerFarmer, updateFarmerProfile } from "./farmers.js";
 import { contractMonitor, listFloors, recordOffer, setFloor } from "./floors.js";
+import { getTelemetryDashboard, getImpactMetrics } from "./ngo-telemetry.js";
+import { getSupplierRedemptions, getSupplierStats, recordSupplierInventory } from "./input-suppliers.js";
+import { getLendingOpportunities, getLendingPortfolio, getRiskAssessment } from "./financial-institutions.js";
+import {
+  listEquipment,
+  createEquipment,
+  updateEquipment,
+  listBookings,
+  createBooking,
+  confirmBooking,
+  completeBooking,
+  cancelBooking,
+  getBookingStats,
+  EQUIPMENT_TYPES,
+} from "./mechanisation.js";
+import {
+  listBuyers,
+  getBuyerById,
+  getBuyerByStaffId,
+  createBuyer,
+  updateBuyer,
+  getBuyerContracts,
+  getBuyerDashboard,
+} from "./buyers.js";
+import {
+  saveMobileFarmer,
+  saveMobileParcel,
+  saveMobileCrop,
+  getMobileStats,
+  getRecentMobileSubmissions,
+} from "./mobile-api.js";
+import {
+  addHouseholdMember,
+  listHouseholdMembers,
+  addLandParcel,
+  listLandParcels,
+  listLandParcelsForFarmer,
+  createProductionSeason,
+  listProductionSeasons,
+  logProductionActivity,
+  listProductionActivities,
+  recordPlantingDetails,
+  logDailyMonitoring,
+  getMonitoringHistory,
+  recordProductionCost,
+  getProductionCostSummary,
+  farmerHomeSummary,
+  createOfftakeAgreement,
+  listOfftakeAgreements,
+} from "./production-management.js";
 import { APP_NAME, APP_SLUG } from "./brand.js";
+import {
+  listInputs,
+  getInputById,
+  createInput,
+  updateInput,
+  deactivateInput,
+  INPUT_CATEGORIES,
+  INPUT_UNITS,
+} from "./inputs.js";
+import {
+  issueVoucher,
+  getVoucherById,
+  getVoucherByCode,
+  listFarmerVouchers,
+  listAllVouchers,
+  redeemVoucher,
+  listFarmerRedemptions,
+  listAllRedemptions,
+  cancelVoucher,
+  getVoucherStats,
+  VOUCHER_STATUS,
+} from "./vouchers.js";
+import {
+  createGroup,
+  getGroupById,
+  listGroups,
+  addMemberToGroup,
+  removeMemberFromGroup,
+  listGroupMembers,
+  listFarmerGroups,
+  updateMemberRole,
+  getGroupStats,
+  GROUP_TYPES,
+  MEMBER_ROLES,
+} from "./groups.js";
 import { listDistricts } from "./places.js";
 import { STAGES } from "./stages.js";
-import { loginStaff } from "./staff.js";
+import {
+  loginStaff,
+  listAllStaff,
+  getStaffById,
+  createStaff,
+  updateStaff,
+  deactivateStaff,
+  reactivateStaff,
+  STAFF_ROLES,
+} from "./staff.js";
 import { handleUssd } from "./ussd.js";
 import { visitQueue } from "./visits.js";
 import { nationalViewWithWeather } from "./ndvi.js";
 import { getFarmPlan, saveFarmPlan } from "./plan.js";
 import { getFarmerPlot, saveFarmerPlot } from "./plots.js";
-import { GRAIN_CROPS, acceptWarehouseLoan, recordIntake, warehouseSummary, withReceipts } from "./warehouse.js";
+import {
+  GRAIN_CROPS,
+  acceptWarehouseLoan,
+  recordIntake,
+  warehouseSummary,
+  withReceipts,
+  listLoanRequests,
+  approveLoanRequest,
+  rejectLoanRequest,
+} from "./warehouse.js";
 import { districtAlerts, fetchDistrictWeather, publicWeather } from "./weather.js";
-import { marketPayload, marketPricesPayload, marketHistoryPayload, marketComparePayload, marketSourcesComparePayload, marketOpportunitiesPayload, marketLogisticsRoutesPayload, marketLocationsPayload, saveLogisticsRoute, marketTrendsPayload, marketExportPayload, marketAlertsPayloadForFarmer, saveMarketAlert, removeMarketAlert, staffMarketAlertsSummary, refreshMarketCache, getMarketRows, getMarketMeta, recordManualObservation, importMarketCsv, refreshAllSources } from "./market.js";
+import {
+  marketPayload,
+  marketPricesPayload,
+  marketHistoryPayload,
+  marketComparePayload,
+  marketSourcesComparePayload,
+  marketOpportunitiesPayload,
+  marketLogisticsRoutesPayload,
+  marketLocationsPayload,
+  saveLogisticsRoute,
+  marketTrendsPayload,
+  marketExportPayload,
+  marketAlertsPayloadForFarmer,
+  saveMarketAlert,
+  removeMarketAlert,
+  staffMarketAlertsSummary,
+  refreshMarketCache,
+  getMarketRows,
+  getMarketMeta,
+  recordManualObservation,
+  importMarketCsv,
+  refreshAllSources,
+} from "./market.js";
 
 export function createApp(db, options = {}) {
   const jwtSecret = options.jwtSecret || "local-dev-secret";
+
+  async function growingCropsFor(farmer) {
+    if (!farmer) return [];
+    try {
+      const care = await dailyFarmCare(db, farmer);
+      return care.growing || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function buildAdvisorAnswer(farmer, body = {}) {
+    const text = String(body.text || body.query || "").trim();
+    const result = askAdvisor({
+      ...body,
+      text,
+      farmer,
+      soil: body.soil || farmer?.soilType,
+      nutrient: body.nutrient || farmer?.nutrientStatus,
+    });
+    if (result.intent === "weather") {
+      const district = body.district || farmer?.district;
+      if (!district) {
+        result.reply = "Tell me your district, or log in so I can use the one on your farm record.";
+      } else {
+        const wx = publicWeather(await fetchDistrictWeather(district));
+        result.reply = `${wx.district} ${wx.alert.toUpperCase()}\nNow ${wx.nowC}°C · rain 3d ${wx.rain3dayMm}mm\n${wx.fieldAdvice}`;
+      }
+    }
+    if (result.kind === "pest" && result.match && farmer) {
+      await logPestReport(db, farmer, {
+        symptoms: text || result.match,
+        matchName: result.match,
+        channel: body.channel || "mobile",
+      });
+    }
+    const seasonId = String(body.seasonId || body.season_id || "").trim();
+    const parcelId = String(body.parcelId || body.parcel_id || "").trim();
+    let growing = await growingCropsFor(farmer);
+    const allGrowing = growing;
+    if (seasonId) growing = growing.filter((row) => row.seasonId === seasonId);
+    else if (parcelId) growing = growing.filter((row) => row.parcelId === parcelId);
+    if ((seasonId || parcelId) && !growing.length) growing = allGrowing;
+    if (result.intent === "market") {
+      await refreshMarketCache(db);
+      const district = farmer?.district || body.district || null;
+      const meta = getMarketMeta(district);
+      const quotes = buildFarmerQuotes({
+        district,
+        epa: farmer?.epa,
+        liveRows: quoteRows(getMarketRows(district)),
+        floors: await listFloors(db),
+        fields: growing,
+      });
+      result.reply = formatFarmerQuotes(quotes, meta);
+    }
+    const answered = attachGrowingContext(result, growing);
+    const extra = adviceFromGuides(text, {
+      district: farmer?.district || body.district,
+      epa: farmer?.epa,
+      growing,
+    });
+    if (extra) answered.reply = answered.reply ? `${answered.reply}\n\n${extra}` : extra;
+    if (farmer && growing.length === 1 && /pest|disease|leaf|photo|plant|hole|spot|worm|streak/.test(text.toLowerCase())) {
+      const prior = await latestPestForSeason(db, farmer.id, growing[0].seasonId);
+      if (prior?.match_name) {
+        answered.reply = `${answered.reply}\n\nThe last plant photo on this field matched ${prior.match_name}.`;
+      }
+    }
+    return answered;
+  }
+
   const app = express();
+
+  // Security middleware
+  app.use(securityHeaders());
+  app.use(requestSizeLimiter("10mb"));
+
+  // Metrics collection
+  app.use(metricsCollector());
+
+  // Logging
+  app.use(createRequestLogger());
+
+  // Health checks
+  app.use(healthCheckMiddleware(db));
+
+  // CORS and body parsing
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: "3mb" }));
   app.use(express.urlencoded({ extended: false }));
 
-  app.get("/health", (_req, res) => {
-    res.json({ ok: true, service: APP_SLUG, name: APP_NAME, database: "postgresql" });
+  // Input sanitization
+  app.use(sanitizeInput);
+
+  // Trust proxy for rate limiting behind reverse proxy
+  app.set("trust proxy", 1);
+
+  app.get("/health", async (_req, res) => {
+    try {
+      // Check database connectivity
+      await db.query("SELECT 1");
+      res.json({
+        ok: true,
+        service: APP_SLUG,
+        name: APP_NAME,
+        database: "postgresql",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Health check failed");
+      res.status(503).json({
+        ok: false,
+        service: APP_SLUG,
+        error: "Service unavailable",
+      });
+    }
+  });
+
+  app.get("/metrics", (_req, res) => {
+    res.json(getMetrics());
+  });
+
+  // API Documentation
+  app.use("/api-docs", swaggerUi.serve);
+  app.get(
+    "/api-docs",
+    swaggerUi.setup(swaggerSpec, {
+      customSiteTitle: `${APP_NAME} API Documentation`,
+      customfavIcon: "/favicon.ico",
+    })
+  );
+  app.get("/api-docs.json", (_req, res) => {
+    res.json(swaggerSpec);
   });
 
   app.get("/api/stages", (_req, res) => {
@@ -40,7 +316,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       res.json(await marketPayload(db, { district }));
     } catch (error) {
       next(error);
@@ -50,15 +327,18 @@ export function createApp(db, options = {}) {
   app.get("/api/market/prices", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketPricesPayload(db, {
-        district: district || undefined,
-        region: String(req.query.region || "").trim() || undefined,
-        commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
-        refresh: req.query.refresh === "1",
-      }));
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
+      res.json(
+        await marketPricesPayload(db, {
+          district: district || undefined,
+          region: String(req.query.region || "").trim() || undefined,
+          commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
+          refresh: req.query.refresh === "1",
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -67,14 +347,17 @@ export function createApp(db, options = {}) {
   app.get("/api/market/history", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketHistoryPayload(db, {
-        district: district || undefined,
-        commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
-        days: Number(req.query.days) || 30,
-      }));
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
+      res.json(
+        await marketHistoryPayload(db, {
+          district: district || undefined,
+          commoditySlug: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          locationSlug: String(req.query.location || req.query.locationSlug || "").trim() || undefined,
+          days: Number(req.query.days) || 30,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -83,10 +366,12 @@ export function createApp(db, options = {}) {
   app.get("/api/market/compare", async (req, res, next) => {
     try {
       const commodity = String(req.query.commodity || req.query.commoditySlug || "maize").trim();
-      res.json(await marketComparePayload(db, {
-        commodity,
-        districts: String(req.query.districts || "").trim() || undefined,
-      }));
+      res.json(
+        await marketComparePayload(db, {
+          commodity,
+          districts: String(req.query.districts || "").trim() || undefined,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -95,11 +380,14 @@ export function createApp(db, options = {}) {
   app.get("/api/market/sources/compare", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim();
-      res.json(await marketSourcesComparePayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
-        district,
-      }));
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim();
+      res.json(
+        await marketSourcesComparePayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+          district,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -107,10 +395,12 @@ export function createApp(db, options = {}) {
 
   app.get("/api/market/opportunities", async (req, res, next) => {
     try {
-      res.json(await marketOpportunitiesPayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
-        loadKg: Number(req.query.loadKg) || undefined,
-      }));
+      res.json(
+        await marketOpportunitiesPayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
+          loadKg: Number(req.query.loadKg) || undefined,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -127,13 +417,16 @@ export function createApp(db, options = {}) {
   app.get("/api/market/trends", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketTrendsPayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
-        district: district || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        range: String(req.query.range || "30d").trim(),
-      }));
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
+      res.json(
+        await marketTrendsPayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+          district: district || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          range: String(req.query.range || "30d").trim(),
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -142,7 +435,8 @@ export function createApp(db, options = {}) {
   app.get("/api/market/export", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
       const payload = await marketExportPayload(db, {
         commodity: String(req.query.commodity || req.query.commoditySlug || "").trim() || undefined,
         district: district || undefined,
@@ -161,11 +455,14 @@ export function createApp(db, options = {}) {
   app.get("/api/market/locations", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const district = String(req.query.district || farmer?.district || "").trim() || null;
-      res.json(await marketLocationsPayload(db, {
-        district: district || undefined,
-        region: String(req.query.region || "").trim() || undefined,
-      }));
+      // Farmers can ONLY see prices from their own district
+      const district = farmer?.district || String(req.query.district || "").trim() || null;
+      res.json(
+        await marketLocationsPayload(db, {
+          district: district || undefined,
+          region: String(req.query.region || "").trim() || undefined,
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -217,7 +514,7 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/farmers/register", async (req, res, next) => {
+  app.post("/api/farmers/register", authLimiter, async (req, res, next) => {
     try {
       res.status(201).json(await registerFarmer(db, req.body || {}, jwtSecret));
     } catch (error) {
@@ -225,7 +522,7 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/farmers/login", async (req, res, next) => {
+  app.post("/api/farmers/login", authLimiter, async (req, res, next) => {
     try {
       res.json(await loginFarmer(db, req.body || {}, jwtSecret));
     } catch (error) {
@@ -235,6 +532,160 @@ export function createApp(db, options = {}) {
 
   app.get("/api/farmers/me", requireFarmer(db, jwtSecret), (req, res) => {
     res.json({ farmer: req.farmer });
+  });
+
+  app.put("/api/farmers/me", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const updatedFarmer = await updateFarmerProfile(db, req.farmer.id, req.body || {});
+      res.json({ farmer: updatedFarmer, message: "Profile updated successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/receipts", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const receipts = await db.prepare(`
+        SELECT id, code, crop, weight_kg, moisture_pct, price_per_kg, 
+               asset_value, loan_cap, loan_disbursed, created_at
+        FROM warehouse_receipts 
+        WHERE farmer_id = ?
+        ORDER BY created_at DESC
+      `).all(req.farmer.id);
+      res.json(receipts);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/market", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const district = req.farmer.district;
+      await refreshMarketCache(db);
+      const meta = getMarketMeta(district);
+      let fields = [];
+      try {
+        fields = (await dailyFarmCare(db, req.farmer)).growing || [];
+      } catch {
+        fields = [];
+      }
+      const seasonId = String(req.query.seasonId || "").trim();
+      const parcelId = String(req.query.parcelId || "").trim();
+      const allFields = fields;
+      if (seasonId) fields = fields.filter((row) => row.seasonId === seasonId);
+      else if (parcelId) fields = fields.filter((row) => row.parcelId === parcelId);
+      if ((seasonId || parcelId) && !fields.length) fields = allFields;
+      const quotes = buildFarmerQuotes({
+        district,
+        epa: req.farmer.epa,
+        liveRows: quoteRows(getMarketRows(district)),
+        floors: await listFloors(db),
+        fields,
+      });
+      res.json({
+        district,
+        live: meta.live,
+        source: meta.source,
+        warehouseHub: meta.warehouseHub,
+        fetchedAt: meta.fetchedAt,
+        quotes,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/farmers/advisor", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const query = req.body?.query || req.body?.text;
+      if (!query || typeof query !== "string") {
+        return res.status(400).json({ error: "Query is required" });
+      }
+
+      const result = await buildAdvisorAnswer(req.farmer, req.body || {});
+      const { randomUUID } = await import("crypto");
+      await db.prepare(`
+        INSERT INTO advisor_queries (id, farmer_id, query, response, created_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `).run(randomUUID(), req.farmer.id, query, result.reply || "");
+
+      res.json({
+        advice: result.reply,
+        reply: result.reply,
+        kind: result.kind,
+        match: result.match || null,
+        growing: result.growing || [],
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/farmers/advisor/photo", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const buffer = decodePlantPhoto(req.body?.image);
+      if (!buffer) return res.status(400).json({ error: "A plant photo is required" });
+      const seasonId = String(req.body?.seasonId || "").trim();
+      const growing = await growingCropsFor(req.farmer);
+      const field = growing.find((row) => row.seasonId === seasonId);
+      if (!field) return res.status(400).json({ error: "Choose a field that has a crop in season" });
+      const diagnosis = diagnosePhoto({
+        crop: field.crop,
+        note: req.body?.note,
+        sign: req.body?.sign,
+        lang: req.body?.lang,
+      });
+      const { randomUUID } = await import("crypto");
+      const id = randomUUID();
+      const photoPath = await savePlantPhoto(id, buffer);
+      await logPestReport(db, req.farmer, {
+        id,
+        symptoms: String(req.body?.note || req.body?.sign || `Plant photo on ${field.parcelName}`).slice(0, 500),
+        matchName: diagnosis.match,
+        channel: "photo",
+        seasonId: field.seasonId,
+        parcelId: field.parcelId,
+        crop: field.crop,
+        photoPath,
+      });
+      res.status(201).json({
+        id,
+        advice: diagnosis.reply,
+        reply: diagnosis.reply,
+        match: diagnosis.match,
+        choices: diagnosis.choices,
+        crop: field.crop,
+        parcelName: field.parcelName,
+        seasonId: field.seasonId,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/farmers/advisor/photo/:id/sign", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const report = await db
+        .prepare("SELECT * FROM pest_reports WHERE id = ? AND farmer_id = ?")
+        .get(req.params.id, req.farmer.id);
+      if (!report) return res.status(404).json({ error: "Photo not found" });
+      const diagnosis = diagnosePhoto({ crop: report.crop, sign: req.body?.sign, lang: req.body?.lang });
+      if (!diagnosis.match) {
+        return res.status(400).json({ error: "Choose one of the signs for this crop", choices: diagnosis.choices });
+      }
+      await db
+        .prepare("UPDATE pest_reports SET match_name = ?, symptoms = ? WHERE id = ?")
+        .run(diagnosis.match, String(req.body?.sign || diagnosis.match).slice(0, 500), report.id);
+      res.json({
+        id: report.id,
+        advice: diagnosis.reply,
+        reply: diagnosis.reply,
+        match: diagnosis.match,
+        choices: [],
+      });
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.get("/api/farmers/me/status", requireFarmer(db, jwtSecret), async (req, res, next) => {
@@ -249,7 +700,9 @@ export function createApp(db, options = {}) {
   app.post("/api/farmers/me/events", requireFarmer(db, jwtSecret), async (req, res, next) => {
     try {
       const row = await db.prepare("SELECT * FROM farmers WHERE id = ?").get(req.farmer.id);
-      res.status(201).json(await withReceipts(db, await logStage(db, row, { ...req.body, channel: req.body?.channel || "mobile" })));
+      res
+        .status(201)
+        .json(await withReceipts(db, await logStage(db, row, { ...req.body, channel: req.body?.channel || "mobile" })));
     } catch (error) {
       next(error);
     }
@@ -307,7 +760,185 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/login", async (req, res, next) => {
+  // ============================================================================
+  // Input & Voucher Endpoints
+  // ============================================================================
+
+  // Public: List all active inputs
+  app.get("/api/inputs", async (req, res, next) => {
+    try {
+      const category = String(req.query.category || "").trim() || null;
+      res.json({
+        inputs: await listInputs(db, { category }),
+        categories: Object.values(INPUT_CATEGORIES),
+        units: Object.values(INPUT_UNITS),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: Get input by ID
+  app.get("/api/inputs/:id", async (req, res, next) => {
+    try {
+      const input = await getInputById(db, req.params.id);
+      if (!input) {
+        res.status(404).json({ error: "Input not found" });
+        return;
+      }
+      res.json(input);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Farmer: List my vouchers
+  app.get("/api/farmers/me/vouchers", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = String(req.query.status || "").trim() || null;
+      const season = String(req.query.season || "").trim() || null;
+      res.json({
+        vouchers: await listFarmerVouchers(db, req.farmer.id, { status, season }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Farmer: Get voucher by code
+  app.get("/api/farmers/me/vouchers/:code", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const voucher = await getVoucherByCode(db, req.params.code.toUpperCase());
+      if (!voucher || voucher.farmerId !== req.farmer.id) {
+        res.status(404).json({ error: "Voucher not found" });
+        return;
+      }
+      res.json(voucher);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Farmer: List my redemptions
+  app.get("/api/farmers/me/redemptions", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json({
+        redemptions: await listFarmerRedemptions(db, req.farmer.id),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Create input
+  app.post("/api/staff/inputs", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.status(201).json(await createInput(db, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Update input
+  app.put("/api/staff/inputs/:id", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.json(await updateInput(db, req.params.id, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Deactivate input
+  app.delete("/api/staff/inputs/:id", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
+    try {
+      res.json(await deactivateInput(db, req.params.id));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Issue voucher to farmer
+  app.post("/api/staff/vouchers/issue", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.status(201).json(await issueVoucher(db, req.staff, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: List all vouchers (filtered by district)
+  app.get("/api/staff/vouchers", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = String(req.query.status || "").trim() || null;
+      const season = String(req.query.season || "").trim() || null;
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      res.json({
+        vouchers: await listAllVouchers(db, { status, season, district }),
+        stats: await getVoucherStats(db, { district, season }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Get voucher by ID
+  app.get("/api/staff/vouchers/:id", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const voucher = await getVoucherById(db, req.params.id);
+      if (!voucher) {
+        res.status(404).json({ error: "Voucher not found" });
+        return;
+      }
+      res.json(voucher);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Cancel voucher
+  app.delete("/api/staff/vouchers/:id", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await cancelVoucher(db, req.params.id, req.body?.reason));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Redeem voucher (agro-dealer or extension officer)
+  app.post("/api/staff/vouchers/redeem", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const data = { ...req.body, staffId: req.staff.id };
+      res.status(201).json(await redeemVoucher(db, data));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: List all redemptions
+  app.get("/api/staff/redemptions", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        redemptions: await listAllRedemptions(db, { district, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Voucher statistics
+  app.get("/api/staff/vouchers/stats", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      const season = String(req.query.season || "").trim() || null;
+      res.json(await getVoucherStats(db, { district, season }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/staff/login", authLimiter, async (req, res, next) => {
     try {
       res.json(await loginStaff(db, req.body || {}, jwtSecret));
     } catch (error) {
@@ -323,6 +954,297 @@ export function createApp(db, options = {}) {
     });
   });
 
+  // ============================================================================
+  // Farmer Groups Endpoints
+  // ============================================================================
+
+  // Farmer: List my groups
+  app.get("/api/farmers/me/groups", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json({
+        groups: await listFarmerGroups(db, req.farmer.id),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: List all groups (filtered)
+  app.get("/api/groups", async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || null;
+      const epa = String(req.query.epa || "").trim() || null;
+      const type = String(req.query.type || "").trim() || null;
+      res.json({
+        groups: await listGroups(db, { district, epa, type }),
+        types: Object.values(GROUP_TYPES),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ============================================================================
+  // Production Management Endpoints
+  // ============================================================================
+
+  // Household Members
+  app.post("/api/farmers/me/household", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const member = await addHouseholdMember(db, req.farmer.id, req.body || {});
+      res.status(201).json(member);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/household", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const members = await listHouseholdMembers(db, req.farmer.id);
+      res.json({ members });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Land Parcels
+  app.post("/api/farmers/me/parcels", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const parcel = await addLandParcel(db, req.farmer.id, req.body || {});
+      res.status(201).json(parcel);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/parcels", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const parcels = await listLandParcelsForFarmer(db, req.farmer);
+      res.json({ parcels });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Production Seasons
+  app.post("/api/farmers/me/seasons", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const season = await createProductionSeason(db, req.farmer.id, req.body || {});
+      res.status(201).json(season);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = req.query.status || null;
+      const seasons = await listProductionSeasons(db, req.farmer.id, status);
+      res.json({ seasons });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/home", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await farmerHomeSummary(db, req.farmer.id));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/care", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await dailyFarmCare(db, req.farmer));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/guide", requireFarmer(db, jwtSecret), (req, res) => {
+    const hectares = Number(req.query.hectares);
+    const setup = seasonSetup(req.query.crop, req.farmer.district);
+    res.json({
+      ...(farmBrief({
+        crop: req.query.crop,
+        district: req.farmer.district,
+        epa: req.farmer.epa,
+        hectares: Number.isFinite(hectares) ? hectares : null,
+      }) || {}),
+      ...setup,
+    });
+  });
+
+  // Production Activities
+  app.post("/api/farmers/me/seasons/:seasonId/activities", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const activity = await logProductionActivity(db, req.params.seasonId, req.body || {}, req.farmer.id);
+      res.status(201).json(activity);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons/:seasonId/activities", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const activities = await listProductionActivities(db, req.params.seasonId, req.farmer.id);
+      res.json({ activities });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Planting Details
+  app.post("/api/farmers/me/seasons/:seasonId/planting", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const planting = await recordPlantingDetails(db, req.params.seasonId, req.body || {}, req.farmer.id);
+      res.status(201).json(planting);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Daily Monitoring
+  app.post("/api/farmers/me/seasons/:seasonId/monitoring", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const monitoring = await logDailyMonitoring(db, req.params.seasonId, req.body || {}, req.farmer.id);
+      res.status(201).json(monitoring);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons/:seasonId/monitoring", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const history = await getMonitoringHistory(db, req.params.seasonId, req.farmer.id);
+      res.json({ monitoring: history, records: history });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Production Costs
+  app.post("/api/farmers/me/seasons/:seasonId/costs", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const cost = await recordProductionCost(db, req.params.seasonId, req.body || {}, req.farmer.id);
+      res.status(201).json(cost);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/seasons/:seasonId/costs", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const summary = await getProductionCostSummary(db, req.params.seasonId, req.farmer.id);
+      res.json(summary);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Offtake Agreements
+  app.post("/api/farmers/me/agreements", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const agreement = await createOfftakeAgreement(db, req.farmer.id, req.body || {});
+      res.status(201).json(agreement);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/farmers/me/agreements", requireFarmer(db, jwtSecret), async (req, res, next) => {
+    try {
+      const status = req.query.status || null;
+      const agreements = await listOfftakeAgreements(db, req.farmer.id, status);
+      res.json({ agreements });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: Get group details
+  app.get("/api/groups/:id", async (req, res, next) => {
+    try {
+      const group = await getGroupById(db, req.params.id);
+      if (!group) {
+        res.status(404).json({ error: "Group not found" });
+        return;
+      }
+      res.json(group);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public: List group members
+  app.get("/api/groups/:id/members", async (req, res, next) => {
+    try {
+      res.json({
+        members: await listGroupMembers(db, req.params.id),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Create group
+  app.post("/api/staff/groups", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.status(201).json(await createGroup(db, req.staff, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Add member to group
+  app.post("/api/staff/groups/:id/members", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const farmerId = req.body?.farmerId;
+      const role = req.body?.role || "member";
+      if (!farmerId) {
+        res.status(400).json({ error: "farmerId is required" });
+        return;
+      }
+      res.status(201).json(await addMemberToGroup(db, req.params.id, farmerId, role));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Remove member from group
+  app.delete("/api/staff/groups/:groupId/members/:farmerId", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(await removeMemberFromGroup(db, req.params.groupId, req.params.farmerId));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Update member role
+  app.put("/api/staff/groups/members/:membershipId", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const newRole = req.body?.role;
+      if (!newRole) {
+        res.status(400).json({ error: "role is required" });
+        return;
+      }
+      res.json(await updateMemberRole(db, req.params.membershipId, newRole));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Group statistics
+  app.get("/api/staff/groups/stats", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      const district = req.staff.district || String(req.query.district || "").trim() || null;
+      res.json(await getGroupStats(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/advisor", (_req, res) => {
     res.json(advisorMeta());
   });
@@ -330,40 +1252,7 @@ export function createApp(db, options = {}) {
   app.post("/api/advisor/ask", async (req, res, next) => {
     try {
       const farmer = await readOptionalFarmer(db, jwtSecret, req);
-      const body = req.body || {};
-      const result = askAdvisor({
-        ...body,
-        farmer,
-        soil: body.soil || farmer?.soilType,
-        nutrient: body.nutrient || farmer?.nutrientStatus,
-      });
-      if (result.intent === "weather") {
-        const district = body.district || farmer?.district;
-        if (!district) {
-          result.reply = "Tell me your district, or log in so I can use the one on your farm record.";
-        } else {
-          const wx = publicWeather(await fetchDistrictWeather(district));
-          result.reply = `${wx.district} ${wx.alert.toUpperCase()}\nNow ${wx.nowC}°C · rain 3d ${wx.rain3dayMm}mm\n${wx.fieldAdvice}`;
-        }
-      }
-      if (result.intent === "market") {
-        await refreshMarketCache(db);
-        const district = farmer?.district || body.district || null;
-        const meta = getMarketMeta(district);
-        const floors = (await listFloors(db)).map((row) => `${row.crop} floor MWK ${row.pricePerKg}/kg`).join("\n");
-        const rows = getMarketRows(district).slice(0, 4).map((row) => `${row.crop} ${row.price}`).join("\n");
-        const label = meta.live
-          ? `LocalBuyEx prices${meta.warehouseHub ? ` · ${meta.warehouseHub} warehouse` : ""}`
-          : "Reference prices";
-        result.reply = `Ministry floors:\n${floors}\n\n${label}:\n${rows}`;
-      }
-      if (result.kind === "pest" && farmer) {
-        await logPestReport(db, farmer, {
-          symptoms: body.text || result.match,
-          matchName: result.match,
-          channel: body.channel || "mobile",
-        });
-      }
+      const result = await buildAdvisorAnswer(farmer, req.body || {});
       res.json(result);
     } catch (error) {
       next(error);
@@ -382,6 +1271,71 @@ export function createApp(db, options = {}) {
     res.json({ staff: req.staff });
   });
 
+  // System Admin: List all staff
+  app.get("/api/staff/users", requireStaff(db, jwtSecret), requireStaffRole("system_admin", "ministry"), async (req, res, next) => {
+    try {
+      const role = String(req.query.role || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json({
+        staff: await listAllStaff(db, { role, status, district }),
+        roles: STAFF_ROLES,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Get specific staff member
+  app.get("/api/staff/users/:id", requireStaff(db, jwtSecret), requireStaffRole("system_admin", "ministry"), async (req, res, next) => {
+    try {
+      const staff = await getStaffById(db, req.params.id);
+      if (!staff) {
+        res.status(404).json({ error: "Staff member not found" });
+        return;
+      }
+      res.json({ staff });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Create new staff member
+  app.post("/api/staff/users", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.status(201).json({ staff: await createStaff(db, req.staff, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Update staff member
+  app.put("/api/staff/users/:id", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ staff: await updateStaff(db, req.params.id, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Deactivate staff member
+  app.post("/api/staff/users/:id/deactivate", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ staff: await deactivateStaff(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Reactivate staff member
+  app.post("/api/staff/users/:id/reactivate", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ staff: await reactivateStaff(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/staff/warehouse", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
       res.json(await warehouseSummary(db));
@@ -398,7 +1352,41 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/staff/contracts", requireStaff(db, jwtSecret), async (_req, res, next) => {
+  // Staff: List loan requests (cooperative and ministry only)
+  app.get("/api/staff/loans/requests", requireStaff(db, jwtSecret), requireStaffRole("cooperative", "ministry"), async (req, res, next) => {
+    try {
+      const status = String(req.query.status || "").trim() || undefined;
+      const district = req.staff.role === "cooperative" ? req.staff.district : String(req.query.district || "").trim() || undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        requests: await listLoanRequests(db, { status, district, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Approve loan request (cooperative only)
+  app.post("/api/staff/loans/requests/:id/approve", requireStaff(db, jwtSecret), requireCooperative(), async (req, res, next) => {
+    try {
+      const notes = String(req.body?.notes || "").trim() || "";
+      res.json(await approveLoanRequest(db, req.params.id, req.staff, notes));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Staff: Reject loan request (cooperative only)
+  app.post("/api/staff/loans/requests/:id/reject", requireStaff(db, jwtSecret), requireCooperative(), async (req, res, next) => {
+    try {
+      const reason = String(req.body?.reason || "").trim() || "Request rejected";
+      res.json(await rejectLoanRequest(db, req.params.id, req.staff, reason));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/contracts", requireStaff(db, jwtSecret), requireStaffRole("cooperative", "fum", "ministry"), async (_req, res, next) => {
     try {
       res.json(await contractMonitor(db));
     } catch (error) {
@@ -406,13 +1394,18 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/contracts", requireStaff(db, jwtSecret), requireStaffRole("cooperative"), async (req, res, next) => {
-    try {
-      res.status(201).json(await recordOffer(db, req.staff, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/contracts",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("cooperative"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await recordOffer(db, req.staff, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   app.put("/api/staff/floors", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
     try {
@@ -446,21 +1439,31 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/market/observations", requireStaff(db, jwtSecret), requireStaffRole("ministry", "cooperative"), async (req, res, next) => {
-    try {
-      res.status(201).json(await recordManualObservation(db, req.staff, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/observations",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry", "cooperative"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await recordManualObservation(db, req.staff, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
-  app.post("/api/staff/market/import", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
-    try {
-      res.status(201).json(await importMarketCsv(db, req.staff, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/import",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await importMarketCsv(db, req.staff, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   app.get("/api/staff/market/export", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
@@ -482,12 +1485,14 @@ export function createApp(db, options = {}) {
 
   app.get("/api/staff/market/trends", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
-      res.json(await marketTrendsPayload(db, {
-        commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
-        district: String(req.query.district || "").trim() || undefined,
-        sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
-        range: String(req.query.range || "90d").trim(),
-      }));
+      res.json(
+        await marketTrendsPayload(db, {
+          commodity: String(req.query.commodity || req.query.commoditySlug || "maize").trim(),
+          district: String(req.query.district || "").trim() || undefined,
+          sourceSlug: String(req.query.source || req.query.sourceSlug || "").trim() || undefined,
+          range: String(req.query.range || "90d").trim(),
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -501,22 +1506,32 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/api/staff/market/routes", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (req, res, next) => {
-    try {
-      res.status(201).json(await saveLogisticsRoute(db, req.body || {}));
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/routes",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry"),
+    async (req, res, next) => {
+      try {
+        res.status(201).json(await saveLogisticsRoute(db, req.body || {}));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
-  app.post("/api/staff/market/refresh", requireStaff(db, jwtSecret), requireStaffRole("ministry"), async (_req, res, next) => {
-    try {
-      const result = await refreshAllSources(db, true);
-      res.json({ ok: true, errors: result.errors || [], sources: result.sources || [] });
-    } catch (error) {
-      next(error);
+  app.post(
+    "/api/staff/market/refresh",
+    requireStaff(db, jwtSecret),
+    requireStaffRole("ministry"),
+    async (_req, res, next) => {
+      try {
+        const result = await refreshAllSources(db, true);
+        res.json({ ok: true, errors: result.errors || [], sources: result.sources || [] });
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   app.get("/api/staff/market/alerts", requireStaff(db, jwtSecret), async (_req, res, next) => {
     try {
@@ -526,18 +1541,272 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/staff/market/locations", requireStaff(db, jwtSecret), async (req, res, next) => {
+  // NGO & Donors: M&E Telemetry Dashboard
+  app.get("/api/staff/ngo/telemetry", requireStaff(db, jwtSecret), requireStaffRole("ngo", "ministry"), async (req, res, next) => {
     try {
-      res.json(await marketLocationsPayload(db, {
-        district: String(req.query.district || "").trim() || undefined,
-        region: String(req.query.region || "").trim() || undefined,
-      }));
+      const district = String(req.query.district || "").trim() || undefined;
+      const startDate = req.query.startDate ? Number(req.query.startDate) : undefined;
+      const endDate = req.query.endDate ? Number(req.query.endDate) : undefined;
+      res.json(await getTelemetryDashboard(db, { district, startDate, endDate }));
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/api/staff/national", requireStaff(db, jwtSecret), async (req, res, next) => {
+  // NGO & Donors: Impact Metrics
+  app.get("/api/staff/ngo/impact", requireStaff(db, jwtSecret), requireStaffRole("ngo", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json(await getImpactMetrics(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Input Suppliers: View redemptions
+  app.get("/api/staff/suppliers/redemptions", requireStaff(db, jwtSecret), requireStaffRole("input_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const startDate = req.query.startDate ? Number(req.query.startDate) : undefined;
+      const endDate = req.query.endDate ? Number(req.query.endDate) : undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        redemptions: await getSupplierRedemptions(db, req.staff.id, { district, startDate, endDate, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Input Suppliers: Stats dashboard
+  app.get("/api/staff/suppliers/stats", requireStaff(db, jwtSecret), requireStaffRole("input_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const startDate = req.query.startDate ? Number(req.query.startDate) : undefined;
+      const endDate = req.query.endDate ? Number(req.query.endDate) : undefined;
+      res.json(await getSupplierStats(db, { district, startDate, endDate }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Input Suppliers: Record inventory
+  app.post("/api/staff/suppliers/inventory", requireStaff(db, jwtSecret), requireStaffRole("input_supplier"), async (req, res, next) => {
+    try {
+      res.status(201).json(await recordSupplierInventory(db, req.staff.id, req.body || {}));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Financial Institutions: Lending opportunities
+  app.get("/api/staff/fi/opportunities", requireStaff(db, jwtSecret), requireStaffRole("financial_institution", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const minBankability = req.query.minBankability ? Number(req.query.minBankability) : undefined;
+      const limit = Number(req.query.limit) || 50;
+      res.json({
+        opportunities: await getLendingOpportunities(db, { district, minBankability, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Financial Institutions: Portfolio dashboard
+  app.get("/api/staff/fi/portfolio", requireStaff(db, jwtSecret), requireStaffRole("financial_institution", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json(await getLendingPortfolio(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Financial Institutions: Risk assessment
+  app.get("/api/staff/fi/risk", requireStaff(db, jwtSecret), requireStaffRole("financial_institution", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      res.json(await getRiskAssessment(db, { district }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: List equipment
+  app.get("/api/staff/mechanisation/equipment", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const type = String(req.query.type || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      res.json({
+        equipment: await listEquipment(db, { type, district, status }),
+        types: EQUIPMENT_TYPES,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Create equipment
+  app.post("/api/staff/mechanisation/equipment", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.status(201).json({ equipment: await createEquipment(db, req.staff, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Update equipment
+  app.put("/api/staff/mechanisation/equipment/:id", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.json({ equipment: await updateEquipment(db, req.params.id, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: List bookings
+  app.get("/api/staff/mechanisation/bookings", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const equipmentId = String(req.query.equipmentId || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        bookings: await listBookings(db, { equipmentId, status, district, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Create booking
+  app.post("/api/staff/mechanisation/bookings", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "extension"), async (req, res, next) => {
+    try {
+      res.status(201).json({ booking: await createBooking(db, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Confirm booking
+  app.post("/api/staff/mechanisation/bookings/:id/confirm", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.json({ booking: await confirmBooking(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Complete booking
+  app.post("/api/staff/mechanisation/bookings/:id/complete", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier"), async (req, res, next) => {
+    try {
+      res.json({ booking: await completeBooking(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Cancel booking
+  app.post("/api/staff/mechanisation/bookings/:id/cancel", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "extension"), async (req, res, next) => {
+    try {
+      res.json({ booking: await cancelBooking(db, req.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Mechanisation Suppliers: Booking stats
+  app.get("/api/staff/mechanisation/stats", requireStaff(db, jwtSecret), requireStaffRole("mechanisation_supplier", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const supplierId = req.staff.role === "mechanisation_supplier" ? req.staff.id : undefined;
+      res.json(await getBookingStats(db, { district, supplierId }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin / Ministry: List all buyers
+  app.get("/api/staff/buyers", requireStaff(db, jwtSecret), requireStaffRole("system_admin", "ministry"), async (req, res, next) => {
+    try {
+      const district = String(req.query.district || "").trim() || undefined;
+      const status = String(req.query.status || "").trim() || undefined;
+      res.json({
+        buyers: await listBuyers(db, { district, status }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Create buyer
+  app.post("/api/staff/buyers", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.status(201).json({ buyer: await createBuyer(db, req.staff, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // System Admin: Update buyer
+  app.put("/api/staff/buyers/:id", requireStaff(db, jwtSecret), requireStaffRole("system_admin"), async (req, res, next) => {
+    try {
+      res.json({ buyer: await updateBuyer(db, req.params.id, req.body || {}) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Buyers: View their own dashboard
+  app.get("/api/staff/buyers/me/dashboard", requireStaff(db, jwtSecret), requireStaffRole("buyer"), async (req, res, next) => {
+    try {
+      const buyer = await getBuyerByStaffId(db, req.staff.id);
+      if (!buyer) {
+        res.status(404).json({ error: "No buyer account linked to this staff login" });
+        return;
+      }
+      res.json(await getBuyerDashboard(db, buyer.id));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Buyers: View their contracts
+  app.get("/api/staff/buyers/me/contracts", requireStaff(db, jwtSecret), requireStaffRole("buyer"), async (req, res, next) => {
+    try {
+      const buyer = await getBuyerByStaffId(db, req.staff.id);
+      if (!buyer) {
+        res.status(404).json({ error: "No buyer account linked to this staff login" });
+        return;
+      }
+      const status = String(req.query.status || "").trim() || undefined;
+      const crop = String(req.query.crop || "").trim() || undefined;
+      const district = String(req.query.district || "").trim() || undefined;
+      const limit = Number(req.query.limit) || 100;
+      res.json({
+        contracts: await getBuyerContracts(db, buyer.id, { status, crop, district, limit }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/market/locations", requireStaff(db, jwtSecret), async (req, res, next) => {
+    try {
+      res.json(
+        await marketLocationsPayload(db, {
+          district: String(req.query.district || "").trim() || undefined,
+          region: String(req.query.region || "").trim() || undefined,
+        })
+      );
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/staff/national", requireStaff(db, jwtSecret), requireStaffRole("ministry", "fum"), async (req, res, next) => {
     try {
       res.json(await nationalViewWithWeather(db, req.staff));
     } catch (error) {
@@ -545,9 +1814,9 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.get("/api/staff/farmers", requireStaff(db, jwtSecret), async (_req, res, next) => {
+  app.get("/api/staff/farmers", requireStaff(db, jwtSecret), async (req, res, next) => {
     try {
-      res.json({ farmers: await listFarmerSummaries(db) });
+      res.json({ farmers: await listFarmerSummaries(db, req.staff) });
     } catch (error) {
       next(error);
     }
@@ -569,7 +1838,72 @@ export function createApp(db, options = {}) {
     }
   });
 
-  app.post("/ussd", async (req, res, next) => {
+  // ==========================================
+  // MOBILE APP API ENDPOINTS
+  // ==========================================
+
+  app.post("/api/mobile/farmers", apiLimiter, async (req, res, next) => {
+    try {
+      const result = await saveMobileFarmer(db, req.body);
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/mobile/parcels", apiLimiter, async (req, res, next) => {
+    try {
+      const result = await saveMobileParcel(db, req.body);
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/mobile/crops", apiLimiter, async (req, res, next) => {
+    try {
+      const result = await saveMobileCrop(db, req.body);
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/mobile/stats", apiLimiter, async (req, res, next) => {
+    try {
+      const stats = await getMobileStats(db, {
+        district: req.query.district,
+        epa: req.query.epa
+      });
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/mobile/submissions", requireStaff, async (req, res, next) => {
+    try {
+      const limit = parseInt(req.query.limit || '50');
+      const submissions = await getRecentMobileSubmissions(db, limit);
+      res.json(submissions);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/ussd", ussdLimiter, async (req, res, next) => {
     try {
       const reply = await handleUssd(db, req.body || {});
       res.type("text/plain").send(reply);

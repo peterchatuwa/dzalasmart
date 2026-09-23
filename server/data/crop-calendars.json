@@ -1,0 +1,716 @@
+{
+  "maize": {
+    "bands": [
+      {
+        "altitude": "low",
+        "districts": [
+          "Nsanje",
+          "Chikwawa",
+          "Neno",
+          "Balaka",
+          "Salima",
+          "Nkhotakota",
+          "Karonga",
+          "Mangochi"
+        ],
+        "varieties": "SC 301, SC 419 or Peacock 10"
+      },
+      {
+        "altitude": "medium",
+        "districts": [
+          "Lilongwe",
+          "Dedza",
+          "Dowa",
+          "Ntchisi",
+          "Kasungu",
+          "Mchinji",
+          "Zomba",
+          "Machinga",
+          "Blantyre",
+          "Chiradzulu",
+          "Thyolo",
+          "Phalombe",
+          "Mzimba"
+        ],
+        "varieties": "SC 555, SC 529, MH 26 or Falcon M601"
+      },
+      {
+        "altitude": "high",
+        "districts": [
+          "Rumphi",
+          "Chitipa",
+          "Nkhata Bay",
+          "Ntcheu",
+          "Mulanje"
+        ],
+        "varieties": "SC 719, SC 727 or MH 34"
+      }
+    ],
+    "tasks": [
+      {
+        "from": -30,
+        "to": -1,
+        "type": "field_work",
+        "label": "Deep ploughing (20-30 cm)",
+        "detail": "Deep ploughing (20-30 cm). Incorporate 5-10 mt/Ha manure into ridges before rains."
+      },
+      {
+        "from": 0,
+        "to": 0,
+        "type": "fertilizing",
+        "label": "Apply basal fertiliser",
+        "detail": "Sow certified seed at 3-5cm depth within 48 hours of first effective rain (30mm+). Space 75x25cm. Apply basal NPK."
+      },
+      {
+        "from": 1,
+        "to": 7,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Scout rows daily for uniform germination. Check for soil crusting or early insects."
+      },
+      {
+        "from": 8,
+        "to": 10,
+        "type": "field_work",
+        "label": "Execute precision gap-filling",
+        "detail": "Execute precision gap-filling. Re-sow empty stations with the exact same variety."
+      },
+      {
+        "from": 14,
+        "to": 21,
+        "type": "weeding",
+        "label": "First weeding",
+        "detail": "Perform 1st thorough weeding. Apply first split of Nitrogen top-dressing (Urea/AN) at 100 kg/Ha."
+      },
+      {
+        "from": 14,
+        "to": 21,
+        "type": "fertilizing",
+        "label": "Top-dress with nitrogen",
+        "detail": "Perform 1st thorough weeding. Apply first split of Nitrogen top-dressing (Urea/AN) at 100 kg/Ha."
+      },
+      {
+        "from": 35,
+        "to": 42,
+        "type": "weeding",
+        "label": "Second weeding",
+        "detail": "Perform 2nd mechanical weeding. Complete 'earthing up' (mounding loose soil high around stalk base)."
+      },
+      {
+        "from": 45,
+        "to": 50,
+        "type": "fertilizing",
+        "label": "Top-dress with nitrogen",
+        "detail": "Apply the second split of Nitrogen top-dressing (Urea/AN) at 100 kg/Ha right before a rain event."
+      },
+      {
+        "from": 55,
+        "to": 85,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Scout for Fall Armyworm daily. Monitor moisture. Peak vegetative demand."
+      },
+      {
+        "from": 86,
+        "to": 115,
+        "type": "weeding",
+        "label": "Third weeding",
+        "detail": "Protect fields from late weeds or lodging. Keep leaves functional and green."
+      },
+      {
+        "from": 116,
+        "to": 140,
+        "type": "harvesting",
+        "label": "Harvest",
+        "detail": "Verify black layer formation at kernel base. Harvest immediately to avoid field exposure."
+      },
+      {
+        "from": 141,
+        "to": 170,
+        "type": "harvesting",
+        "label": "Dry and store",
+        "detail": "Sun-dry cobs on clean tarpaulins to 13.5% moisture. Shell carefully. Treat with Actellic dust. Store in Hermetic bags."
+      }
+    ]
+  },
+  "soya": {
+    "bands": [
+      {
+        "altitude": "low",
+        "districts": [
+          "Nsanje",
+          "Chikwawa",
+          "Neno",
+          "Balaka",
+          "Salima",
+          "Nkhotakota",
+          "Karonga",
+          "Mangochi"
+        ],
+        "varieties": "Tikolore"
+      },
+      {
+        "altitude": "medium",
+        "districts": [
+          "Lilongwe",
+          "Dedza",
+          "Dowa",
+          "Ntchisi",
+          "Kasungu",
+          "Mchinji",
+          "Zomba",
+          "Machinga",
+          "Blantyre",
+          "Chiradzulu",
+          "Thyolo",
+          "Phalombe",
+          "Mzimba"
+        ],
+        "varieties": "Makwacha or Nasoko"
+      },
+      {
+        "altitude": "high",
+        "districts": [
+          "Rumphi",
+          "Chitipa",
+          "Nkhata Bay",
+          "Ntcheu",
+          "Mulanje"
+        ],
+        "varieties": "Soprano"
+      }
+    ],
+    "tasks": [
+      {
+        "from": -30,
+        "to": -1,
+        "type": "field_work",
+        "label": "Land Preparation",
+        "detail": "Land Preparation: Ploughing/ridging (spaced at 75cm or 60cm). Procure certified seed and active Rhizobium inoculant. Keep inoculant cool."
+      },
+      {
+        "from": 0,
+        "to": 0,
+        "type": "field_work",
+        "label": "Sowing & Inoculation",
+        "detail": "Sowing & Inoculation: Mix seed with inoculant wet-slurry using sugar water. Plant immediately into damp soil at 2-3cm depth. Spacing: 5-7cm apart."
+      },
+      {
+        "from": 1,
+        "to": 3,
+        "type": "weeding",
+        "label": "First weeding",
+        "detail": "Pre-Emergence Weed Shield: Apply pre-emergence herbicide mixtures to wet soil immediately before any seedlings break the surface."
+      },
+      {
+        "from": 4,
+        "to": 7,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Germination Scouting: Monitor field for even emergence. Check for soil capping or early insect damage like cutworms."
+      },
+      {
+        "from": 14,
+        "to": 21,
+        "type": "weeding",
+        "label": "Second weeding",
+        "detail": "Early Weeding & Post-Emergence: Complete the first weeding round. Spray post-emergence herbicides for broadleaf weeds if needed."
+      },
+      {
+        "from": 35,
+        "to": 45,
+        "type": "weeding",
+        "label": "Third weeding",
+        "detail": "Nodulation Check & 2nd Clean: Dig up a few plants to check root nodules. If pink inside, nitrogen fixing is active. Complete 2nd weeding."
+      },
+      {
+        "from": 35,
+        "to": 45,
+        "type": "fertilizing",
+        "label": "Top-dress with nitrogen",
+        "detail": "Nodulation Check & 2nd Clean: Dig up a few plants to check root nodules. If pink inside, nitrogen fixing is active. Complete 2nd weeding."
+      },
+      {
+        "from": 50,
+        "to": 75,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Flowering & Pod Initiation: Peak water and nutrient uptake phase. Monitor closely for early signs of Asian Soybean Rust fungus."
+      },
+      {
+        "from": 76,
+        "to": 100,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Pod Filling Phase: Grains expand inside the pods. Scout for pod-sucking bugs and leaf-eating caterpillars."
+      },
+      {
+        "from": 105,
+        "to": 130,
+        "type": "field_work",
+        "label": "Physiological Maturity",
+        "detail": "Physiological Maturity: Leaves turn yellow and drop off naturally. Pods turn brown and rattle when shaken."
+      },
+      {
+        "from": 141,
+        "to": 170,
+        "type": "harvesting",
+        "label": "Dry and store",
+        "detail": "Handling & Storage: Thresh on clean canvas tarpaulins. Dry grain to 12% moisture. Store in dry, clean, hermetic bags away from pests."
+      },
+      {
+        "from": 141,
+        "to": 170,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Handling & Storage: Thresh on clean canvas tarpaulins. Dry grain to 12% moisture. Store in dry, clean, hermetic bags away from pests."
+      }
+    ]
+  },
+  "groundnut": {
+    "bands": [
+      {
+        "altitude": "low",
+        "districts": [
+          "Nsanje",
+          "Chikwawa",
+          "Neno",
+          "Balaka",
+          "Salima",
+          "Nkhotakota",
+          "Karonga",
+          "Mangochi"
+        ],
+        "varieties": "CG 7, Kakoma or Chitala"
+      },
+      {
+        "altitude": "medium",
+        "districts": [
+          "Lilongwe",
+          "Dedza",
+          "Dowa",
+          "Ntchisi",
+          "Kasungu",
+          "Mchinji",
+          "Zomba",
+          "Machinga",
+          "Blantyre",
+          "Chiradzulu",
+          "Thyolo",
+          "Phalombe",
+          "Mzimba"
+        ],
+        "varieties": "CG 7, CG 9, CG 11, Nsinjiro or Baka"
+      },
+      {
+        "altitude": "high",
+        "districts": [
+          "Rumphi",
+          "Chitipa",
+          "Nkhata Bay",
+          "Ntcheu",
+          "Mulanje"
+        ],
+        "varieties": "Nsinjiro, CG 9 or Baka"
+      }
+    ],
+    "tasks": [
+      {
+        "from": -30,
+        "to": -1,
+        "type": "field_work",
+        "label": "Land Preparation",
+        "detail": "Land Preparation: Construct precise contour ridges spaced 75cm apart. Sieve and prepare certified shell-on seeds."
+      },
+      {
+        "from": 0,
+        "to": 0,
+        "type": "field_work",
+        "label": "Sowing",
+        "detail": "Sowing: Plant immediately after 30mm+ rain. Plant 2 rows per ridge (double-row), 10-15cm between seeds, 5cm deep."
+      },
+      {
+        "from": 1,
+        "to": 7,
+        "type": "field_work",
+        "label": "Emergence Monitoring",
+        "detail": "Emergence Monitoring: Inspect fields daily for standard germination rate (expecting 85%+ standalone rate)."
+      },
+      {
+        "from": 8,
+        "to": 10,
+        "type": "field_work",
+        "label": "Gap Filling",
+        "detail": "Gap Filling: Re-sow missing pockets immediately using the same variety; avoid deep soil disturbance."
+      },
+      {
+        "from": 14,
+        "to": 21,
+        "type": "weeding",
+        "label": "First weeding",
+        "detail": "First Weeding: Hand weed cleanly. Groundnuts are extremely sensitive to early weed shading and choking."
+      },
+      {
+        "from": 30,
+        "to": 35,
+        "type": "weeding",
+        "label": "Second weeding",
+        "detail": "Second Weeding & Earthing Up: Final light weeding. Reshape ridges carefully before flowering starts."
+      },
+      {
+        "from": 45,
+        "to": 55,
+        "type": "fertilizing",
+        "label": "Apply gypsum",
+        "detail": "Gypsum Application (Flowering): Apply Calcium Sulfate (Gypsum) at 200-400 kg/Ha directly over rows/plants."
+      },
+      {
+        "from": 60,
+        "to": 80,
+        "type": "weeding",
+        "label": "Third weeding",
+        "detail": "Strict No-Disturbance Window (Pegging): DO NOT weed or enter fields. Let pegs naturally penetrate soil."
+      },
+      {
+        "from": 90,
+        "to": 110,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Disease & Pest Scouting: Monitor for Leaf Spots and Rosette Virus (transmitted by aphids). Spray if needed."
+      },
+      {
+        "from": 115,
+        "to": 130,
+        "type": "harvesting",
+        "label": "Harvest",
+        "detail": "Maturity & Lifting: Check inner pod color (dark brown/black markings = mature). Lift plants carefully with a hoe."
+      },
+      {
+        "from": 141,
+        "to": 170,
+        "type": "harvesting",
+        "label": "Dry and store",
+        "detail": "Plucking, Drying & Curing: Invert plants to sun-dry pods for 2-3 weeks (pod moisture <10%). Clean, shell by hand, store."
+      }
+    ]
+  },
+  "rice": {
+    "bands": [
+      {
+        "altitude": "low",
+        "districts": [
+          "Nsanje",
+          "Chikwawa",
+          "Neno",
+          "Balaka",
+          "Salima",
+          "Nkhotakota",
+          "Karonga",
+          "Mangochi",
+          "Machinga",
+          "Zomba"
+        ],
+        "varieties": "Kilombero, Faya or NERICA 4"
+      },
+      {
+        "altitude": "medium",
+        "districts": [
+          "Lilongwe",
+          "Dedza",
+          "Dowa",
+          "Ntchisi",
+          "Kasungu",
+          "Mchinji",
+          "Zomba",
+          "Machinga",
+          "Blantyre",
+          "Chiradzulu",
+          "Thyolo",
+          "Phalombe",
+          "Mzimba"
+        ],
+        "varieties": "NERICA 1, NERICA 2 or Makassane"
+      },
+      {
+        "altitude": "high",
+        "districts": [
+          "Rumphi",
+          "Chitipa",
+          "Nkhata Bay",
+          "Ntcheu",
+          "Mulanje"
+        ],
+        "varieties": "NERICA 7"
+      }
+    ],
+    "tasks": [
+      {
+        "from": -45,
+        "to": -31,
+        "type": "field_work",
+        "label": "Select lowland plot (Dambo)",
+        "detail": "Select lowland plot (Dambo). Clear stubble."
+      },
+      {
+        "from": -30,
+        "to": -15,
+        "type": "field_work",
+        "label": "Construct flat nursery beds near water source",
+        "detail": "Construct flat nursery beds near water source. Sow nursery seeds."
+      },
+      {
+        "from": -14,
+        "to": -1,
+        "type": "field_work",
+        "label": "Plough main field heavily to create muddy clods",
+        "detail": "Plough main field heavily to create muddy clods. Build field bunds."
+      },
+      {
+        "from": 0,
+        "to": 0,
+        "type": "field_work",
+        "label": "Wet field to saturation",
+        "detail": "Wet field to saturation. Broadcast seeds directly or pull seedlings."
+      },
+      {
+        "from": 1,
+        "to": 7,
+        "type": "irrigation",
+        "label": "Check the water",
+        "detail": "Monitor germination/transplant shock. Keep soil moist."
+      },
+      {
+        "from": 8,
+        "to": 14,
+        "type": "weeding",
+        "label": "First weeding",
+        "detail": "Execute early hand weeding. Repair bund leaks."
+      },
+      {
+        "from": 15,
+        "to": 20,
+        "type": "fertilizing",
+        "label": "Apply basal fertiliser",
+        "detail": "Apply Basal Fertilizer (Compound D) at 100 kg/Ha if water level is low."
+      },
+      {
+        "from": 21,
+        "to": 25,
+        "type": "field_work",
+        "label": "Maintain thin water layer (2-3 cm)",
+        "detail": "Maintain thin water layer (2-3 cm). Fill missing gaps."
+      },
+      {
+        "from": 26,
+        "to": 40,
+        "type": "weeding",
+        "label": "Second weeding",
+        "detail": "First split Top-Dressing (Urea at 75 kg/Ha). Hand weed."
+      },
+      {
+        "from": 26,
+        "to": 40,
+        "type": "fertilizing",
+        "label": "Top-dress with nitrogen",
+        "detail": "First split Top-Dressing (Urea at 75 kg/Ha). Hand weed."
+      },
+      {
+        "from": 41,
+        "to": 55,
+        "type": "fertilizing",
+        "label": "Top-dress with nitrogen",
+        "detail": "Second split Top-Dressing (Urea at 75 kg/Ha). Monitor pests."
+      },
+      {
+        "from": 41,
+        "to": 55,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Second split Top-Dressing (Urea at 75 kg/Ha). Monitor pests."
+      },
+      {
+        "from": 56,
+        "to": 75,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Scout for Stem Borers & Blast disease. Maintain water level."
+      },
+      {
+        "from": 76,
+        "to": 95,
+        "type": "field_work",
+        "label": "Protect field from birds",
+        "detail": "Protect field from birds. Keep water at 5-10 cm depth."
+      },
+      {
+        "from": 121,
+        "to": 140,
+        "type": "harvesting",
+        "label": "Harvest",
+        "detail": "Drain field completely 2 weeks before target harvest date."
+      },
+      {
+        "from": 141,
+        "to": 170,
+        "type": "harvesting",
+        "label": "Harvest",
+        "detail": "Harvest when 80% of panicles turn straw-colored. Avoid dropping in mud."
+      },
+      {
+        "from": 141,
+        "to": 170,
+        "type": "harvesting",
+        "label": "Dry and store",
+        "detail": "Thresh on clean tarpaulins. Sun-dry grain to 13.0% moisture."
+      }
+    ]
+  },
+  "tobacco": {
+    "bands": [
+      {
+        "altitude": "low",
+        "districts": [
+          "Nsanje",
+          "Chikwawa",
+          "Neno",
+          "Balaka",
+          "Salima",
+          "Nkhotakota",
+          "Karonga",
+          "Mangochi"
+        ],
+        "varieties": "Drought-tolerant Burley"
+      },
+      {
+        "altitude": "medium",
+        "districts": [
+          "Lilongwe",
+          "Dedza",
+          "Dowa",
+          "Ntchisi",
+          "Kasungu",
+          "Mchinji",
+          "Zomba",
+          "Machinga",
+          "Blantyre",
+          "Chiradzulu",
+          "Thyolo",
+          "Phalombe",
+          "Mzimba"
+        ],
+        "varieties": "Kutsaga T71, KM10 or Burley BRK"
+      },
+      {
+        "altitude": "high",
+        "districts": [
+          "Rumphi",
+          "Chitipa",
+          "Nkhata Bay",
+          "Ntcheu",
+          "Mulanje"
+        ],
+        "varieties": "Flue-cured Virginia or late Burley"
+      }
+    ],
+    "tasks": [
+      {
+        "from": -60,
+        "to": -45,
+        "type": "weeding",
+        "label": "First weeding",
+        "detail": "Nursery site selection & soil sterilization via burning wood/stalks to kill weed seeds and nematodes."
+      },
+      {
+        "from": -40,
+        "to": -30,
+        "type": "fertilizing",
+        "label": "Apply basal fertiliser",
+        "detail": "Construct nursery beds (1m wide). Apply basal compound S fertilizer to beds. Prepare shade structures."
+      },
+      {
+        "from": -30,
+        "to": -30,
+        "type": "fertilizing",
+        "label": "Top-dress with nitrogen",
+        "detail": "Sow tiny tobacco seeds uniformly using water-can mix. Cover immediately with fine grass thatch."
+      },
+      {
+        "from": -29,
+        "to": -1,
+        "type": "field_work",
+        "label": "Water nursery twice daily",
+        "detail": "Water nursery twice daily. Thin seedlings to 2cm spacing at Day 15. Clip leaves at Day 30 to harden stems."
+      },
+      {
+        "from": 0,
+        "to": 0,
+        "type": "field_work",
+        "label": "Transplant out to main field when seedlings are pencil-thick (15-20cm) i",
+        "detail": "Transplant out to main field when seedlings are pencil-thick (15-20cm) immediately after 30mm+ rain."
+      },
+      {
+        "from": 1,
+        "to": 14,
+        "type": "fertilizing",
+        "label": "Apply basal fertiliser",
+        "detail": "Scout for cutworms. Apply basal fertilizer (Compound D/Tobacco mix) at 15g per plant station."
+      },
+      {
+        "from": 1,
+        "to": 14,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Scout for cutworms. Apply basal fertilizer (Compound D/Tobacco mix) at 15g per plant station."
+      },
+      {
+        "from": 15,
+        "to": 21,
+        "type": "weeding",
+        "label": "Second weeding",
+        "detail": "First mechanical weeding using hand hoes. Re-ridge plants to establish strong root anchorage."
+      },
+      {
+        "from": 22,
+        "to": 35,
+        "type": "weeding",
+        "label": "Third weeding",
+        "detail": "Apply top-dressing fertilizer (Calcium Ammonium Nitrate - CAN). Maintain absolute weed-free fields."
+      },
+      {
+        "from": 22,
+        "to": 35,
+        "type": "fertilizing",
+        "label": "Top-dress with nitrogen",
+        "detail": "Apply top-dressing fertilizer (Calcium Ammonium Nitrate - CAN). Maintain absolute weed-free fields."
+      },
+      {
+        "from": 36,
+        "to": 50,
+        "type": "scouting",
+        "label": "Scout the crop",
+        "detail": "Scout for Wildfire, Angular Leaf Spot, and Aphids. Apply recommended fungicides/insecticides."
+      },
+      {
+        "from": 51,
+        "to": 70,
+        "type": "field_work",
+        "label": "Inflorescence appears",
+        "detail": "Inflorescence appears. Top the plants (remove flower heads) to redirect nutrients to the leaves."
+      },
+      {
+        "from": 71,
+        "to": 90,
+        "type": "field_work",
+        "label": "Suckering management",
+        "detail": "Suckering management: Manually break off suckers from leaf axils weekly or apply sucker oil."
+      },
+      {
+        "from": 91,
+        "to": 120,
+        "type": "harvesting",
+        "label": "Harvest",
+        "detail": "Harvesting by reaping leaves as they ripen (turning yellow-green). Move immediately to curing barns."
+      }
+    ]
+  }
+}

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Farm API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .error {
+            color: #f44336;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Farm API Test Page</h1>
+    
+    <div class="section">
+        <h2>1. Login</h2>
+        <input type="tel" id="phone" placeholder="+265..." value="+265991234567">
+        <input type="password" id="pin" placeholder="PIN" value="1234">
+        <button onclick="login()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Test Parcels API</h2>
+        <button onclick="testParcels()">Get Parcels</button>
+        <button onclick="addTestParcel()">Add Test Parcel</button>
+        <div id="parcelsResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Test Seasons API</h2>
+        <button onclick="testSeasons()">Get Seasons</button>
+        <button onclick="addTestSeason()">Add Test Season</button>
+        <div id="seasonsResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>4. Test Household API</h2>
+        <button onclick="testHousehold()">Get Household</button>
+        <button onclick="addTestMember()">Add Test Member</button>
+        <div id="householdResult"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://api.zammunda.com';
+        let authToken = null;
+
+        async function login() {
+            const phone = document.getElementById('phone').value;
+            const pin = document.getElementById('pin').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/farmers/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, pin })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    resultDiv.innerHTML = `<p class="success">✅ Login successful!</p><pre>${JSON.stringify(data.farmer, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Login failed: ${data.message || 'Unknown error'}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+
+        async function testParcels() {
+            const resultDiv = document.getElementById('parcelsResult');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">❌ Please login first</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/farmers/me/parcels`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p class="success">✅ API Response (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API Error (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+
+        async function addTestParcel() {
+            const resultDiv = document.getElementById('parcelsResult');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">❌ Please login first</p>';
+                return;
+            }
+            
+            const parcel = {
+                parcel_name: 'Test Field ' + Date.now(),
+                area_hectares: 2.5,
+                ownership_type: 'owned',
+                soil_type: 'loam',
+                water_source: 'rain-fed'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/farmers/me/parcels`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(parcel)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p class="success">✅ Parcel created (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API Error (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+
+        async function testSeasons() {
+            const resultDiv = document.getElementById('seasonsResult');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">❌ Please login first</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/farmers/me/seasons`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p class="success">✅ API Response (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API Error (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+
+        async function addTestSeason() {
+            const resultDiv = document.getElementById('seasonsResult');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">❌ Please login first</p>';
+                return;
+            }
+            
+            // First get parcels to use one
+            const parcelsResponse = await fetch(`${API_BASE}/api/farmers/me/parcels`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const parcelsData = await parcelsResponse.json();
+            
+            if (!parcelsData.parcels || parcelsData.parcels.length === 0) {
+                resultDiv.innerHTML = '<p class="error">❌ Please add a parcel first</p>';
+                return;
+            }
+            
+            const season = {
+                parcel_id: parcelsData.parcels[0].id,
+                crop: 'Maize',
+                variety: 'Hybrid 614',
+                area_hectares: 1.5,
+                season_name: '2026/2027'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/farmers/me/seasons`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(season)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p class="success">✅ Season created (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API Error (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+
+        async function testHousehold() {
+            const resultDiv = document.getElementById('householdResult');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">❌ Please login first</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/farmers/me/household`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p class="success">✅ API Response (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API Error (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+
+        async function addTestMember() {
+            const resultDiv = document.getElementById('householdResult');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">❌ Please login first</p>';
+                return;
+            }
+            
+            const member = {
+                name: 'Test Member',
+                relationship: 'spouse',
+                age: 35,
+                gender: 'female',
+                involved_in_farming: true
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/farmers/me/household`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(member)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p class="success">✅ Member added (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API Error (${response.status})</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

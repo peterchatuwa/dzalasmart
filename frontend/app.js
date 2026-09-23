@@ -15,7 +15,9 @@ function apiBase() {
 }
 
 function setApiBase(url) {
-  const cleaned = String(url || "").trim().replace(/\/$/, "");
+  const cleaned = String(url || "")
+    .trim()
+    .replace(/\/$/, "");
   if (cleaned) localStorage.setItem(API_BASE_KEY, cleaned);
   else localStorage.removeItem(API_BASE_KEY);
 }
@@ -45,7 +47,8 @@ let planTab = "budget";
 const CHAT_UI = {
   en: {
     title: "Ask in English, Chichewa, or Tumbuka",
-    disclaimer: "This assistant gives simplified demo advice. Confirm chemical products and rates with your extension officer before use. Photo diagnosis is not live yet.",
+    disclaimer:
+      "Confirm chemical products and rates with your extension officer before use. A plant photo is saved on the selected field and matched to that crop's sign list.",
     weather: "Today's weather",
     market: "What's my crop worth?",
     crop: "Best crop for my soil",
@@ -60,7 +63,8 @@ const CHAT_UI = {
   },
   ny: {
     title: "Funsani mu Chingerezi, Chichewa, kapena Chitumbuka",
-    disclaimer: "Wothandizirayu akupereka malangizo osavuta a chitsanzo. Onetsetsani ndi wa Ulimi musanagwiritse ntchito mankhwala. Chithunzi sichikuwunikidwa pano.",
+    disclaimer:
+      "Wothandizirayu akupereka malangizo osavuta a chitsanzo. Onetsetsani ndi wa Ulimi musanagwiritse ntchito mankhwala. Chithunzi sichikuwunikidwa pano.",
     weather: "Nyengo lero",
     market: "Mitengo ya msika",
     crop: "Mbewu yabwino pa nthaka yanga",
@@ -75,7 +79,8 @@ const CHAT_UI = {
   },
   tum: {
     title: "Fumbani mu Chizungu, Chichewa, panji Chitumbuka",
-    disclaimer: "Wovwira uyu wakupeleka ulongozgi wapadera wa chiyelezgero. Fumbani wa vilimo pambere mundagwiliskire ntchito mankhwala. Chithuzithuzi chikulutila yayi pano.",
+    disclaimer:
+      "Wovwira uyu wakupeleka ulongozgi wapadera wa chiyelezgero. Fumbani wa vilimo pambere mundagwiliskire ntchito mankhwala. Chithuzithuzi chikulutila yayi pano.",
     weather: "Nyengo yasono",
     market: "Mitengo ya msika",
     crop: "Mbeu yiwemi pa charu chane",
@@ -94,6 +99,59 @@ function showError(id, message) {
   const el = document.getElementById(id);
   el.hidden = !message;
   el.textContent = message || "";
+}
+
+// Toast notification system
+function showToast(message, type = "info", duration = 5000) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+
+  const icons = {
+    success: "✓",
+    error: "✕",
+    warning: "⚠",
+    info: "ℹ",
+  };
+
+  const titles = {
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Info",
+  };
+
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || icons.info}</div>
+    <div class="toast-content">
+      <div class="toast-title">${titles[type] || titles.info}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" aria-label="Close">&times;</button>
+    ${duration > 0 ? '<div class="toast-progress"></div>' : ""}
+  `;
+
+  const closeBtn = toast.querySelector(".toast-close");
+  const removeToast = () => {
+    toast.classList.add("toast-exit");
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 250);
+  };
+
+  closeBtn.addEventListener("click", removeToast);
+
+  container.appendChild(toast);
+
+  if (duration > 0) {
+    setTimeout(removeToast, duration);
+  }
+
+  return toast;
 }
 
 function fmtTime(ts) {
@@ -125,7 +183,11 @@ async function api(method, path, { body, auth = false, plain = false } = {}) {
   const raw = await res.text();
   let parsed = raw;
   if (!plain) {
-    try { parsed = raw ? JSON.parse(raw) : {}; } catch { parsed = { error: raw }; }
+    try {
+      parsed = raw ? JSON.parse(raw) : {};
+    } catch {
+      parsed = { error: raw };
+    }
   }
   addWire(method, path, body ?? null, parsed, res.status);
   if (!res.ok) {
@@ -173,10 +235,12 @@ function fillEpas() {
 function renderStepper() {
   const stages = status?.farmer ? window.__stages || [] : [];
   const current = status?.currentStage?.index ?? -1;
-  document.getElementById("stepper").innerHTML = stages.map((stage) => {
-    const cls = stage.index < current ? "done" : stage.index === current ? "current" : "";
-    return `<li class="${cls}"><span class="dot"></span>${stage.name}</li>`;
-  }).join("");
+  document.getElementById("stepper").innerHTML = stages
+    .map((stage) => {
+      const cls = stage.index < current ? "done" : stage.index === current ? "current" : "";
+      return `<li class="${cls}"><span class="dot"></span>${stage.name}</li>`;
+    })
+    .join("");
 }
 
 function renderFarm() {
@@ -190,31 +254,37 @@ function renderFarm() {
   const farmer = status.farmer;
   document.getElementById("farmerCode").textContent = farmer.code;
   document.getElementById("farmerName").textContent = farmer.name;
-  document.getElementById("farmerPlace").textContent = [farmer.district, farmer.epa, farmer.region].filter(Boolean).join(" · ");
+  document.getElementById("farmerPlace").textContent = [farmer.district, farmer.epa, farmer.region]
+    .filter(Boolean)
+    .join(" · ");
   renderPassport(status.passport);
   document.getElementById("currentStage").textContent = status.currentStage?.name || "Not started";
   document.getElementById("nextStage").textContent = status.nextStage?.name || "Season complete";
   const btn = document.getElementById("advanceBtn");
   btn.disabled = status.seasonComplete;
-  btn.textContent = status.seasonComplete
-    ? "Season complete"
-    : `Log ${status.nextStage.name} from this app`;
+  btn.textContent = status.seasonComplete ? "Season complete" : `Log ${status.nextStage.name} from this app`;
   renderStepper();
   const events = status.events || [];
   document.getElementById("eventLog").innerHTML = events.length
-    ? events.map((event) => `
+    ? events
+        .map(
+          (event) => `
         <div class="event-row">
           <div>
             <strong>${event.stageName}</strong>
             <div class="hint">${fmtTime(event.createdAt)}</div>
           </div>
           <span class="channel ${event.channel}">${event.channel}</span>
-        </div>`).join("")
+        </div>`
+        )
+        .join("")
     : `<p class="hint">No stages logged yet. Use the button above or dial *413#.</p>`;
   const receipts = status.receipts || [];
   const receiptCard = document.getElementById("receiptCard");
   receiptCard.hidden = receipts.length === 0;
-  document.getElementById("receiptList").innerHTML = receipts.map((row) => `
+  document.getElementById("receiptList").innerHTML = receipts
+    .map(
+      (row) => `
     <div class="ledger-row">
       <div>
         <strong>${row.code}</strong>
@@ -225,7 +295,9 @@ function renderFarm() {
         <div class="hint">${row.loanDisbursed ? `Loan ${fmtMoney(row.loanDisbursed)} sent` : row.loanPending ? `Advance ${fmtMoney(row.loanCap)}` : "No loan"}</div>
         ${row.loanPending ? `<button type="button" class="primary" data-accept-loan="${row.id}" style="margin-top:8px;">Accept ${fmtMoney(row.loanCap)}</button>` : ""}
       </div>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
   document.querySelectorAll("[data-accept-loan]").forEach((btn) => {
     btn.addEventListener("click", () => acceptLoan(btn.dataset.acceptLoan));
   });
@@ -238,7 +310,314 @@ function renderFarm() {
   loadPlan();
   loadPlot();
   loadMarket();
+  loadVouchers();
+  loadInputsCatalog();
+  loadFarmerProfile();
+  loadWebCare();
 }
+
+let webCare = null;
+let webSeasonId = localStorage.getItem("web_active_season") || "";
+
+function webEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function webMoney(amount) {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return "—";
+  return `MWK ${Math.round(value).toLocaleString("en-MW")}`;
+}
+
+async function loadWebCare() {
+  const note = document.getElementById("careNote");
+  if (!note || !token) return;
+  try {
+    webCare = await api("GET", "/api/farmers/me/care", { auth: true });
+    const growing = webCare.growing || [];
+    if (growing.length && !growing.some((row) => row.seasonId === webSeasonId)) {
+      webSeasonId = growing[0].seasonId;
+    }
+    if (webSeasonId) localStorage.setItem("web_active_season", webSeasonId);
+    renderWebFieldSelect(growing);
+    renderWebCare();
+    await Promise.all([loadWebQuotes(), loadWebParcels()]);
+  } catch (error) {
+    note.textContent = error.message || "Farm checks are unavailable right now.";
+  }
+}
+
+function renderWebFieldSelect(growing) {
+  const select = document.getElementById("webFieldSelect");
+  if (!select) return;
+  select.innerHTML = growing.length
+    ? growing
+        .map((row) => {
+          const ha = Number.isFinite(Number(row.hectares)) ? ` · ${row.hectares} ha` : "";
+          return `<option value="${webEscape(row.seasonId)}">${webEscape(row.parcelName)} · ${webEscape(row.crop)}${ha}</option>`;
+        })
+        .join("")
+    : `<option value="">Start a season to choose a field</option>`;
+  if (webSeasonId) select.value = webSeasonId;
+}
+
+function renderWebCare() {
+  const body = document.getElementById("careBody");
+  const note = document.getElementById("careNote");
+  if (!body || !webCare) return;
+  const forecast = (webCare.forecast || [])
+    .slice(0, 3)
+    .map((day) => `${day.day} ${Math.round(day.max)}° / ${Number(day.rain || 0).toFixed(0)} mm`)
+    .join(" · ");
+  note.textContent = forecast
+    ? `${webCare.alertHeadline || "Forecast"}. ${forecast}. ${webCare.advice || ""}`
+    : webCare.advice || "The season starts with land preparation. Crop days begin on the day planting is recorded.";
+  const growing = (webCare.growing || []).filter((row) => !webSeasonId || row.seasonId === webSeasonId);
+  const tasks = (webCare.tasks || []).filter((task) => !webSeasonId || task.seasonId === webSeasonId);
+  if (!growing.length) {
+    body.innerHTML = `<p class="hint">No crop actions yet. Start a season below.</p>`;
+    return;
+  }
+  body.innerHTML = growing
+    .map((group) => {
+      const groupTasks = tasks.filter((task) => task.seasonId === group.seasonId);
+      const stage = group.planted ? `day ${group.ageDays}` : "land preparation";
+      const guide = [group.variety, group.guide?.seed, group.guide?.fieldInputs, group.guide?.margin, group.guide?.buyers]
+        .filter(Boolean)
+        .map((line) => `<div class="hint">${webEscape(line)}</div>`)
+        .join("");
+      const taskHtml = groupTasks.length
+        ? groupTasks
+            .map(
+              (task) => `
+          <div class="ledger-row">
+            <div>
+              <strong>${webEscape(task.label)}</strong>
+              <div class="hint">${webEscape(task.detail || "")}</div>
+            </div>
+            <div class="ledger-side">
+              <span class="badge ${task.status === "done" ? "accepted" : ""}">${task.status === "due" ? "Due" : task.status === "done" ? "Logged" : "Rain"}</span>
+              ${
+                task.status === "due"
+                  ? `<button type="button" class="primary" data-care-season="${webEscape(task.seasonId)}" data-care-type="${webEscape(task.logType || task.type)}" data-care-label="${webEscape(task.label)}">Mark done</button>`
+                  : ""
+              }
+            </div>
+          </div>`
+            )
+            .join("")
+        : `<p class="hint">${group.nextAction ? "" : "No action due for this crop today."}</p>`;
+      return `
+        <div>
+          <strong>${webEscape(group.crop)} · ${webEscape(group.parcelName)} · ${stage}</strong>
+          ${group.nextAction ? `<div class="hint">${webEscape(group.nextAction)}</div>` : ""}
+          ${guide}
+          ${taskHtml}
+        </div>`;
+    })
+    .join("");
+}
+
+async function loadWebQuotes() {
+  const box = document.getElementById("fieldQuotes");
+  if (!box || !token) return;
+  const params = new URLSearchParams();
+  if (webSeasonId) params.set("seasonId", webSeasonId);
+  try {
+    const data = await api("GET", `/api/farmers/market?${params}`, { auth: true });
+    const quotes = data.quotes || [];
+    if (!quotes.length) {
+      box.innerHTML = "";
+      return;
+    }
+    const source = data.live ? "Live warehouse quote." : "Reference price until a live quote is available.";
+    box.innerHTML = `<p class="hint">${webEscape(data.warehouseHub ? `Nearest warehouse: ${data.warehouseHub}. ` : "")}${source}</p>` +
+      quotes
+        .map((quote) => {
+          const title = quote.parcelName ? `${quote.parcelName} · ${quote.crop}` : quote.crop;
+          const today = quote.today
+            ? `${quote.today.live ? "Today" : "Reference"}: ${webMoney(quote.today.pricePerKg)}/kg · ${quote.today.source || ""}`
+            : "Today: no warehouse quote";
+          const floor = quote.floor ? `Floor: ${webMoney(quote.floor.pricePerKg)}/kg` : "Floor: not set";
+          const plan = quote.plan
+            ? `Plan: ${webMoney(quote.plan.pricePerKg)}/kg. Break-even ${webMoney(quote.plan.breakEvenPrice)}/kg.`
+            : "";
+          const field =
+            quote.plan && quote.plan.marginForField != null
+              ? `This field: gross margin about ${webMoney(quote.plan.marginForField)}.`
+              : "";
+          return `<div class="ledger-row"><div><strong>${webEscape(title)}</strong><div class="hint">${webEscape(today)}</div><div class="hint">${webEscape(floor)}</div>${plan ? `<div class="hint">${webEscape(plan)}</div>` : ""}${field ? `<div class="hint">${webEscape(field)}</div>` : ""}</div></div>`;
+        })
+        .join("");
+  } catch (error) {
+    box.innerHTML = `<p class="hint">${webEscape(error.message)}</p>`;
+  }
+}
+
+async function loadWebParcels() {
+  const select = document.getElementById("webSeasonParcel");
+  if (!select || !token) return;
+  try {
+    const data = await api("GET", "/api/farmers/me/parcels", { auth: true });
+    const parcels = data.parcels || [];
+    select.innerHTML = parcels.length
+      ? parcels
+          .map((parcel) => {
+            const name = parcel.parcel_name || parcel.parcelName || "Plot";
+            const ha = parcel.size_hectares ?? parcel.hectares ?? parcel.area_hectares ?? "";
+            return `<option value="${webEscape(parcel.id)}">${webEscape(name)}${ha !== "" ? ` (${ha} ha)` : ""}</option>`;
+          })
+          .join("")
+      : `<option value="">No parcel yet</option>`;
+  } catch (error) {
+    select.innerHTML = `<option value="">${webEscape(error.message)}</option>`;
+  }
+}
+
+async function refreshWebSeasonGuide() {
+  const guide = document.getElementById("webSeasonGuide");
+  const crop = document.getElementById("webSeasonCrop")?.value;
+  if (!guide || !token) return;
+  if (!crop) {
+    guide.textContent = "";
+    return;
+  }
+  const params = new URLSearchParams({ crop });
+  const hectares = document.getElementById("webSeasonArea")?.value;
+  if (hectares) params.set("hectares", hectares);
+  try {
+    const brief = await api("GET", `/api/farmers/me/guide?${params}`, { auth: true });
+    const variety = document.getElementById("webSeasonVariety");
+    if (variety && brief.varieties && !variety.dataset.touched) variety.value = brief.varieties;
+    guide.textContent = [brief.phaseNote, brief.note, brief.variety, brief.planting, brief.seed, brief.margin, brief.suppliers, brief.buyers]
+      .filter(Boolean)
+      .join(" ");
+  } catch (error) {
+    guide.textContent = error.message;
+  }
+}
+
+document.getElementById("webFieldSelect")?.addEventListener("change", (event) => {
+  webSeasonId = event.target.value || "";
+  if (webSeasonId) localStorage.setItem("web_active_season", webSeasonId);
+  renderWebCare();
+  loadWebQuotes();
+});
+
+document.getElementById("careBody")?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-care-season]");
+  if (!button) return;
+  button.disabled = true;
+  const today = new Date();
+  const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  try {
+    await api("POST", `/api/farmers/me/seasons/${button.dataset.careSeason}/activities`, {
+      auth: true,
+      body: {
+        activityType: button.dataset.careType,
+        activityDate: date,
+        description: button.dataset.careLabel,
+      },
+    });
+    showToast("Logged", "success");
+    await loadWebCare();
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message || "Could not log this check", "error");
+  }
+});
+
+document.getElementById("webSeasonCrop")?.addEventListener("change", () => {
+  const variety = document.getElementById("webSeasonVariety");
+  if (variety) variety.dataset.touched = "";
+  refreshWebSeasonGuide();
+});
+document.getElementById("webSeasonArea")?.addEventListener("input", refreshWebSeasonGuide);
+document.getElementById("webSeasonVariety")?.addEventListener("input", (event) => {
+  event.target.dataset.touched = "1";
+});
+document.getElementById("webSeasonForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showError("webSeasonError", "");
+  const area = parseFloat(document.getElementById("webSeasonArea").value);
+  try {
+    const season = await api("POST", "/api/farmers/me/seasons", {
+      auth: true,
+      body: {
+        parcelId: document.getElementById("webSeasonParcel").value,
+        crop: document.getElementById("webSeasonCrop").value,
+        variety: document.getElementById("webSeasonVariety").value,
+        areaHectares: area,
+        seasonName: document.getElementById("webSeasonName").value,
+      },
+    });
+    webSeasonId = season.id || webSeasonId;
+    showToast("Season started. Land preparation is the first step.", "success");
+    await loadWebCare();
+  } catch (error) {
+    showError("webSeasonError", error.message);
+  }
+});
+
+document.getElementById("plantPhoto")?.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+  if (!webSeasonId) {
+    showError("chatError", "Choose a field first, then photograph the plant.");
+    return;
+  }
+  if (file.size > 2_500_000) {
+    showError("chatError", "Use a photo smaller than 2.5 MB.");
+    return;
+  }
+  const image = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read the photo"));
+    reader.readAsDataURL(file);
+  });
+  addChatBubble("Plant photo sent for this field.", "user");
+  try {
+    const data = await api("POST", "/api/farmers/advisor/photo", {
+      auth: true,
+      body: { image, seasonId: webSeasonId, lang: chatLang },
+    });
+    addChatBubble(data.advice || data.reply || "No match yet.", "bot");
+    if (!data.choices?.length || !data.id) return;
+    const win = document.getElementById("chatWindow");
+    const wrap = document.createElement("div");
+    wrap.className = "chat-topics";
+    for (const choice of data.choices) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "chip";
+      button.textContent = choice.lookFor;
+      button.addEventListener("click", async () => {
+        wrap.remove();
+        addChatBubble(choice.lookFor, "user");
+        try {
+          const confirmed = await api("POST", `/api/farmers/advisor/photo/${data.id}/sign`, {
+            auth: true,
+            body: { sign: choice.name, lang: chatLang },
+          });
+          addChatBubble(confirmed.advice || confirmed.reply, "bot");
+        } catch (error) {
+          showError("chatError", error.message);
+        }
+      });
+      wrap.appendChild(button);
+    }
+    win.appendChild(wrap);
+    win.scrollTop = win.scrollHeight;
+  } catch (error) {
+    showError("chatError", error.message);
+  }
+});
 
 async function loadStatus() {
   status = await api("GET", "/api/farmers/me/status", { auth: true });
@@ -248,7 +627,9 @@ async function loadStatus() {
 function renderPassport(passport) {
   if (!passport) return;
   document.getElementById("passportId").textContent = `Farmer Passport · ${passport.code}`;
-  document.getElementById("passportPlace").textContent = [passport.district, passport.epa, passport.phone].filter(Boolean).join(" · ");
+  document.getElementById("passportPlace").textContent = [passport.district, passport.epa, passport.phone]
+    .filter(Boolean)
+    .join(" · ");
   document.getElementById("passportGrade").textContent = passport.grade;
   document.getElementById("passportLabel").textContent = passport.label;
   document.getElementById("passportIncome").textContent = fmtMoney(passport.netIncome);
@@ -257,11 +638,15 @@ function renderPassport(passport) {
     ? `${fmtMoney(passport.loanPending)} waiting`
     : fmtMoney(passport.loanDisbursed);
   document.getElementById("passportStatus").textContent = passport.status;
-  document.getElementById("passportChecks").innerHTML = (passport.checks || []).map((row) => `
+  document.getElementById("passportChecks").innerHTML = (passport.checks || [])
+    .map(
+      (row) => `
     <div class="passport-check">
       <span class="mark">${row.done ? "✓" : "·"}</span>
       <span>${row.label}</span>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 }
 
 async function acceptLoan(receiptId) {
@@ -287,12 +672,16 @@ async function loadWeather(district) {
     document.getElementById("wxHumidity").textContent = wx.humidity + "%";
     document.getElementById("wxRain3").textContent = wx.rain3dayMm + " mm";
     document.getElementById("wxWind").textContent = wx.windKmh + " km/h";
-    document.getElementById("wxForecast").innerHTML = (wx.forecast || []).map((day) => `
+    document.getElementById("wxForecast").innerHTML = (wx.forecast || [])
+      .map(
+        (day) => `
       <div class="wx-day">
         <div class="wx-lbl">${day.day}</div>
         <div class="wx-val">${Math.round(day.max)}°/${Math.round(day.min)}°</div>
         <div class="hint">${Number(day.rain || 0).toFixed(0)}mm</div>
-      </div>`).join("");
+      </div>`
+      )
+      .join("");
     document.getElementById("wxSeason").textContent = `${wx.season.label} — ${wx.season.text}`;
     document.getElementById("wxField").textContent = wx.fieldAdvice;
     note.textContent = `Live from Open-Meteo · ${wx.district}`;
@@ -320,28 +709,50 @@ async function loadMarketCompare(commoditySlug, district) {
     } else {
       summary.textContent = `No district comparison yet for ${compare.commodity}.`;
     }
-    table.innerHTML = (compare.districts || []).map((row) => `
+    table.innerHTML =
+      (compare.districts || [])
+        .map(
+          (row) => `
       <div class="kv-row${row.buyPricePerKg === compare.stats?.lowestBuy ? " price-low" : row.buyPricePerKg === compare.stats?.highestBuy ? " price-high" : ""}">
         <span>${row.district} · ${row.source}${row.priceKind === "procurement" ? " · gov" : ""}</span>
         <strong>${row.buyPrice || "—"}${row.sellPrice ? ` / ${row.sellPrice}` : ""}</strong>
-      </div>`).join("") || `<p class="hint">Need warehouse quotes in at least two hubs.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">Need warehouse quotes in at least two hubs.</p>`;
 
     if (district) {
-      const sources = await api("GET", `/api/market/sources/compare?commodity=${encodeURIComponent(commoditySlug)}&district=${encodeURIComponent(district)}`);
-      sourcePanel.innerHTML = `<p class="eyebrow">Sources in ${district}</p>${(sources.sources || []).map((row) => `
+      const sources = await api(
+        "GET",
+        `/api/market/sources/compare?commodity=${encodeURIComponent(commoditySlug)}&district=${encodeURIComponent(district)}`
+      );
+      sourcePanel.innerHTML = `<p class="eyebrow">Sources in ${district}</p>${
+        (sources.sources || [])
+          .map(
+            (row) => `
         <div class="kv-row${row.buyPricePerKg === sources.stats?.lowestBuy ? " price-low" : row.buyPricePerKg === sources.stats?.highestBuy ? " price-high" : ""}">
           <span>${row.source}${row.priceKind === "procurement" ? " · procurement" : ""}</span>
           <strong>${row.buyPrice || "—"}</strong>
-        </div>`).join("") || `<p class="hint">No source quotes for your district yet.</p>`}`;
+        </div>`
+          )
+          .join("") || `<p class="hint">No source quotes for your district yet.</p>`
+      }`;
     }
 
     const opps = await api("GET", `/api/market/opportunities?commodity=${encodeURIComponent(commoditySlug)}`);
-    opportunitiesPanel.innerHTML = `<p class="eyebrow">Profitable haulage (after transport)</p>${(opps.opportunities || []).slice(0, 4).map((row) => `
+    opportunitiesPanel.innerHTML = `<p class="eyebrow">Profitable haulage (after transport)</p>${
+      (opps.opportunities || [])
+        .slice(0, 4)
+        .map(
+          (row) => `
       <div class="kv-row">
         <span>${row.commodity}: ${row.fromDistrict} → ${row.toDistrict}${row.profitable ? "" : " · not profitable"}</span>
         <strong>${row.netMarginLabel || row.spreadLabel}${row.transportPerKg ? ` · haul ${row.transportLabel}` : ""}</strong>
       </div>
-      <p class="hint">${row.note}</p>`).join("") || `<p class="hint">No cross-hub opportunities yet. Need live prices in at least two warehouse hubs.</p>`}`;
+      <p class="hint">${row.note}</p>`
+        )
+        .join("") ||
+      `<p class="hint">No cross-hub opportunities yet. Need live prices in at least two warehouse hubs.</p>`
+    }`;
     const transportNote = document.getElementById("marketTransportNote");
     if (transportNote) {
       transportNote.textContent = opps.profitableCount
@@ -400,9 +811,10 @@ async function loadMarketTrends(commoditySlug, district, range) {
     const payload = await api("GET", `/api/market/trends?${qs}`);
     if (payload.stats) {
       const change = payload.stats.change >= 0 ? `+${payload.stats.change}` : payload.stats.change;
-      summary.textContent = `${payload.commodity} · ${payload.rangeLabel}${district ? ` · ${district}` : ""} · `
-        + `${payload.stats.count} observations · last buy MWK ${payload.stats.lastBuy?.toLocaleString("en")}/kg `
-        + `(${change} MWK${payload.stats.changePct != null ? `, ${payload.stats.changePct}%` : ""})`;
+      summary.textContent =
+        `${payload.commodity} · ${payload.rangeLabel}${district ? ` · ${district}` : ""} · ` +
+        `${payload.stats.count} observations · last buy MWK ${payload.stats.lastBuy?.toLocaleString("en")}/kg ` +
+        `(${change} MWK${payload.stats.changePct != null ? `, ${payload.stats.changePct}%` : ""})`;
     } else {
       summary.textContent = `No trend data yet for ${payload.commodity}. Refresh feeds or import historical prices.`;
     }
@@ -449,11 +861,19 @@ async function loadMarketHistory(commoditySlug, district) {
     const qs = new URLSearchParams({ commodity: commoditySlug, days: "30" });
     if (district) qs.set("district", district);
     const payload = await api("GET", `/api/market/history?${qs}`);
-    list.innerHTML = (payload.points || []).slice(-20).reverse().map((row) => `
+    list.innerHTML =
+      (payload.points || [])
+        .slice(-20)
+        .reverse()
+        .map(
+          (row) => `
       <div class="kv-row">
         <span>${new Date(row.fetchedAt).toLocaleDateString()} · ${row.source} · ${row.market}</span>
         <strong>${row.buyPrice || "—"}${row.sellPrice ? ` / ${row.sellPrice}` : ""}</strong>
-      </div>`).join("") || `<p class="hint">No history yet for this commodity. Prices are stored each time feeds refresh.</p>`;
+      </div>`
+        )
+        .join("") ||
+      `<p class="hint">No history yet for this commodity. Prices are stored each time feeds refresh.</p>`;
   } catch (error) {
     list.innerHTML = `<p class="hint">${error.message || "Could not load history."}</p>`;
   }
@@ -479,27 +899,40 @@ async function loadMarketAlerts() {
     }
     document.getElementById("marketAlertsSummary").textContent =
       `${payload.activeCount || 0} active alert${payload.activeCount === 1 ? "" : "s"} · checked after each market refresh.`;
-    document.getElementById("marketAlertsList").innerHTML = (payload.alerts || []).map((row) => `
+    document.getElementById("marketAlertsList").innerHTML =
+      (payload.alerts || [])
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.commoditySlug} · ${row.direction} ${row.thresholdLabel || row.thresholdPerKg}</strong>
           <div class="meta">${row.district}${row.locationSlug ? ` · ${row.locationSlug}` : ""}</div>
         </div>
         <button type="button" class="ghost" data-alert-id="${row.id}">Remove</button>
-      </div>`).join("") || `<p class="hint">No alerts yet.</p>`;
-    document.getElementById("marketAlertsList").querySelectorAll("[data-alert-id]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        await api("DELETE", `/api/market/alerts/${btn.dataset.alertId}`, { auth: true });
-        await loadMarketAlerts();
+      </div>`
+        )
+        .join("") || `<p class="hint">No alerts yet.</p>`;
+    document
+      .getElementById("marketAlertsList")
+      .querySelectorAll("[data-alert-id]")
+      .forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await api("DELETE", `/api/market/alerts/${btn.dataset.alertId}`, { auth: true });
+          await loadMarketAlerts();
+        });
       });
-    });
-    document.getElementById("marketAlertEvents").innerHTML = (payload.events || []).map((row) => `
+    document.getElementById("marketAlertEvents").innerHTML =
+      (payload.events || [])
+        .map(
+          (row) => `
       <div class="ledger-row">
         <div>
           <strong>${row.message}</strong>
           <div class="meta">${new Date(row.triggeredAt).toLocaleString("en-MW")}</div>
         </div>
-      </div>`).join("") || `<p class="hint">No triggered alerts yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No triggered alerts yet.</p>`;
   } catch (error) {
     document.getElementById("marketAlertsSummary").textContent = error.message;
   }
@@ -512,8 +945,9 @@ async function loadMarketLocations(district) {
     const qs = district ? `?district=${encodeURIComponent(district)}` : "";
     const payload = await api("GET", `/api/market/locations${qs}`, token ? { auth: true } : undefined);
     const current = select.value;
-    select.innerHTML = `<option value="">All locations</option>${(payload.tradingCentres || []).map((row) =>
-      `<option value="${row.slug}">${row.name} · ${row.district}</option>`).join("")}`;
+    select.innerHTML = `<option value="">All locations</option>${(payload.tradingCentres || [])
+      .map((row) => `<option value="${row.slug}">${row.name} · ${row.district}</option>`)
+      .join("")}`;
     if ([...select.options].some((opt) => opt.value === current)) select.value = current;
   } catch {
     /* keep existing options */
@@ -537,17 +971,20 @@ async function loadMarket(options = {}) {
     const prices = payload.prices || [];
 
     if (commodityFilter && commodityFilter.options.length <= 1) {
-      commodityFilter.innerHTML = `<option value="">All commodities</option>${(payload.commodities || []).map((row) =>
-        `<option value="${row.slug}">${row.name}</option>`).join("")}`;
+      commodityFilter.innerHTML = `<option value="">All commodities</option>${(payload.commodities || [])
+        .map((row) => `<option value="${row.slug}">${row.name}</option>`)
+        .join("")}`;
       const compareSelect = document.getElementById("marketCompareCommodity");
       if (compareSelect && compareSelect.options.length <= 1) {
-        compareSelect.innerHTML = (payload.commodities || []).map((row) =>
-          `<option value="${row.slug}">${row.name}</option>`).join("");
+        compareSelect.innerHTML = (payload.commodities || [])
+          .map((row) => `<option value="${row.slug}">${row.name}</option>`)
+          .join("");
       }
       const trendSelect = document.getElementById("marketTrendCommodity");
       if (trendSelect && trendSelect.options.length <= 1) {
-        trendSelect.innerHTML = (payload.commodities || []).map((row) =>
-          `<option value="${row.slug}">${row.name}</option>`).join("");
+        trendSelect.innerHTML = (payload.commodities || [])
+          .map((row) => `<option value="${row.slug}">${row.name}</option>`)
+          .join("");
       }
     }
 
@@ -564,7 +1001,10 @@ async function loadMarket(options = {}) {
 
     const tbody = document.getElementById("marketPriceBody");
     if (tbody) {
-      tbody.innerHTML = prices.map((row) => `
+      tbody.innerHTML =
+        prices
+          .map(
+            (row) => `
         <tr data-slug="${row.commoditySlug || ""}">
           <td><strong>${row.crop}</strong>${row.priceKind === "procurement" ? ' <span class="hint procurement">gov</span>' : row.priceKind === "reference" ? ' <span class="hint procurement">ref</span>' : ""}</td>
           <td>${row.market}${row.district ? `<div class="hint">${row.district}</div>` : ""}</td>
@@ -572,33 +1012,41 @@ async function loadMarket(options = {}) {
           <td>${row.sellPrice || "—"}</td>
           <td>${row.source}</td>
           <td>${row.updatedLabel || "—"}</td>
-        </tr>`).join("") || `<tr><td colspan="6"><p class="hint">No prices yet. The server refreshes LocalBuyEx and Ulimi automatically.</p></td></tr>`;
+        </tr>`
+          )
+          .join("") ||
+        `<tr><td colspan="6"><p class="hint">No prices yet. The server refreshes LocalBuyEx and Ulimi automatically.</p></td></tr>`;
       tbody.querySelectorAll("tr[data-slug]").forEach((tr) => {
         tr.addEventListener("click", () => loadMarketHistory(tr.dataset.slug, district));
       });
     }
 
-    document.getElementById("marketTable").innerHTML = prices.filter((r) => r.sourceSlug === "localbuy").map((row) => `
+    document.getElementById("marketTable").innerHTML =
+      prices
+        .filter((r) => r.sourceSlug === "localbuy")
+        .map(
+          (row) => `
       <div class="market-row">
         <div>
           <strong>${row.crop}</strong>
           <div class="hint">${row.buyPrice || "—"}${row.market ? ` · ${row.market}` : ""}</div>
         </div>
         <div class="trend flat">${row.source}<div class="hint">${row.updatedLabel || ""}</div></div>
-      </div>`).join("") || `<p class="hint">No warehouse quotes for your nearest hub yet.</p>`;
+      </div>`
+        )
+        .join("") || `<p class="hint">No warehouse quotes for your nearest hub yet.</p>`;
 
     const note = document.getElementById("marketNote");
     if (note) {
-      const sources = (payload.sources || []).map((s) =>
-        `${s.name} (${s.status === "ok" ? s.updatedLabel : s.status})`).join(" · ");
+      const sources = (payload.sources || [])
+        .map((s) => `${s.name} (${s.status === "ok" ? s.updatedLabel : s.status})`)
+        .join(" · ");
       note.textContent = sources
         ? `Sources: ${sources}. Tap a row for 30-day history. Lowest/highest buy prices are highlighted. Ministry floor prices below still govern off-take contracts.`
         : "Market prices are stored in PostgreSQL each time feeds refresh.";
     }
 
-    const compareCommodity = document.getElementById("marketCompareCommodity")?.value
-      || commodity
-      || "maize";
+    const compareCommodity = document.getElementById("marketCompareCommodity")?.value || commodity || "maize";
     await loadMarketCompare(compareCommodity, district);
 
     const trendCommodity = document.getElementById("marketTrendCommodity")?.value || compareCommodity;
@@ -606,18 +1054,170 @@ async function loadMarket(options = {}) {
     await loadMarketTrends(trendCommodity, district, trendRange);
     if (token) await loadMarketAlerts();
   } catch {
-    document.getElementById("marketPriceBody").innerHTML = `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
+    document.getElementById("marketPriceBody").innerHTML =
+      `<tr><td colspan="6"><p class="hint">Market figures unavailable.</p></td></tr>`;
     document.getElementById("marketTable").innerHTML = `<p class="hint">Market figures unavailable.</p>`;
   }
   try {
     const floors = await api("GET", "/api/floors");
-    document.getElementById("floorTable").innerHTML = (floors.floors || []).map((row) => `
+    document.getElementById("floorTable").innerHTML = (floors.floors || [])
+      .map(
+        (row) => `
       <div class="kv-row">
         <span>${row.crop} floor</span>
         <strong>MWK ${Number(row.pricePerKg).toLocaleString("en")}/kg</strong>
-      </div>`).join("");
+      </div>`
+      )
+      .join("");
   } catch {
     document.getElementById("floorTable").innerHTML = "";
+  }
+}
+
+async function loadVouchers() {
+  const note = document.getElementById("vouchersNote");
+  const list = document.getElementById("vouchersList");
+  
+  if (!status?.farmer) {
+    note.textContent = "Sign in to view your input vouchers.";
+    list.innerHTML = "";
+    return;
+  }
+
+  try {
+    note.textContent = "Loading vouchers…";
+    const payload = await api("GET", "/api/farmers/me/vouchers", { auth: true });
+    const vouchers = payload.vouchers || [];
+
+    if (vouchers.length === 0) {
+      note.textContent = "You have no input vouchers yet. Contact your extension officer for FISP allocation.";
+      list.innerHTML = "";
+      return;
+    }
+
+    note.textContent = `You have ${vouchers.length} voucher${vouchers.length === 1 ? "" : "s"}.`;
+
+    list.innerHTML = vouchers
+      .map((v) => {
+        const statusClass = v.status === "active" ? "accepted" : v.status === "redeemed" ? "loan_disbursed" : "rejected";
+        const statusText = v.status === "active" ? "ACTIVE — Ready to redeem" : v.status === "redeemed" ? "REDEEMED" : v.status.toUpperCase();
+        
+        const inputList = v.inputs
+          .map((inp) => `<div class="hint">• ${inp.inputName}: ${inp.quantity} ${inp.inputUnit}</div>`)
+          .join("");
+
+        const expiryDate = new Date(v.expiresAt);
+        const isExpiringSoon = v.status === "active" && (expiryDate - Date.now()) < 30 * 24 * 60 * 60 * 1000;
+
+        return `
+          <div class="ledger-row">
+            <div>
+              <strong>${v.code}</strong>
+              <div class="hint">Season ${v.season} · ${v.inputs.length} input${v.inputs.length === 1 ? "" : "s"}</div>
+              ${inputList}
+              ${v.summary.totalFarmerContribution > 0 ? `<div class="hint" style="margin-top:4px;">Your contribution: MWK ${v.summary.totalFarmerContribution.toLocaleString("en")}</div>` : `<div class="hint" style="margin-top:4px;">Fully subsidized (${Math.round(v.summary.subsidyPercentage)}% govt support)</div>`}
+              ${isExpiringSoon ? `<div class="hint" style="color:#d97706;margin-top:4px;">⚠ Expires ${fmtTime(v.expiresAt)}</div>` : ""}
+            </div>
+            <div class="ledger-side">
+              <span class="badge ${statusClass}">${statusText}</span>
+              <div class="hint">${fmtTime(v.issuedAt)}</div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  } catch (error) {
+    note.textContent = `Failed to load vouchers: ${error.message}`;
+    list.innerHTML = "";
+  }
+}
+
+async function loadFarmerProfile() {
+  if (!status?.farmer) return;
+
+  try {
+    // Load farmer's full profile from database
+    const profileData = await api("GET", "/api/farmers/me", { auth: true });
+    const farmer = profileData.farmer;
+
+    // Populate form fields with existing data
+    if (document.getElementById("profileGender")) document.getElementById("profileGender").value = farmer.gender || "";
+    if (document.getElementById("profileDob") && farmer.dateOfBirth) {
+      const date = new Date(farmer.dateOfBirth);
+      document.getElementById("profileDob").value = date.toISOString().split("T")[0];
+    }
+    if (document.getElementById("profileNationalId")) document.getElementById("profileNationalId").value = farmer.nationalId || "";
+    if (document.getElementById("profileVillage")) document.getElementById("profileVillage").value = farmer.village || "";
+    if (document.getElementById("profileMaritalStatus")) document.getElementById("profileMaritalStatus").value = farmer.maritalStatus || "";
+    if (document.getElementById("profileHouseholdSize")) document.getElementById("profileHouseholdSize").value = farmer.householdSize || "";
+    if (document.getElementById("profileEducation")) document.getElementById("profileEducation").value = farmer.educationLevel || "";
+    if (document.getElementById("profileExperience")) document.getElementById("profileExperience").value = farmer.yearsOfExperience || "";
+    if (document.getElementById("profileAltPhone")) document.getElementById("profileAltPhone").value = farmer.alternativePhone || "";
+    if (document.getElementById("profileEmail")) document.getElementById("profileEmail").value = farmer.email || "";
+  } catch (error) {
+    console.error("Failed to load farmer profile:", error);
+  }
+}
+
+async function saveProfile(formData) {
+  try {
+    await api("PUT", "/api/farmers/me", {
+      auth: true,
+      body: formData,
+    });
+    
+    showToast("Your profile has been updated successfully!", "success");
+    
+    // Reload status to refresh farmer info
+    await loadStatus();
+  } catch (error) {
+    showToast(error.message || "Failed to update profile", "error");
+  }
+}
+
+let currentInputCategory = "all";
+
+async function loadInputsCatalog(category = "all") {
+  const note = document.getElementById("inputsNote");
+  const list = document.getElementById("inputsList");
+  currentInputCategory = category;
+
+  try {
+    note.textContent = "Loading inputs…";
+    const params = category !== "all" ? `?category=${category}` : "";
+    const payload = await api("GET", `/api/inputs${params}`, { auth: false });
+    const inputs = payload.inputs || [];
+
+    if (inputs.length === 0) {
+      note.textContent = category !== "all" ? `No ${category} inputs available.` : "No inputs available.";
+      list.innerHTML = "";
+      return;
+    }
+
+    note.textContent = `${inputs.length} input${inputs.length === 1 ? "" : "s"} available${category !== "all" ? ` in ${category}` : ""}.`;
+
+    list.innerHTML = inputs
+      .map((inp) => {
+        const categoryBadge = inp.category === "fertilizer" ? "accepted" : inp.category === "seed" ? "loan_disbursed" : "pending";
+        
+        return `
+          <div class="ledger-row">
+            <div>
+              <strong>${inp.name}</strong>
+              <div class="hint">${inp.description || "No description"}</div>
+              ${inp.supplier ? `<div class="hint" style="margin-top:4px;">Supplier: ${inp.supplier}</div>` : ""}
+            </div>
+            <div class="ledger-side">
+              <span class="badge ${categoryBadge}">${inp.category.toUpperCase()}</span>
+              <div class="stat">MWK ${inp.standardPrice.toLocaleString("en")}/${inp.unit}</div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  } catch (error) {
+    note.textContent = `Failed to load inputs: ${error.message}`;
+    list.innerHTML = "";
   }
 }
 
@@ -669,9 +1269,11 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
       },
     });
     setSession(payload);
+    showToast(`Welcome back, ${payload.farmer.name}!`, "success");
     await loadStatus();
   } catch (error) {
     showError("loginError", error.message);
+    showToast(error.message || "Login failed", "error");
   }
 });
 
@@ -686,12 +1288,22 @@ document.getElementById("registerForm").addEventListener("submit", async (event)
         pin: document.getElementById("regPin").value,
         district: document.getElementById("regDistrict").value,
         epa: document.getElementById("regEpa").value,
+        village: document.getElementById("regVillage")?.value || null,
+        gender: document.getElementById("regGender")?.value || null,
+        dateOfBirth: document.getElementById("regAge")?.value ? 
+          new Date(new Date().getFullYear() - parseInt(document.getElementById("regAge").value), 0, 1).getTime() : null,
+        householdSize: document.getElementById("regHouseholdSize")?.value ? 
+          parseInt(document.getElementById("regHouseholdSize").value) : null,
+        householdType: document.getElementById("regHouseholdType")?.value || null,
+        livestock: document.getElementById("regLivestock")?.value || null,
       },
     });
     setSession(payload);
+    showToast(`Welcome to Nzeru za Alimi, ${payload.farmer.name}! Your account has been created.`, "success");
     await loadStatus();
   } catch (error) {
     showError("registerError", error.message);
+    showToast(error.message || "Registration failed", "error");
   }
 });
 
@@ -702,9 +1314,11 @@ document.getElementById("advanceBtn").addEventListener("click", async () => {
   showError("advanceError", "");
   try {
     status = await api("POST", "/api/farmers/me/events", { auth: true, body: {} });
+    showToast(`Milestone logged: ${status.currentStage?.name || "Complete"}!`, "success");
     renderFarm();
   } catch (error) {
     showError("advanceError", error.message);
+    showToast(error.message || "Failed to log milestone", "error");
   }
 });
 
@@ -791,7 +1405,8 @@ async function askChat({ text, topic, soil, nutrient, showUser = true }) {
         lang: chatLang,
         soil: soil || document.getElementById("chatSoil").value,
         nutrient: nutrient || document.getElementById("chatNutrient").value,
-        channel: "mobile",
+        seasonId: document.getElementById("webFieldSelect")?.value || undefined,
+        channel: "web",
       },
     });
     addChatBubble(payload.reply || "No reply.", "bot");
@@ -840,6 +1455,42 @@ document.getElementById("chatCropBtn").addEventListener("click", async () => {
   });
 });
 
+document.getElementById("chatWeatherBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "What's the weather forecast for my area?", topic: "weather", showUser: true });
+});
+
+document.getElementById("chatMarketBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "When is the best time to sell my crops?", topic: "selling", showUser: true });
+});
+
+document.getElementById("chatPestBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How do I identify and treat crop pests?", topic: "pest", showUser: true });
+});
+
+document.getElementById("chatFertiliserBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "What fertiliser should I use for my soil?", topic: "fertiliser", showUser: true });
+});
+
+document.getElementById("chatIrrigationBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How can I improve my irrigation and water management?", topic: "irrigation", showUser: true });
+});
+
+document.getElementById("chatStorageBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How do I store my harvest to reduce post-harvest loss?", topic: "storage", showUser: true });
+});
+
+document.getElementById("chatLoansBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How can I access loans and financing for my farm?", topic: "loans", showUser: true });
+});
+
+document.getElementById("chatLivestockBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "What's the best way to feed and care for my livestock?", topic: "livestock", showUser: true });
+});
+
+document.getElementById("chatCoopBtn")?.addEventListener("click", async () => {
+  await askChat({ text: "How can I join or start a farmer cooperative?", topic: "cooperatives", showUser: true });
+});
+
 document.getElementById("chatForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = document.getElementById("chatInput").value.trim();
@@ -862,11 +1513,13 @@ function renderPlotPolygon(svgEl, polygon) {
   const pad = 8;
   const width = 200 - pad * 2;
   const height = 120 - pad * 2;
-  const points = polygon.map((point) => {
-    const x = pad + ((point.lon - minLon) / (maxLon - minLon || 1)) * width;
-    const y = pad + ((maxLat - point.lat) / (maxLat - minLat || 1)) * height;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
+  const points = polygon
+    .map((point) => {
+      const x = pad + ((point.lon - minLon) / (maxLon - minLon || 1)) * width;
+      const y = pad + ((maxLat - point.lat) / (maxLat - minLat || 1)) * height;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
   svgEl.innerHTML = `<polygon points="${points}" fill="rgba(214,154,34,0.15)" stroke="#D69A22" stroke-width="1.6" stroke-dasharray="4 3"/>`;
 }
 
@@ -918,29 +1571,33 @@ async function saveGpsPlot() {
   }
   btn.disabled = true;
   btn.textContent = "Getting location…";
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    try {
-      const payload = await api("PUT", "/api/farmers/me/plot", {
-        auth: true,
-        body: {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-          accuracyM: pos.coords.accuracy,
-          source: "gps",
-        },
-      });
-      renderPlot(payload);
-    } catch (error) {
-      showError("plotError", error.message);
-    } finally {
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const payload = await api("PUT", "/api/farmers/me/plot", {
+          auth: true,
+          body: {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            accuracyM: pos.coords.accuracy,
+            source: "gps",
+          },
+        });
+        renderPlot(payload);
+      } catch (error) {
+        showError("plotError", error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Use my location";
+      }
+    },
+    (err) => {
+      showError("plotError", err.message || "Could not read GPS.");
       btn.disabled = false;
       btn.textContent = "Use my location";
-    }
-  }, (err) => {
-    showError("plotError", err.message || "Could not read GPS.");
-    btn.disabled = false;
-    btn.textContent = "Use my location";
-  }, { enableHighAccuracy: true, timeout: 15000 });
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
 }
 
 document.getElementById("plotGpsBtn").addEventListener("click", saveGpsPlot);
@@ -979,15 +1636,17 @@ function collectPlanDraft() {
 }
 
 function renderPlanCropRows() {
-  const options = (farmPlan?.cropOptions || ["Maize"]).map((crop) =>
-    `<option value="${crop}">${crop}</option>`
-  ).join("");
+  const options = (farmPlan?.cropOptions || ["Maize"])
+    .map((crop) => `<option value="${crop}">${crop}</option>`)
+    .join("");
   const monthOptions = Array.from({ length: 12 }, (_, i) => {
     const m = String(i + 1);
     const label = new Date(2026, i, 1).toLocaleString("en", { month: "short" });
     return `<option value="${m}">${label}</option>`;
   }).join("");
-  document.getElementById("planCropRows").innerHTML = planDraft.crops.map((row, index) => `
+  document.getElementById("planCropRows").innerHTML = planDraft.crops
+    .map(
+      (row, index) => `
     <div class="plan-crop-row">
       <label>Crop
         <select data-plan-crop data-index="${index}">${options}</select>
@@ -999,7 +1658,9 @@ function renderPlanCropRows() {
         <select data-plan-month data-index="${index}">${monthOptions}</select>
       </label>
       <button type="button" data-plan-remove="${index}" aria-label="Remove crop">✕</button>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
   planDraft.crops.forEach((row, index) => {
     document.querySelector(`[data-plan-crop][data-index="${index}"]`).value = row.crop;
     document.querySelector(`[data-plan-month][data-index="${index}"]`).value = row.startMonth;
@@ -1007,7 +1668,8 @@ function renderPlanCropRows() {
   document.querySelectorAll("[data-plan-remove]").forEach((btn) => {
     btn.addEventListener("click", () => {
       planDraft.crops.splice(Number(btn.dataset.planRemove), 1);
-      if (!planDraft.crops.length) planDraft.crops.push({ crop: "Maize", hectares: 1, startMonth: String(new Date().getMonth() + 1) });
+      if (!planDraft.crops.length)
+        planDraft.crops.push({ crop: "Maize", hectares: 1, startMonth: String(new Date().getMonth() + 1) });
       renderPlanCropRows();
     });
   });
@@ -1028,6 +1690,31 @@ function renderPlan() {
   renderPlanCropRows();
   const bank = farmPlan.bankability;
   const border = bank.score >= 70 ? "var(--green)" : bank.score >= 40 ? "var(--gold-deep)" : "var(--alert)";
+  
+  // Render breakdown if available
+  let breakdownHtml = "";
+  if (bank.breakdown) {
+    breakdownHtml = `
+      <div style="display: grid; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line);">
+        ${Object.entries(bank.breakdown)
+          .map(([key, data]) => {
+            const barColor = data.score >= 70 ? "var(--green)" : data.score >= 40 ? "var(--gold-deep)" : "var(--alert)";
+            return `
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 13px; color: var(--ink-soft);">${data.label}</span>
+                  <span style="font-size: 13px; font-weight: 600; color: ${barColor};">${data.score}%</span>
+                </div>
+                <div style="height: 6px; background: var(--paper-dim); border-radius: 3px; overflow: hidden;">
+                  <div style="height: 100%; width: ${data.score}%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                </div>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>`;
+  }
+  
   document.getElementById("planBankability").innerHTML = `
     <div class="plan-bank-top">
       <div class="plan-bank-score" style="border-color:${border}">
@@ -1037,7 +1724,8 @@ function renderPlan() {
         <strong>${bank.status}</strong>
         <p class="hint">Grade ${bank.grade} · saved ${farmPlan.updatedAt ? fmtTime(farmPlan.updatedAt) : "just now"}</p>
       </div>
-    </div>`;
+    </div>
+    ${breakdownHtml}`;
   document.getElementById("planWeatherNote").textContent = farmPlan.weatherNote || "";
   const c = farmPlan.combined;
   document.getElementById("planSummary").innerHTML = `
@@ -1047,7 +1735,9 @@ function renderPlan() {
     <div class="plan-metric"><div class="lbl">Net margin</div><div class="val">${fmtMoney(c.totalMargin)}</div></div>`;
 
   const primary = farmPlan.crops[0]?.budget;
-  document.getElementById("planTabBudget").innerHTML = farmPlan.crops.map((row) => `
+  document.getElementById("planTabBudget").innerHTML = farmPlan.crops
+    .map(
+      (row) => `
     <div class="market-row" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <strong>${row.crop} · ${row.hectares} ha</strong>
@@ -1055,31 +1745,47 @@ function renderPlan() {
       </div>
       <div class="hint">${row.cropInfo?.reason || "Crop fit notes from your soil record."}</div>
       <div class="hint">Price ${fmtMoney(row.budget.priceMwkKg)}/kg${row.budget.marketPrice ? " · live market" : ""}${row.budget.belowFloor ? " · below ministry floor" : ""}</div>
-      ${row.budget.costBreakdown.map((part) => `
+      ${row.budget.costBreakdown
+        .map(
+          (part) => `
         <div class="plan-costbar">
           <span style="width:72px;color:var(--ink-soft);">${part.label}</span>
-          <span class="plan-costbar-track"><span class="plan-costbar-fill" style="width:${Math.round(part.amount / row.budget.totalCost * 100)}%;"></span></span>
+          <span class="plan-costbar-track"><span class="plan-costbar-fill" style="width:${Math.round((part.amount / row.budget.totalCost) * 100)}%;"></span></span>
           <span class="mono">${fmtMoney(part.amount)}</span>
-        </div>`).join("")}
-    </div>`).join("");
+        </div>`
+        )
+        .join("")}
+    </div>`
+    )
+    .join("");
 
-  document.getElementById("planTabDaily").innerHTML = (farmPlan.tabs.dailyPlan || []).map((row) => `
+  document.getElementById("planTabDaily").innerHTML = (farmPlan.tabs.dailyPlan || [])
+    .map(
+      (row) => `
     <div class="daily-plan-row ${row.tone || ""}">
       <span class="daily-plan-day">${row.day}</span>
       <div><strong>${row.title}</strong><div class="hint">${row.desc}</div></div>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 
   let running = 0;
   document.getElementById("planTabCashflow").innerHTML = `
     <table class="market-row" style="display:block;padding:0;background:transparent;">
-      ${(farmPlan.tabs.cashflow || []).map((row) => {
-        running += row.amount;
-        return `<div class="market-row"><span>${row.label}</span><strong>${fmtMoney(row.amount)} · running ${fmtMoney(running)}</strong></div>`;
-      }).join("")}
+      ${(farmPlan.tabs.cashflow || [])
+        .map((row) => {
+          running += row.amount;
+          return `<div class="market-row"><span>${row.label}</span><strong>${fmtMoney(row.amount)} · running ${fmtMoney(running)}</strong></div>`;
+        })
+        .join("")}
     </table>`;
 
-  document.getElementById("planTabDecisions").innerHTML = (farmPlan.decisions || []).map((row) => `
-    <div class="plan-decision"><span>${row.icon}</span><div><strong>${row.title}</strong><div class="hint">${row.detail}</div></div></div>`).join("");
+  document.getElementById("planTabDecisions").innerHTML = (farmPlan.decisions || [])
+    .map(
+      (row) => `
+    <div class="plan-decision"><span>${row.icon}</span><div><strong>${row.title}</strong><div class="hint">${row.detail}</div></div></div>`
+    )
+    .join("");
 
   document.querySelectorAll("[data-plan-tab]").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.planTab === planTab);
@@ -1123,9 +1829,11 @@ document.getElementById("planSaveBtn").addEventListener("click", async () => {
       crops: farmPlan.crops.map((row) => ({ crop: row.crop, hectares: row.hectares, startMonth: row.startMonth })),
       readiness: { ...farmPlan.readiness },
     };
+    showToast("Your farm plan has been saved successfully!", "success");
     renderPlan();
   } catch (error) {
     showError("planError", error.message);
+    showToast(error.message || "Failed to save farm plan", "error");
   }
 });
 
@@ -1137,7 +1845,8 @@ async function boot() {
   const districtPayload = await api("GET", "/api/districts");
   districts = districtPayload.districts || [];
   fillDistricts();
-  loadMarket();
+  // Don't load market prices until user logs in (district filtering requires authentication)
+  // loadMarket() will be called in renderFarm() after login
   document.getElementById("marketCommodityFilter")?.addEventListener("change", () => loadMarket());
   document.getElementById("marketLocationFilter")?.addEventListener("change", () => loadMarket());
   document.getElementById("marketRefreshBtn")?.addEventListener("click", () => loadMarket({ refresh: true }));
@@ -1191,6 +1900,43 @@ async function boot() {
       alert(error.message || "Export failed");
     }
   });
+
+  // Input catalog category tabs
+  document.querySelectorAll("[data-input-category]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-input-category]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadInputsCatalog(btn.dataset.inputCategory);
+    });
+  });
+
+  // Profile form submit
+  document.getElementById("profileForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = {
+      gender: document.getElementById("profileGender")?.value || null,
+      dateOfBirth: document.getElementById("profileDob")?.value || null,
+      nationalId: document.getElementById("profileNationalId")?.value || null,
+      village: document.getElementById("profileVillage")?.value || null,
+      maritalStatus: document.getElementById("profileMaritalStatus")?.value || null,
+      householdSize: document.getElementById("profileHouseholdSize")?.value || null,
+      educationLevel: document.getElementById("profileEducation")?.value || null,
+      yearsOfExperience: document.getElementById("profileExperience")?.value || null,
+      alternativePhone: document.getElementById("profileAltPhone")?.value || null,
+      email: document.getElementById("profileEmail")?.value || null,
+    };
+    await saveProfile(formData);
+  });
+
+  // Household and assets management (placeholders for now)
+  document.getElementById("addHouseholdBtn")?.addEventListener("click", () => {
+    showToast("Household member management coming soon! Please contact your extension officer to update household information.", "info", 8000);
+  });
+
+  document.getElementById("addAssetBtn")?.addEventListener("click", () => {
+    showToast("Asset tracking coming soon! Please contact your extension officer to register your assets and livestock.", "info", 8000);
+  });
+
   await loadAdvisor();
   if (token) {
     try {

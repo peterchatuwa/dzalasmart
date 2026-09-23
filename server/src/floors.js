@@ -23,12 +23,13 @@ export function judgeOffer(pricePerKg, floorPerKg) {
 }
 
 export async function listFloors(db) {
-  return (await db.prepare("SELECT crop, price_per_kg, updated_at FROM price_floors ORDER BY crop").all())
-    .map((row) => ({
+  return (await db.prepare("SELECT crop, price_per_kg, updated_at FROM price_floors ORDER BY crop").all()).map(
+    (row) => ({
       crop: row.crop,
       pricePerKg: row.price_per_kg,
       updatedAt: row.updated_at,
-    }));
+    })
+  );
 }
 
 export async function floorFor(db, crop) {
@@ -73,11 +74,43 @@ export async function listContractsForFarmer(db, farmerId) {
 export async function contractMonitor(db) {
   const contracts = await listContracts(db);
   const violations = contracts.filter((row) => row.status === "blocked");
+  
+  // Calculate exposure by district
+  const exposureByDistrict = {};
+  for (const contract of contracts) {
+    const district = contract.district || "Unknown";
+    if (!exposureByDistrict[district]) {
+      exposureByDistrict[district] = {
+        district,
+        totalValue: 0,
+        totalWeight: 0,
+        contractCount: 0,
+        violationCount: 0,
+        clearedCount: 0,
+      };
+    }
+    
+    exposureByDistrict[district].totalValue += contract.offerPrice * contract.weightKg;
+    exposureByDistrict[district].totalWeight += contract.weightKg;
+    exposureByDistrict[district].contractCount += 1;
+    
+    if (contract.status === "blocked") {
+      exposureByDistrict[district].violationCount += 1;
+    } else if (contract.status === "cleared") {
+      exposureByDistrict[district].clearedCount += 1;
+    }
+  }
+  
+  // Sort by total value descending
+  const exposureBreakdown = Object.values(exposureByDistrict).sort((a, b) => b.totalValue - a.totalValue);
+  
   return {
     floors: await listFloors(db),
     contracts,
     violationCount: violations.length,
     clearedCount: contracts.filter((row) => row.status === "cleared").length,
+    exposureByDistrict: exposureBreakdown,
+    totalExposure: exposureBreakdown.reduce((sum, d) => sum + d.totalValue, 0),
   };
 }
 
@@ -92,11 +125,15 @@ export async function setFloor(db, staff, input = {}) {
     throw HttpError(400, "Floor price must be a whole number of MWK per kg");
   }
   const name = existing?.crop || DEFAULT_FLOORS.find((row) => row.crop.toLowerCase() === crop.toLowerCase()).crop;
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO price_floors (crop, price_per_kg, updated_at, updated_by)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(crop) DO UPDATE SET price_per_kg = excluded.price_per_kg, updated_at = excluded.updated_at, updated_by = excluded.updated_by
-  `).run(name, pricePerKg, Date.now(), staff.id);
+  `
+    )
+    .run(name, pricePerKg, Date.now(), staff.id);
   return { floors: await listFloors(db) };
 }
 
@@ -120,7 +157,10 @@ export async function recordOffer(db, staff, input = {}) {
     const status = await farmerStatus(db, farmer);
     const currentIndex = status.currentStage?.index ?? -1;
     if (currentIndex < POST_HARVEST_INDEX) {
-      throw HttpError(409, "This farmer has not reached Post-Harvest Handling yet. Grain must be graded before it can be sold.");
+      throw HttpError(
+        409,
+        "This farmer has not reached Post-Harvest Handling yet. Grain must be graded before it can be sold."
+      );
     }
   }
 
@@ -138,12 +178,16 @@ export async function recordOffer(db, staff, input = {}) {
     created_at: Date.now(),
   };
 
-  await db.prepare(`
+  await db
+    .prepare(
+      `
     INSERT INTO offtake_contracts
       (id, buyer, crop, district, price_per_kg, floor_per_kg, status, farmer_id, staff_id, created_at)
     VALUES
       (@id, @buyer, @crop, @district, @price_per_kg, @floor_per_kg, @status, @farmer_id, @staff_id, @created_at)
-  `).run(row);
+  `
+    )
+    .run(row);
 
   let stageAdvanced = false;
   let farmerRecord = farmer ? await farmerStatus(db, farmer) : null;

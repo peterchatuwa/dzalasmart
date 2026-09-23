@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nzeru za Alimi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">🌾</div>
+            <h2>Nzeru za Alimi</h2>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen" style="display:none;">
+        <div class="login-container">
+            <div class="logo-section">
+                <div class="app-logo">🌾</div>
+                <h1>Nzeru za Alimi</h1>
+                <p class="tagline">Agricultural Management System</p>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginPhone">Phone Number</label>
+                    <input type="tel" id="loginPhone" placeholder="+265..." required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPin">PIN</label>
+                    <input type="password" id="loginPin" placeholder="Enter PIN" maxlength="4" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+
+            <div class="help-section">
+                <p>Need help? Contact your extension officer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="screen" style="display:none;">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-content">
+                <h1 class="app-title">Nzeru za Alimi</h1>
+                <button id="logoutBtn" class="icon-btn">🚪</button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="home">🏠</button>
+            <button class="tab-btn" data-tab="farm">🏡</button>
+            <button class="tab-btn" data-tab="production">📊</button>
+            <button class="tab-btn" data-tab="market">💰</button>
+            <button class="tab-btn" data-tab="advisor">💬</button>
+            <button class="tab-btn" data-tab="receipts">📄</button>
+            <button class="tab-btn" data-tab="profile">👤</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Home Tab -->
+            <div id="homeTab" class="tab-pane active">
+                <div class="welcome-card">
+                    <h2 id="welcomeName">Welcome!</h2>
+                    <p id="welcomeDistrict"></p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🌾</div>
+                        <div class="stat-value" id="totalLand">--</div>
+                        <div class="stat-label">Hectares</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-value" id="totalReceipts">--</div>
+                        <div class="stat-label">Receipts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-value" id="totalLoans">--</div>
+                        <div class="stat-label">Loans</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivity" class="activity-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="switchTab('receipts')">
+                            📄 View Receipts
+                        </button>
+                        <button class="action-btn" onclick="switchTab('market')">
+                            💰 Check Prices
+                        </button>
+                        <button class="action-btn" onclick="switchTab('advisor')">
+                            💬 Ask Advisor
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profileTab" class="tab-pane">
+                <div class="profile-header">
+                    <div class="profile-avatar">👤</div>
+                    <h2 id="profileName"></h2>
+                    <p id="profilePhone"></p>
+                </div>
+
+                <div class="section">
+                    <h3>Personal Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>District</label>
+                            <span id="profileDistrict">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>EPA</label>
+                            <span id="profileEpa">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Village</label>
+                            <span id="profileVillage">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Gender</label>
+                            <span id="profileGender">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Household Size</label>
+                            <span id="profileHousehold">--</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Household Type</label>
+                            <span id="profileHouseholdType">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Farm Details</h3>
+                    <div id="farmDetails" class="farm-details"></div>
+                </div>
+
+                <button class="btn-secondary" onclick="showEditProfile()">Edit Profile</button>
+            </div>
+
+            <!-- Receipts Tab -->
+            <div id="receiptsTab" class="tab-pane">
+                <div class="section">
+                    <h3>My Warehouse Receipts</h3>
+                    <div id="receiptsList" class="receipts-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Loans</h3>
+                    <div id="loansList" class="loans-list"></div>
+                </div>
+            </div>
+
+            <!-- Market Tab -->
+            <div id="marketTab" class="tab-pane">
+                <div class="section">
+                    <h3>Market Prices</h3>
+                    <p class="section-subtitle">Today's warehouse price, the official floor, and the district plan price for the field you select</p>
+                    <div id="marketPrices" class="market-prices"></div>
+                </div>
+            </div>
+
+            <!-- Advisor Tab -->
+            <div id="advisorTab" class="tab-pane">
+                <div class="advisor-header">
+                    <h3>🌱 Agricultural Advisor</h3>
+                    <p id="advisorContext">Advice follows the crop you are growing</p>
+                </div>
+
+                <div class="advisor-topics">
+                    <button class="topic-chip" onclick="askAdvisor('weather')">☀️ Weather</button>
+                    <button class="topic-chip" onclick="askAdvisor('fertilizer')">🌱 Fertilizer</button>
+                    <button class="topic-chip" onclick="askAdvisor('irrigation')">💧 Irrigation</button>
+                    <button class="topic-chip" onclick="askAdvisor('pests')">🐛 Pests</button>
+                    <button class="topic-chip" onclick="askAdvisor('storage')">📦 Storage</button>
+                    <button class="topic-chip" onclick="askAdvisor('market')">💰 Market</button>
+                </div>
+
+                <div id="chatContainer" class="chat-container"></div>
+
+                <div class="chat-input-area">
+                    <button type="button" onclick="photographPlant()" class="btn-send" id="photoPlant">📷</button>
+                    <input type="text" id="chatInput" placeholder="Ask a question..." class="chat-input">
+                    <button onclick="sendMessage()" class="btn-send">Send</button>
+                </div>
+            </div>
+
+            <!-- Farm Tab -->
+            <div id="farmTab" class="tab-pane">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>🏡 My Farm</h3>
+                    </div>
+                    <div class="welcome-card" id="farmProfileCard">
+                        <h2 id="farmFarmerName">My Farm</h2>
+                        <p id="farmLocation">Location loads after login</p>
+                        <p id="farmSoil"></p>
+                    </div>
+
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h4>Crop actions</h4>
+                        </div>
+                        <div id="careForecast" class="care-forecast"></div>
+                        <div class="form-group">
+                            <label for="fieldSelect">Field</label>
+                            <select id="fieldSelect"></select>
+                        </div>
+                        <div id="careTasks" class="cards-list"></div>
+                    </div>
+
+                    <!-- Land Parcels -->
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h4>Land Parcels</h4>
+                            <button onclick="showAddParcel()" class="btn-small">+ Add Parcel</button>
+                        </div>
+                        <div id="parcelsList" class="cards-list"></div>
+                    </div>
+
+                    <!-- Production Seasons -->
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h4>Production Seasons</h4>
+                            <button onclick="showAddSeason()" class="btn-small">+ Start Season</button>
+                        </div>
+                        <div id="seasonsList" class="cards-list"></div>
+                    </div>
+
+                    <!-- Household -->
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h4>Household Members</h4>
+                            <button onclick="showAddMember()" class="btn-small">+ Add Member</button>
+                        </div>
+                        <div id="householdList" class="cards-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Tab -->
+            <div id="productionTab" class="tab-pane">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>📊 Production Tracking</h3>
+                    </div>
+
+                    <!-- Select Active Season -->
+                    <div class="form-group">
+                        <label>Select Season:</label>
+                        <select id="activeSeasonSelect" onchange="loadSeasonDetails()">
+                            <option value="">-- Select a season --</option>
+                        </select>
+                    </div>
+
+                    <div id="seasonDetailsContainer" style="display:none;">
+                        <!-- Quick Stats -->
+                        <div class="stats-grid-small">
+                            <div class="stat-card-small">
+                                <div class="stat-label">Days Since Planting</div>
+                                <div class="stat-value" id="daysSincePlanting">--</div>
+                            </div>
+                            <div class="stat-card-small">
+                                <div class="stat-label">Total Costs</div>
+                                <div class="stat-value" id="seasonTotalCosts">--</div>
+                            </div>
+                            <div class="stat-card-small">
+                                <div class="stat-label">Activities Logged</div>
+                                <div class="stat-value" id="seasonActivities">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Tabs for different actions -->
+                        <div class="sub-tabs">
+                            <button class="sub-tab-btn active" data-subtab="activities">Activities</button>
+                            <button class="sub-tab-btn" data-subtab="monitoring">Monitoring</button>
+                            <button class="sub-tab-btn" data-subtab="costs">Costs</button>
+                        </div>
+
+                        <!-- Activities Sub-tab -->
+                        <div id="activitiesSubtab" class="sub-tab-pane active">
+                            <button onclick="showLogActivity()" class="btn-primary full-width">+ Log Activity</button>
+                            <div id="activitiesList" class="timeline"></div>
+                        </div>
+
+                        <!-- Monitoring Sub-tab -->
+                        <div id="monitoringSubtab" class="sub-tab-pane">
+                            <button onclick="showRecordMonitoring()" class="btn-primary full-width">+ Record Monitoring</button>
+                            <div id="monitoringList" class="timeline"></div>
+                        </div>
+
+                        <!-- Costs Sub-tab -->
+                        <div id="costsSubtab" class="sub-tab-pane">
+                            <button onclick="showAddCost()" class="btn-primary full-width">+ Add Cost</button>
+                            <div id="costSummary" class="cost-summary"></div>
+                            <div id="costsList" class="timeline"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button onclick="closeEditProfile()" class="close-btn">×</button>
+            </div>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label>Village</label>
+                    <input type="text" id="editVillage">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="editGender">
+                        <option value="">Select...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="editDob">
+                </div>
+                <div class="form-group">
+                    <label>Household Size</label>
+                    <input type="number" id="editHouseholdSize" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Household Type</label>
+                    <select id="editHouseholdType">
+                        <option value="">Select...</option>
+                        <option value="single">Single</option>
+                        <option value="married_no_children">Married (No Children)</option>
+                        <option value="married_with_children">Married (With Children)</option>
+                        <option value="single_parent">Single Parent</option>
+                        <option value="extended_family">Extended Family</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Livestock</label>
+                    <input type="text" id="editLivestock" placeholder="e.g., chickens, goats">
+                </div>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Parcel Modal -->
+    <div id="addParcelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Land Parcel</h3>
+                <button onclick="closeAddParcel()" class="close-btn">×</button>
+            </div>
+            <form id="addParcelForm">
+                <div class="form-group">
+                    <label>Parcel Name</label>
+                    <input type="text" id="parcelName" placeholder="e.g., Main Field" required>
+                </div>
+                <div class="form-group">
+                    <label>Size (Hectares)</label>
+                    <input type="number" id="parcelSize" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Ownership Type</label>
+                    <select id="parcelOwnership" required>
+                        <option value="">Select...</option>
+                        <option value="owned">Owned</option>
+                        <option value="leased">Leased</option>
+                        <option value="borrowed">Borrowed</option>
+                        <option value="communal">Communal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Soil Type</label>
+                    <input type="text" id="parcelSoilType" placeholder="e.g., Sandy loam">
+                </div>
+                <div class="form-group">
+                    <label>Water Source</label>
+                    <select id="parcelWaterSource">
+                        <option value="">Select...</option>
+                        <option value="rainfed">Rainfed</option>
+                        <option value="irrigation">Irrigation</option>
+                        <option value="borehole">Borehole</option>
+                        <option value="river">River</option>
+                    </select>
+                </div>
+                <button type="button" onclick="captureGPS()" class="btn-secondary">📍 Capture GPS</button>
+                <small id="gpsStatus"></small>
+                <button type="submit" class="btn-primary">Save Parcel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Season Modal -->
+    <div id="addSeasonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Start Production Season</h3>
+                <button onclick="closeAddSeason()" class="close-btn">×</button>
+            </div>
+            <form id="addSeasonForm">
+                <div class="form-group">
+                    <label>Select Parcel</label>
+                    <select id="seasonParcel" required>
+                        <option value="">Select parcel...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Crop</label>
+                    <select id="seasonCrop" required>
+                        <option value="">Select crop...</option>
+                        <option value="Maize">Maize</option>
+                        <option value="Soya">Soya</option>
+                        <option value="Groundnuts">Groundnuts</option>
+                        <option value="Tobacco">Tobacco</option>
+                        <option value="Rice">Rice</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Variety (Optional)</label>
+                    <input type="text" id="seasonVariety" placeholder="e.g., SC627">
+                </div>
+                <div class="form-group">
+                    <label>Area (Hectares)</label>
+                    <input type="number" id="seasonArea" step="0.01" min="0.01" required>
+                </div>
+                <p id="seasonGuide" class="season-guide"></p>
+                <div class="form-group">
+                    <label>Season Name</label>
+                    <input type="text" id="seasonName" value="2025-2026" required>
+                </div>
+                <button type="submit" class="btn-primary">Start Season</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div id="addMemberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Household Member</h3>
+                <button onclick="closeAddMember()" class="close-btn">×</button>
+            </div>
+            <form id="addMemberForm">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="memberName" required>
+                </div>
+                <div class="form-group">
+                    <label>Relationship</label>
+                    <select id="memberRelationship" required>
+                        <option value="">Select...</option>
+                        <option value="spouse">Spouse</option>
+                        <option value="child">Child</option>
+                        <option value="parent">Parent</option>
+                        <option value="sibling">Sibling</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="memberAge" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="memberGender">
+                        <option value="">Select...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="memberFarming">
+                        Involved in Farming
+                    </label>
+                </div>
+                <button type="submit" class="btn-primary">Add Member</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Log Activity Modal -->
+    <div id="logActivityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Log Activity</h3>
+                <button onclick="closeLogActivity()" class="close-btn">×</button>
+            </div>
+            <form id="logActivityForm">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="activityDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Activity Type</label>
+                    <select id="activityType" required>
+                        <option value="">Select...</option>
+                        <option value="land_prep">Land Preparation</option>
+                        <option value="planting">Planting</option>
+                        <option value="weeding">Weeding</option>
+                        <option value="fertilizing">Fertilizing</option>
+                        <option value="spraying">Spraying</option>
+                        <option value="irrigation">Irrigation</option>
+                        <option value="monitoring">General Monitoring</option>
+                        <option value="harvesting">Harvesting</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="activityDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Labor Hours</label>
+                    <input type="number" id="activityLaborHours" step="0.5" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Cost (MWK)</label>
+                    <input type="number" id="activityCost" min="0">
+                </div>
+                <button type="submit" class="btn-primary">Save Activity</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Record Monitoring Modal -->
+    <div id="recordMonitoringModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Record Monitoring</h3>
+                <button onclick="closeRecordMonitoring()" class="close-btn">×</button>
+            </div>
+            <form id="recordMonitoringForm">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="monitoringDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Crop Stage</label>
+                    <select id="monitoringStage">
+                        <option value="">Select...</option>
+                        <option value="germination">Germination</option>
+                        <option value="vegetative">Vegetative</option>
+                        <option value="flowering">Flowering</option>
+                        <option value="grain_filling">Grain Filling</option>
+                        <option value="maturity">Maturity</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Crop Health</label>
+                    <select id="monitoringHealth">
+                        <option value="">Select...</option>
+                        <option value="excellent">⭐⭐⭐⭐⭐ Excellent</option>
+                        <option value="good">⭐⭐⭐⭐ Good</option>
+                        <option value="fair">⭐⭐⭐ Fair</option>
+                        <option value="poor">⭐⭐ Poor</option>
+                        <option value="critical">⭐ Critical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pests Observed</label>
+                    <input type="text" id="monitoringPests" placeholder="e.g., Fall Armyworm">
+                </div>
+                <div class="form-group">
+                    <label>Diseases Observed</label>
+                    <input type="text" id="monitoringDiseases" placeholder="e.g., Leaf blight">
+                </div>
+                <div class="form-group">
+                    <label>Action Taken</label>
+                    <textarea id="monitoringAction" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="monitoringNotes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Monitoring</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Cost Modal -->
+    <div id="addCostModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Cost</h3>
+                <button onclick="closeAddCost()" class="close-btn">×</button>
+            </div>
+            <form id="addCostForm">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="costDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="costCategory" required>
+                        <option value="">Select...</option>
+                        <option value="cc-1">Land Preparation</option>
+                        <option value="cc-2">Seeds & Planting Materials</option>
+                        <option value="cc-3">Fertilizers</option>
+                        <option value="cc-4">Pesticides & Herbicides</option>
+                        <option value="cc-5">Labor</option>
+                        <option value="cc-6">Equipment & Tools</option>
+                        <option value="cc-7">Irrigation</option>
+                        <option value="cc-8">Transportation</option>
+                        <option value="cc-9">Storage</option>
+                        <option value="cc-10">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="costDescription" required placeholder="e.g., Hired 2 workers">
+                </div>
+                <div class="form-group">
+                    <label>Amount (MWK)</label>
+                    <input type="number" id="costAmount" required min="0">
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="costPayment">
+                        <option value="">Select...</option>
+                        <option value="cash">Cash</option>
+                        <option value="mobile_money">Mobile Money</option>
+                        <option value="credit">Credit</option>
+                        <option value="voucher">Voucher</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Production Stage</label>
+                    <select id="costStage">
+                        <option value="">Select...</option>
+                        <option value="pre_planting">Pre-Planting</option>
+                        <option value="planting">Planting</option>
+                        <option value="growing">Growing</option>
+                        <option value="harvesting">Harvesting</option>
+                        <option value="post_harvest">Post-Harvest</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Save Cost</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Capacitor Scripts -->
+    <script src="cordova.js"></script>
+    <script src="app.js" type="module"></script>
+</body>
+</html>
